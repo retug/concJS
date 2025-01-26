@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+  </head>
+  <body>
+    <div id="userResults" class="column resizable">
+        <h3>User Results</h3>
+        <p>Content for user results.</p>
+    </div>
+
+    <div id="middleColumn">
+        <div id="concGui">
+            <h3>Conc Gui</h3>
+            <p>Content for conc gui.</p>
+
+        </div>
+        <div id="results">
+            <h3>Results</h3>
+            <p>Content for results.</p>
+        </div>
+    </div>
+
+    <div id="materialsandShapes">
+      <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
+      <div id="materialContent">
+        <h3>Materials and Shapes</h3>
+        <div id="Shape Buttons" class="flex space-x-2 py-2">
+          <div id="RectangeShape">
+            <button class="modern-button">
+              <span class="circle tl"></span>
+              <span class="circle tr"></span>
+              <span class="circle bl"></span>
+              <span class="circle br"></span>
+          </div>
+          <div id="BarBellShape">
+            <button class="barbell-button">
+              <span class="circle bbtl"></span>
+              <span class="circle bbtr"></span>
+              <span class="circle bbbl"></span>
+              <span class="circle bbbr"></span>
+            </button>
+        </div>
+      </div>
+
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

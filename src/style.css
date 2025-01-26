@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  display: flex;
+  height: 100vh;
+  margin: 0;
+}
+
+#userResults, #materialsandShapes {
+  width: 16.666%; /* 1/6 of the width */
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-right: 1px solid #ccc;
+  overflow: auto;
+}
+
+#materialsandShapes {
+  border-left: 1px solid #ccc;
+  border-right: none;
+}
+
+#middleColumn {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#concGui {
+  flex: 1;
+  background-color: #e0e0e0;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+#results {
+  flex: 1;
+  background-color: #d0d0d0;
+  padding: 10px;
+}
+
+
+
+.toggle-button {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  border: 1px solid rgb(55 65 81);
+  color: rgb(55 65 81);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+.toggle-button:hover {
+  background-color: rgb(55 65 81);
+  color: white
+
+}
+
+
+
+
+.modern-button .circle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background-color: rgb(55 65 81);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.modern-button:hover .circle {
+  background-color: white;
+}
+
+.modern-button .circle.tl {
+  top: 8px;
+  left: 8px;
+}
+
+.modern-button .circle.tr {
+  top: 8px;
+  right: 8px;
+}
+
+.modern-button .circle.bl {
+  bottom: 8px;
+  left: 8px;
+}
+
+.modern-button .circle.br {
+  bottom: 8px;
+  right: 8px;
+}
+
+.barbell-button .circle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background-color: rgb(55 65 81);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.barbell-button:hover .circle {
+  background-color: white;
+}
+
+.barbell-button .circle.bbtl {
+  top: 10px;
+  left: 20px;
+}
+
+.barbell-button .circle.bbtr {
+  top: 10px;
+  right: 20px;
+}
+
+.barbell-button .circle.bbbl {
+  bottom: 10px;
+  left: 20px;
+}
+
+.barbell-button .circle.bbbr {
+  bottom: 10px;
+  right: 20px;
+}
+
+.modern-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 40px;
+  border: 2px solid rgb(55 65 81);
+  border-radius: 6px;
+  background-color: transparent;
+  color: rgb(55 65 81);
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.modern-button:hover::after {
+  content: "Rectangle";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: all 0.3s ease;
+  z-index: 10;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.modern-button:hover {
+  background-color: rgb(55 65 81);
+  color: white;
+  box-shadow: 0 4px 10px rgb(55 65 81);
+}
+
+.barbell-button:hover {
+  background-color: rgb(55 65 81);
+  color: white;
+  box-shadow: 0 4px 10px rgb(55 65 81);
+}
+
+
+.barbell-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 40px;
+  border: 2px solid rgb(55 65 81);
+  border-radius: 30px;
+  background-color: transparent;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  z-index: 1;
+}
+
+.barbell-button:hover::after {
+  content: "Bridge Pier";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: all 0.3s ease;
+  z-index: 10;
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+
+
