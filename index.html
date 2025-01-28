@@ -26,23 +26,119 @@
 
     <div id="materialsandShapes">
       <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
-      <div id="materialContent">
-        <h3>Materials and Shapes</h3>
-        <div id="Shape Buttons" class="flex space-x-2 py-2">
-          <div id="RectangeShape">
-            <button class="modern-button">
+      <div id="materialContent" class="block uppercase text-gray-700 text-xs font-bold mb-2">
+        <h3 text-gray-700>Materials and Shapes</h3>
+        <div id="ShapeButtons" class="flex space-x-2 py-2">
+          <div id="RectangleShape">
+            <button id="rectangleButton" class="modern-button">
               <span class="circle tl"></span>
               <span class="circle tr"></span>
               <span class="circle bl"></span>
               <span class="circle br"></span>
+            </button>
           </div>
           <div id="BarBellShape">
-            <button class="barbell-button">
+            <button id="barbellButton" class="barbell-button">
               <span class="circle bbtl"></span>
               <span class="circle bbtr"></span>
               <span class="circle bbbl"></span>
               <span class="circle bbbr"></span>
             </button>
+          </div>
+        </div>
+      </div>
+      <div id="square_rect_oval_shapes" class="p-3 bg-gray-400 py-1">
+        <!-- Concrete Props Section -->
+        <div class="border-b-2 text-lg mb-3">Concrete Props</div>
+        <div class="grid grid-cols-3 gap-4 grid-flow-row py-1">
+          <!-- Width Input -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="width_input">
+              Width
+            </label>
+            <input
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white"
+              type="number"
+              name="width"
+              id="width_input"
+              placeholder="Width"
+              min="0"
+              step="0.1"
+              required
+            />
+          </div>
+          <!-- Length Input -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="length_input">
+              Length
+            </label>
+            <input
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white"
+              type="number"
+              name="length"
+              id="length_input"
+              placeholder="Length"
+              min="0"
+              step="0.1"
+              required
+            />
+          </div>
+          <!-- Concrete Mat Dropdown -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="concrete_mat">
+              Conc Mat
+            </label>
+            <select
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
+              id="concrete_mat"
+              name="concrete_mat"
+            >
+              <option value="fc4">fc4</option>
+              <option value="fc5">fc5</option>
+            </select>
+          </div>
+        </div>
+      
+        <!-- Rebar Props Section -->
+        <div class="border-b-2 text-lg mt-6 mb-3">Rebar Props</div>
+        <div class="grid grid-cols-2 gap-4 grid-flow-row py-1">
+          <!-- Rebar Dropdown -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar">
+              Rebar
+            </label>
+            <select
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
+              id="rebar"
+              name="rebar"
+            >
+              <option value="3">#3</option>
+              <option value="4">#4</option>
+              <option value="5">#5</option>
+              <option value="6">#6</option>
+              <option value="7">#7</option>
+              <option value="8">#8</option>
+              <option value="9">#9</option>
+              <option value="10">#10</option>
+              <option value="11">#11</option>
+              <option value="14">#14</option>
+              <option value="18">#18</option>
+            </select>
+          </div>
+          <!-- Rebar Mat Dropdown -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_mat">
+              Rebar Mat
+            </label>
+            <select
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
+              id="rebar_mat"
+              name="rebar_mat"
+            >
+              <option value="fy60">fy60</option>
+              <option value="fy75">fy75</option>
+            </select>
+          </div>
         </div>
       </div>
 

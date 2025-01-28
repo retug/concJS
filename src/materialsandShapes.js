@@ -10,7 +10,7 @@ export function toggleMaterialsAndShapesDiv() {
     if (materialContent.style.display === 'none') {
       // Show content and reset width
       materialContent.style.display = 'block';
-      materialsAndShapes.style.width = 'auto'; // Reset to default width
+      materialsAndShapes.style.width = '16.666%'; // Reset to default width
       button.innerHTML = '&#xab;'; // Left-pointing double arrow
     } else {
       // Hide content and shrink the container
@@ -19,4 +19,19 @@ export function toggleMaterialsAndShapesDiv() {
       button.innerHTML = '&#xbb;'; // Right-pointing double arrow
     }
   }
+
+  export function toggleShapeButtons() {
+    const rectangleButton = document.getElementById("rectangleButton");
+    const barbellButton = document.getElementById("barbellButton");
   
+    rectangleButton.addEventListener("click", () => {
+      rectangleButton.classList.add("active");
+      barbellButton.classList.remove("active");
+    });
+  
+    barbellButton.addEventListener("click", () => {
+      barbellButton.classList.add("active");
+      rectangleButton.classList.remove("active");
+    });
+  }
+

@@ -233,5 +233,17 @@ body {
   transform: translate(-50%, 0);
 }
 
+.modern-button.active,
+.barbell-button.active {
+  background-color: rgb(55 65 81);
+  color: white;
+  box-shadow: 0 4px 10px rgb(55 65 81);
+}
+
+.modern-button.active .circle,
+.barbell-button.active .circle {
+  background-color: white;
+}
+
 
 
