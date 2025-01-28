@@ -23,7 +23,7 @@
             <p>Content for results.</p>
         </div>
     </div>
-
+    
     <div id="materialsandShapes">
       <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
       <div id="materialContent" class="block uppercase text-gray-700 text-xs font-bold mb-2">
@@ -49,10 +49,10 @@
       </div>
       <div id="square_rect_oval_shapes" class="p-3 bg-gray-400 py-1">
         <!-- Concrete Props Section -->
-        <div class="border-b-2 text-lg mb-3">Concrete Props</div>
-        <div class="grid grid-cols-3 gap-4 grid-flow-row py-1">
+        <div class="border-b-2 text-lg mb-2">Concrete Props</div>
+        <div class="grid grid-cols-4 gap-2 grid-flow-row py-1">
           <!-- Width Input -->
-          <div>
+          <div class="col-span-2">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="width_input">
               Width
             </label>
@@ -68,7 +68,7 @@
             />
           </div>
           <!-- Length Input -->
-          <div>
+          <div class="col-span-2">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="length_input">
               Length
             </label>
@@ -84,9 +84,9 @@
             />
           </div>
           <!-- Concrete Mat Dropdown -->
-          <div>
+          <div class="col-span-4">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="concrete_mat">
-              Conc Mat
+              Concrete Mat
             </label>
             <select
               class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
@@ -100,10 +100,10 @@
         </div>
       
         <!-- Rebar Props Section -->
-        <div class="border-b-2 text-lg mt-6 mb-3">Rebar Props</div>
-        <div class="grid grid-cols-2 gap-4 grid-flow-row py-1">
+        <div class="border-b-2 text-lg mt-2 mb-2">Rebar Props</div>
+        <div class="grid grid-cols-4 gap-2 grid-flow-row py-1">
           <!-- Rebar Dropdown -->
-          <div>
+          <div class="col-span-2">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar">
               Rebar
             </label>
@@ -125,8 +125,24 @@
               <option value="18">#18</option>
             </select>
           </div>
+          <!-- Rebar Quantity Input -->
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_quantity">
+              Rebar Quantity
+            </label>
+            <input
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white"
+              type="number"
+              name="rebar_quantity"
+              id="rebar_quantity"
+              placeholder="Quantity"
+              min="1"
+              step="1"
+              required
+            />
+          </div>
           <!-- Rebar Mat Dropdown -->
-          <div>
+          <div class="col-span-4">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_mat">
               Rebar Mat
             </label>
@@ -141,8 +157,7 @@
           </div>
         </div>
       </div>
-
-    </div>
+    </div>      
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
