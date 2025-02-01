@@ -26,14 +26,14 @@
         </div>
     </div>
     
-    <div id="materialsandShapes">
+    <div id="materialsandShapes" class="bg-gray-400">
       <div id="materialsandShapesExpanded">
         <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
       </div>
       
       <div id="shapeContent" class="block uppercase text-gray-700 text-xs font-bold mb-2">
         <h3 text-gray-700>Prebuilt Shapes</h3>
-        <div id="ShapeButtons" class="flex space-x-2 py-2">
+        <div id="ShapeButtons" class="flex space-x-2 py-1">
           <div id="RectangleShape">
             <button id="rectangleButton" class="modern-button">
               <span class="circle tl"></span>
@@ -52,9 +52,9 @@
           </div>
         </div>
       </div>
-      <div id="square_rect_oval_shapes" class="p-3 bg-gray-400 py-1">
+      <div id="square_rect_oval_shapes" class="p-3 bg-gray-400 py-0">
         <!-- Concrete Props Section -->
-        <div class="border-b-2 text-lg mb-2">Concrete Props</div>
+        <div class="border-b-1 text-lg mb-1">Concrete Properties</div>
         <div class="grid grid-cols-4 gap-2 grid-flow-row py-1">
           <!-- Width Input -->
           <div class="col-span-2">
@@ -105,7 +105,7 @@
         </div>
       
         <!-- Rebar Props Section -->
-        <div class="border-b-2 text-lg mt-2 mb-2">Rebar Props</div>
+        <div class="border-b-2 text-lg mt-2 mb-2">Rebar Properties</div>
         <div class="grid grid-cols-4 gap-2 grid-flow-row py-1">
           <!-- Rebar Dropdown -->
           <div class="col-span-2">
@@ -163,37 +163,53 @@
         </div>
       </div>
       <div id="materialCreation" class="block uppercase text-gray-700 text-xs font-bold mb-2" >
-        <h3>Materials</h3>
-        <label for="materialDropdown">Material:</label>
-        <select id="materialDropdown">
-          <option disabled selected>Select a material</option>
-        </select>
+        <h3 class="border-b-1 text-lg mb-1">Materials</h3>
+        <div class="grid grid-cols-4 items-center">
+          <label for="materialDropdown" class="text-sm font-medium text-gray-700 col-span-1">Material:</label>
+          <select id="materialDropdown" class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white col-span-3">
+            <option disabled selected>Select a material</option>
+          </select>
+        </div>
+        <div id="userDefinedInputs" class="hidden mt-4 space-y-4">
+          <!-- Material Name Input -->
+          <div class="flex flex-col space-y-2">
+            <label for="materialName" class="text-sm font-medium text-gray-700">Material Name:</label>
+            <input type="text" id="materialName" class="appearance-none bg-gray-200 border text-gray-700 px-4 py-2 rounded leading-tight focus:outline-none focus:bg-white" placeholder="Enter material name" />
+          </div>
         
-        <div id="userDefinedInputs" style="display: none; margin-top: 20px;">
-          <label for="materialName">Material Name:</label>
-          <input type="text" id="materialName" placeholder="Enter material name" />
-          <br><br>
-          <label for="expectedStrength">Expected Strength:</label>
-          <input type="checkbox" id="expectedStrength" />
-          <br><br>
-          <table id="userStressStrainTable" border="1">
+          <!-- Expected Strength Checkbox -->
+          <div class="flex items-center space-x-2">
+            <label for="expectedStrength" class="text-sm font-medium text-gray-700">Expected Strength:</label>
+            <input type="checkbox" id="expectedStrength" class="w-4 h-4" />
+          </div>
+        
+          <!-- Stress-Strain Table -->
+          <table id="userStressStrainTable" class="w-full border-collapse">
             <thead>
-              <tr>
-                <th>Strain</th>
-                <th>Stress (psi)</th>
-                <th>Action</th>
+              <tr class="bg-gray-100">
+                <th class="border px-4 py-2">Strain</th>
+                <th class="border px-4 py-2">Stress (psi)</th>
+                <th class="border px-4 py-2">Action</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><input type="number" step="0.0001" class="strainInput" /></td>
-                <td><input type="number" step="0.01" class="stressInput" /></td>
-                <td><button class="removeRow">Remove</button></td>
+                <td class="border px-4 py-2"><input type="number" step="0.0001" class="strainInput w-full px-2 py-1 border rounded" /></td>
+                <td class="border px-4 py-2"><input type="number" step="0.01" class="stressInput w-full px-2 py-1 border rounded" /></td>
+                <td class="border px-4 py-2 text-center"><button class="removeRow text-red-600 hover:text-red-800">Remove</button></td>
               </tr>
             </tbody>
           </table>
-          <button id="addRow">Add Row</button>
-          <button id="saveMaterial">Save Material</button>
+        
+          <!-- Buttons Row -->
+          <div class="flex justify-between space-x-4">
+            <button id="addRow" class="w-1/2 uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">
+              Add Row
+            </button>
+            <button id="saveMaterial" class="w-1/2 uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">
+              Save Material
+            </button>
+          </div>
         </div>
 
         <table id="stressStrainTable" border="1" style="margin-top: 20px;">

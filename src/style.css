@@ -24,7 +24,6 @@ body {
 
 #userResults, #materialsandShapes {
   width: 16.666%; /* 1/6 of the width */
-  background-color: #f0f0f0;
   padding: 10px;
   border-right: 1px solid #ccc;
   overflow: auto;
@@ -271,6 +270,33 @@ body {
 
 .toggle-button:hover::after {
     opacity: 1;
+}
+
+#stressStrainTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+#stressStrainTable th, #userStressStrainTable th
+#stressStrainTable td, #userStressStrainTable td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+}
+
+#stressStrainTable, #userStressStrainTable th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+#stressStrainTable, #userStressStrainTable input {
+  width: 100%;
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 4px;
+  text-align: center;
 }
 
 
