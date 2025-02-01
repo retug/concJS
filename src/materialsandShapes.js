@@ -8,9 +8,9 @@ export function toggleMaterialsAndShapesDiv() {
     const closedContainer = document.getElementById('materialsandShapesClosed');
     const expandedContainer = document.getElementById('materialsandShapesExpanded');
 
-    if (materialContent.style.display === 'none') {
+    if (shapeContent.style.display === 'none') {
         // Show content and reset width
-        materialContent.style.display = 'block';
+        shapeContent.style.display = 'block';
         materialsAndShapes.style.width = '16.666%'; // Reset to default width
         button.innerHTML = '&#xab;'; // Left-pointing double arrow
         button.setAttribute('data-tooltip', 'Close materials and shapes');
@@ -20,7 +20,7 @@ export function toggleMaterialsAndShapesDiv() {
         button.style.position = 'static'; // Reset button position
     } else {
         // Hide content and shrink the container
-        materialContent.style.display = 'none';
+        shapeContent.style.display = 'none';
         materialsAndShapes.style.width = '0'; // Collapse width
         materialsAndShapes.style.overflow = 'hidden'; // Hide overflow
 
