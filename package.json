@@ -17,6 +17,7 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
+    "chart.js": "^4.4.7",
     "three": "^0.172.0"
   }
 }

@@ -49,4 +49,18 @@ export class StructuralMaterial {
       [0, 4000, 5000, 10, 10],
       [0, 0.002, 0.005, 0.01, 0.1]
     ),
+    new StructuralMaterial(
+        "fy60ksi",
+        "steel",
+        "normal",
+        [0, 60000, 60000, 60000, 10],
+        [0, 0.00207, 0.005, 0.01, 0.1]
+      ),
+      new StructuralMaterial(
+        "fye75ksi",
+        "steel",
+        "normal",
+        [0, 60000, 75000, 75000, 10],
+        [0, 0.00207, 0.005, 0.01, 0.1]
+      ),
   ];

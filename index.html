@@ -164,6 +164,49 @@
       </div>
       <div id="materialCreation" class="block uppercase text-gray-700 text-xs font-bold mb-2" >
         <h3>Materials</h3>
+        <label for="materialDropdown">Material:</label>
+        <select id="materialDropdown">
+          <option disabled selected>Select a material</option>
+        </select>
+        
+        <div id="userDefinedInputs" style="display: none; margin-top: 20px;">
+          <label for="materialName">Material Name:</label>
+          <input type="text" id="materialName" placeholder="Enter material name" />
+          <br><br>
+          <label for="expectedStrength">Expected Strength:</label>
+          <input type="checkbox" id="expectedStrength" />
+          <br><br>
+          <table id="userStressStrainTable" border="1">
+            <thead>
+              <tr>
+                <th>Strain</th>
+                <th>Stress (psi)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="number" step="0.0001" class="strainInput" /></td>
+                <td><input type="number" step="0.01" class="stressInput" /></td>
+                <td><button class="removeRow">Remove</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <button id="addRow">Add Row</button>
+          <button id="saveMaterial">Save Material</button>
+        </div>
+
+        <table id="stressStrainTable" border="1" style="margin-top: 20px;">
+          <thead>
+            <tr>
+              <th>Strain</th>
+              <th>Stress (psi)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <canvas id="stressStrainChart"></canvas>
+
       </div>
     </div>      
     <script type="module" src="/src/main.js"></script>

@@ -1,6 +1,7 @@
-import './style.css'
+import './style.css';
 import * as THREE from 'three';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons } from './materialsandShapes.js';
+import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial } from './materialsPlotting.js';
 
 
 
@@ -9,5 +10,11 @@ console.log(scene)
 
 // Attach the function to the global window object
 window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
-// Call the function when the DOM is loaded
-document.addEventListener("DOMContentLoaded", toggleShapeButtons);
+document.addEventListener("DOMContentLoaded", () => {
+  toggleShapeButtons();
+  populateMaterialDropdown();
+
+  document.getElementById("materialDropdown").addEventListener("change", updateChartAndTable);
+  document.getElementById("addRow").addEventListener("click", addUserDefinedRow);
+  document.getElementById("saveMaterial").addEventListener("click", saveUserDefinedMaterial);
+});
