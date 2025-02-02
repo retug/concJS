@@ -123,31 +123,50 @@ export function addUserDefinedRow() {
 
 // Update rebar dropdown whenever a new material is added
 export function saveUserDefinedMaterial() {
-    const materialName = document.getElementById("materialName").value;
+    const materialName = document.getElementById("materialName").value.trim();
     const expectedStrength = document.getElementById("expectedStrength").checked ? "expected" : "normal";
     const strainData = Array.from(document.querySelectorAll(".strainInput")).map(input => parseFloat(input.value));
     const stressData = Array.from(document.querySelectorAll(".stressInput")).map(input => parseFloat(input.value));
-  
-    if (materialName && strainData.length && stressData.length) {
-      const newMaterial = new StructuralMaterial(materialName, "other", expectedStrength, stressData, strainData);
-      defaultMaterials.push(newMaterial);
-      
-      const materialDropdown = document.getElementById("materialDropdown");
-      const customOption = materialDropdown.querySelector("option[value='Custom Material']");
-      const option = document.createElement("option");
-      option.value = newMaterial.name;
-      option.textContent = newMaterial.name;
-      materialDropdown.insertBefore(option, customOption);
-      
-      alert("New material added successfully!");
-      
-      // Clear inputs
-      document.getElementById("materialName").value = "";
-      document.getElementById("userStressStrainTable").querySelector("tbody").innerHTML = "";
-  
-      // Update rebar material dropdown
-      populateRebarDropdown();
-    } else {
-      alert("Please fill in all fields and add at least one row of data.");
+
+    if (!materialName || strainData.length === 0 || stressData.length === 0) {
+        alert("Please fill in all fields and add at least one row of data.");
+        return;
     }
-  }
+
+    // Check if material already exists in the defaultMaterials list
+    const isDuplicate = defaultMaterials.some(material => material.name === materialName);
+    if (isDuplicate) {
+        alert(`Material "${materialName}" already exists. Please choose a different name.`);
+        return;
+    }
+
+    try {
+        // Attempt to create a new StructuralMaterial instance
+        const newMaterial = new StructuralMaterial(materialName, "other", expectedStrength, stressData, strainData);
+        defaultMaterials.push(newMaterial);
+
+        // Update the material dropdown
+        const materialDropdown = document.getElementById("materialDropdown");
+        const customOption = materialDropdown.querySelector("option[value='Custom Material']");
+        const option = document.createElement("option");
+        option.value = newMaterial.name;
+        option.textContent = newMaterial.name;
+        materialDropdown.insertBefore(option, customOption);
+
+        alert(`New material "${materialName}" added successfully!`);
+
+        // Clear inputs
+        document.getElementById("materialName").value = "";
+        document.getElementById("userStressStrainTable").querySelector("tbody").innerHTML = "";
+
+        // Update rebar material dropdown
+        populateRebarDropdown();
+    } catch (error) {
+        // Catch and alert user if strain data is not in increasing order
+        if (error.message === "Strain data must be input from smallest to largest.") {
+            alert("Error: Strain data must be input from smallest to largest.");
+        } else {
+            alert(`An unexpected error occurred: ${error.message}`);
+        }
+    }
+}
