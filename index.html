@@ -27,12 +27,18 @@
     </div>
     
     <div id="materialsandShapes" class="bg-gray-400">
-      <div id="materialsandShapesExpanded">
-        <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
-      </div>
+      
       
       <div id="shapeContent" class="block uppercase text-gray-700 text-xs font-bold mb-2">
-        <h3 text-gray-700>Prebuilt Shapes</h3>
+        <div class="flex space-x-2 py-1">
+          <div id="materialsandShapesExpanded">
+            <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
+          </div>
+          <h3 text-gray-700>Prebuilt Shapes</h3>
+
+        </div>
+        
+        
         <div id="ShapeButtons" class="flex space-x-2 py-1">
           <div id="RectangleShape">
             <button id="rectangleButton" class="modern-button">
@@ -98,8 +104,8 @@
               id="concrete_mat"
               name="concrete_mat"
             >
-              <option value="fc4">fc4</option>
-              <option value="fc5">fc5</option>
+              <option value="fy60">fy60</option>
+              <option value="fy75">fy75</option>
             </select>
           </div>
         </div>
@@ -156,8 +162,6 @@
               id="rebar_mat"
               name="rebar_mat"
             >
-              <option value="fy60">fy60</option>
-              <option value="fy75">fy75</option>
             </select>
           </div>
         </div>

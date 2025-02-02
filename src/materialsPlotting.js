@@ -19,6 +19,44 @@ export function populateMaterialDropdown() {
   materialDropdown.appendChild(customOption);
 }
 
+// Function to populate rebar and concrete material dropdowns with prioritized materials
+export function populateRebarDropdown() {
+    const rebarDropdown = document.getElementById("rebar_mat");
+    const concDropdown = document.getElementById("concrete_mat");
+
+    rebarDropdown.innerHTML = ""; // Clear existing options
+    concDropdown.innerHTML = ""; // Clear existing options
+
+    // Sort materials so the priority type appears first
+    const sortedRebarMaterials = [
+        ...defaultMaterials.filter(material => material.type === "steel"), // Steel first
+        ...defaultMaterials.filter(material => material.type !== "steel")  // Then others
+    ];
+
+    const sortedConcreteMaterials = [
+        ...defaultMaterials.filter(material => material.type === "concrete"), // Concrete first
+        ...defaultMaterials.filter(material => material.type !== "concrete")  // Then others
+    ];
+
+    // Populate rebar dropdown
+    sortedRebarMaterials.forEach((material) => {
+        const rebarOption = document.createElement("option");
+        rebarOption.value = material.name;
+        rebarOption.textContent = material.name;
+        rebarDropdown.appendChild(rebarOption);
+    });
+
+    // Populate concrete dropdown
+    sortedConcreteMaterials.forEach((material) => {
+        const concOption = document.createElement("option");
+        concOption.value = material.name;
+        concOption.textContent = material.name;
+        concDropdown.appendChild(concOption);
+    });
+}
+  
+ 
+
 // Initialize chart
 const ctx = document.getElementById("stressStrainChart").getContext("2d");
 export let stressStrainChart = new Chart(ctx, {
@@ -83,28 +121,33 @@ export function addUserDefinedRow() {
   document.getElementById("userStressStrainTable").querySelector("tbody").appendChild(newRow);
 }
 
-// Function to save user-defined material
+// Update rebar dropdown whenever a new material is added
 export function saveUserDefinedMaterial() {
-  const materialName = document.getElementById("materialName").value;
-  const expectedStrength = document.getElementById("expectedStrength").checked ? "expected" : "normal";
-  const strainData = Array.from(document.querySelectorAll(".strainInput")).map(input => parseFloat(input.value));
-  const stressData = Array.from(document.querySelectorAll(".stressInput")).map(input => parseFloat(input.value));
-
-  if (materialName && strainData.length && stressData.length) {
-    const newMaterial = new StructuralMaterial(materialName, "other", expectedStrength, stressData, strainData);
-    defaultMaterials.push(newMaterial);
-    
-    const materialDropdown = document.getElementById("materialDropdown");
-    const customOption = materialDropdown.querySelector("option[value='Custom Material']");
-    const option = document.createElement("option");
-    option.value = newMaterial.name;
-    option.textContent = newMaterial.name;
-    materialDropdown.insertBefore(option, customOption);
-    
-    alert("New material added successfully!");
-    document.getElementById("materialName").value = "";
-    document.getElementById("userStressStrainTable").querySelector("tbody").innerHTML = "";
-  } else {
-    alert("Please fill in all fields and add at least one row of data.");
+    const materialName = document.getElementById("materialName").value;
+    const expectedStrength = document.getElementById("expectedStrength").checked ? "expected" : "normal";
+    const strainData = Array.from(document.querySelectorAll(".strainInput")).map(input => parseFloat(input.value));
+    const stressData = Array.from(document.querySelectorAll(".stressInput")).map(input => parseFloat(input.value));
+  
+    if (materialName && strainData.length && stressData.length) {
+      const newMaterial = new StructuralMaterial(materialName, "other", expectedStrength, stressData, strainData);
+      defaultMaterials.push(newMaterial);
+      
+      const materialDropdown = document.getElementById("materialDropdown");
+      const customOption = materialDropdown.querySelector("option[value='Custom Material']");
+      const option = document.createElement("option");
+      option.value = newMaterial.name;
+      option.textContent = newMaterial.name;
+      materialDropdown.insertBefore(option, customOption);
+      
+      alert("New material added successfully!");
+      
+      // Clear inputs
+      document.getElementById("materialName").value = "";
+      document.getElementById("userStressStrainTable").querySelector("tbody").innerHTML = "";
+  
+      // Update rebar material dropdown
+      populateRebarDropdown();
+    } else {
+      alert("Please fill in all fields and add at least one row of data.");
+    }
   }
-}
