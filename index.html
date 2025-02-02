@@ -14,10 +14,8 @@
 
     <div id="middleColumn">
         <div id="concGui">
-          <div id="materialsandShapesClosed" class="absolute top-1 right-4">
-          </div>
-            <h3>Conc Gui</h3>
-            <p>Content for conc gui.</p>
+          <div id="materialsandShapesClosed" class="absolute top-1 right-4"></div>
+          <canvas></canvas>
 
         </div>
         <div id="results">
@@ -97,7 +95,7 @@
           <!-- Concrete Mat Dropdown -->
           <div class="col-span-4">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="concrete_mat">
-              Concrete Mat
+              Concrete Material
             </label>
             <select
               class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
@@ -155,7 +153,7 @@
           <!-- Rebar Mat Dropdown -->
           <div class="col-span-4">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_mat">
-              Rebar Mat
+              Rebar Material
             </label>
             <select
               class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
@@ -163,6 +161,9 @@
               name="rebar_mat"
             >
             </select>
+          </div>
+          <div class="col-span-4 ">
+            <button id="addShapestoScene" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">Add To Scene</button>
           </div>
         </div>
       </div>

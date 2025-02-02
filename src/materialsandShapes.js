@@ -2,6 +2,10 @@
 // Materials are a class contained in _______
 // Shapes are a function to create a _______ base class.
 
+import { ConcShape } from './concShape.js'; // Adjust path as needed
+import * as THREE from 'three';
+
+
 export function toggleMaterialsAndShapesDiv() {
     const materialsAndShapes = document.getElementById('materialsandShapes');
     const button = document.querySelector('.toggle-button');
@@ -47,5 +51,53 @@ export function toggleShapeButtons() {
       barbellButton.classList.add("active");
       rectangleButton.classList.remove("active");
     });
+}
+
+// Function to check which button is active
+export function getActiveShape() {
+    if (document.getElementById('rectangleButton').classList.contains('active')) {
+        return 'rectangle';
+    } else if (document.getElementById('barbellButton').classList.contains('active')) {
+        return 'barbell';
+    }
+    return null;
+}
+
+// Function to create a rectangle shape from length and width
+export function createRectangleShape(length, width) {
+    return [
+        new THREE.Vector2(-length / 2, -width / 2),
+        new THREE.Vector2(length / 2, -width / 2),
+        new THREE.Vector2(length / 2, width / 2),
+        new THREE.Vector2(-length / 2, width / 2),
+        new THREE.Vector2(-length / 2, -width / 2) // Close the shape
+    ];
+}
+
+export function addShapeToScene(scene) {  // Accept scene as a parameter
+    const activeShape = getActiveShape();
+    if (!activeShape) {
+        console.warn('No active shape selected');
+        return;
+    }
+
+    const length = parseFloat(document.getElementById('length_input').value);
+    const width = parseFloat(document.getElementById('width_input').value);
+    if (isNaN(length) || isNaN(width) || length <= 0 || width <= 0) {
+        console.warn('Invalid length or width');
+        return;
+    }
+
+    let concShape;
+    if (activeShape === 'rectangle') {
+        const points = createRectangleShape(length, width);
+        concShape = new ConcShape(points, new THREE.MeshBasicMaterial({ color: 0xE5E5E5 }));
+    } else {
+        console.warn('Only rectangle shape is currently implemented');
+        return;
+    }
+
+    concShape.generateMesh();
+    scene.add(concShape.mesh);  // Use the passed scene
 }
 
