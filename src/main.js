@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const concGui = document.querySelector('#concGui');
 
+//Setting up the scene
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(75, concGui.offsetWidth/concGui.offsetHeight, 0.1, 1000)
 const renderer = new THREE.WebGLRenderer({

@@ -4,6 +4,7 @@
 
 import { ConcShape } from './concShape.js'; // Adjust path as needed
 import * as THREE from 'three';
+import { defaultMaterials } from "./materials.js";
 
 
 export function toggleMaterialsAndShapesDiv() {
@@ -88,10 +89,29 @@ export function addShapeToScene(scene) {  // Accept scene as a parameter
         return;
     }
 
+    // Get the selected concrete material
+    const materialNameConc = document.getElementById("concrete_mat").value;
+    const selectedMaterialConc = defaultMaterials.find(material => material.name === materialNameConc);
+
+    if (!selectedMaterialConc) {
+        console.warn(`Material "${materialName}" not found in default materials.`);
+        return;
+    }
+
+    // Get the selected rebar material
+    const materialNameRebar = document.getElementById("rebar_mat").value;
+    const selectedMaterialRebar = defaultMaterials.find(material => material.name === materialNameRebar);
+    console.log(selectedMaterialRebar)
+    if (!selectedMaterialRebar) {
+        console.warn(`Material "${materialName}" not found in default materials.`);
+        return;
+    }
+
+
     let concShape;
     if (activeShape === 'rectangle') {
         const points = createRectangleShape(length, width);
-        concShape = new ConcShape(points, new THREE.MeshBasicMaterial({ color: 0xE5E5E5 }));
+        concShape = new ConcShape(points, selectedMaterialConc);
     } else {
         console.warn('Only rectangle shape is currently implemented');
         return;
@@ -99,5 +119,6 @@ export function addShapeToScene(scene) {  // Accept scene as a parameter
 
     concShape.generateMesh();
     scene.add(concShape.mesh);  // Use the passed scene
+    console.log(concShape)
 }
 
