@@ -43,9 +43,23 @@ body {
 #concGui {
   flex: 1;
   background-color: #e0e0e0;
-  padding: 10px;
+  padding: 0;  /* Remove extra padding */
   border-bottom: 1px solid #ccc;
+  position: relative;
+  width: 100%;  /* Ensure it fills #middleColumn */
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Prevent content overflow */
 }
+
+canvas {
+  display: block;  /* Remove default inline behavior */
+  width: 100% !important;  /* Force full width */
+  height: 100% !important; /* Force full height */
+}
+
 
 #results {
   flex: 1;

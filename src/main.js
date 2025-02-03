@@ -3,10 +3,12 @@ import * as THREE from 'three';
 import {OrbitControls} from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js'
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
+import {resizeThreeJsScene} from './threeJSscenefunctions.js'
 
 
 // Attach the function to the global window object
 window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
+window.addEventListener('resize', resizeThreeJsScene);
 document.addEventListener("DOMContentLoaded", () => {
   toggleShapeButtons();
   populateMaterialDropdown();

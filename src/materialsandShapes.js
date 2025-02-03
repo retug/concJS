@@ -7,8 +7,42 @@ import * as THREE from 'three';
 import { defaultMaterials } from "./materials.js";
 
 
+// export function toggleMaterialsAndShapesDiv() {
+//     const materialsAndShapes = document.getElementById('materialsandShapes');
+//     const button = document.querySelector('.toggle-button');
+//     const closedContainer = document.getElementById('materialsandShapesClosed');
+//     const expandedContainer = document.getElementById('materialsandShapesExpanded');
+
+//     if (shapeContent.style.display === 'none') {
+//         // Show content and reset width
+//         shapeContent.style.display = 'block';
+//         materialsAndShapes.style.width = '16.666%'; // Reset to default width
+//         button.innerHTML = '&#xab;'; // Left-pointing double arrow
+//         button.setAttribute('data-tooltip', 'Close materials and shapes');
+
+//         // Move button back to expanded container
+//         expandedContainer.appendChild(button);
+//         button.style.position = 'static'; // Reset button position
+//     } else {
+//         // Hide content and shrink the container
+//         shapeContent.style.display = 'none';
+//         materialsAndShapes.style.width = '0'; // Collapse width
+//         materialsAndShapes.style.overflow = 'hidden'; // Hide overflow
+
+//         // Move button to the closed container
+//         closedContainer.appendChild(button);
+//         button.style.position = 'absolute'; // Keep button positioned
+//         button.style.top = '10px'; // Set distance from the top
+//         button.style.right = '10px'; // Set distance from the right
+//         button.innerHTML = '&#xbb;'; // Right-pointing double arrow
+//         button.setAttribute('data-tooltip', 'Show materials and shapes');
+//     }
+// }
+
 export function toggleMaterialsAndShapesDiv() {
     const materialsAndShapes = document.getElementById('materialsandShapes');
+    const middleColumn = document.getElementById('middleColumn');
+    const shapeContent = document.getElementById('shapeContent');
     const button = document.querySelector('.toggle-button');
     const closedContainer = document.getElementById('materialsandShapesClosed');
     const expandedContainer = document.getElementById('materialsandShapesExpanded');
@@ -17,6 +51,7 @@ export function toggleMaterialsAndShapesDiv() {
         // Show content and reset width
         shapeContent.style.display = 'block';
         materialsAndShapes.style.width = '16.666%'; // Reset to default width
+        middleColumn.style.width = '66.666%'; // Reset middleColumn width
         button.innerHTML = '&#xab;'; // Left-pointing double arrow
         button.setAttribute('data-tooltip', 'Close materials and shapes');
 
@@ -28,6 +63,7 @@ export function toggleMaterialsAndShapesDiv() {
         shapeContent.style.display = 'none';
         materialsAndShapes.style.width = '0'; // Collapse width
         materialsAndShapes.style.overflow = 'hidden'; // Hide overflow
+        middleColumn.style.width = '83.333%'; // Expand middle column
 
         // Move button to the closed container
         closedContainer.appendChild(button);
@@ -37,6 +73,9 @@ export function toggleMaterialsAndShapesDiv() {
         button.innerHTML = '&#xbb;'; // Right-pointing double arrow
         button.setAttribute('data-tooltip', 'Show materials and shapes');
     }
+
+    // Resize the Three.js scene
+    resizeThreeJsScene();
 }
 
 export function toggleShapeButtons() {
@@ -67,11 +106,11 @@ export function getActiveShape() {
 // Function to create a rectangle shape from length and width
 export function createRectangleShape(length, width) {
     return [
-        new THREE.Vector2(-length / 2, -width / 2),
-        new THREE.Vector2(length / 2, -width / 2),
-        new THREE.Vector2(length / 2, width / 2),
-        new THREE.Vector2(-length / 2, width / 2),
-        new THREE.Vector2(-length / 2, -width / 2) // Close the shape
+        new THREE.Vector2(-width / 2, -length / 2),
+        new THREE.Vector2(width / 2, -length / 2),
+        new THREE.Vector2(width / 2, length / 2),
+        new THREE.Vector2(-width / 2, length / 2),
+        new THREE.Vector2(-width / 2, -length / 2) // Close the shape
     ];
 }
 
