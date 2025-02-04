@@ -153,7 +153,7 @@ export function saveUserDefinedMaterial() {
         option.textContent = newMaterial.name;
         materialDropdown.insertBefore(option, customOption);
 
-        alert(`New material "${materialName}" added successfully!.`);
+        alert(`New material "${materialName}" added successfully!`);
 
         // Clear inputs
         document.getElementById("materialName").value = "";

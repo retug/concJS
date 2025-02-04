@@ -1,3 +1,7 @@
+import { camera, renderer, scene } from "./main.js"; // Import camera & renderer
+import * as THREE from 'three';
+
+
 export function resizeThreeJsScene() {
     const concGui = document.getElementById('concGui');
     const canvas = document.querySelector('canvas');
@@ -20,3 +24,118 @@ export function resizeThreeJsScene() {
     camera.aspect = newWidth / newHeight;
     camera.updateProjectionMatrix();
 }
+
+export function setupDragAndAnalyze() {
+    const concGui = document.getElementById("concGui");
+    const results = document.getElementById("results");
+    const dragBar = document.getElementById("drag-bar");
+    const analyzeButton = document.getElementById("analyze-button");
+    const middleColumn = document.getElementById("middleColumn");
+
+    let isDragging = false;
+
+    // Ensure middleColumn has full height
+    middleColumn.style.display = "flex";
+    middleColumn.style.flexDirection = "column";
+    middleColumn.style.height = "100%";
+
+    // Set initial height percentages
+    concGui.style.flex = "1"; // Takes 50% of the available space
+    results.style.flex = "1"; // Takes 50% of the available space
+
+    // Drag functionality
+    dragBar.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        document.body.style.cursor = "row-resize";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+
+        const middleColumnHeight = middleColumn.clientHeight;
+        const offset = e.clientY - middleColumn.getBoundingClientRect().top;
+
+        // Ensure valid heights (at least 50px each)
+        const concHeightRatio = Math.max(50, offset) / middleColumnHeight;
+        const resultsHeightRatio = Math.max(50, middleColumnHeight - offset - dragBar.clientHeight) / middleColumnHeight;
+
+        // Set heights as flex ratios
+        concGui.style.flex = concHeightRatio;
+        results.style.flex = resultsHeightRatio;
+
+        // Resize Three.js scene
+        resizeThreeJsScene();
+    });
+
+    document.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.cursor = "default";
+    });
+
+    // Hide results functionality
+    analyzeButton.addEventListener("click", () => {
+        if (results.style.display === "none") {
+            // Show results
+            results.style.display = "block";
+            dragBar.style.display = "block";
+            concGui.style.flex = "1";
+            results.style.flex = "1";
+            analyzeButton.textContent = "Analyze Shape";
+        } else {
+            // Hide results
+            results.style.display = "none";
+            dragBar.style.display = "none";
+            concGui.style.flex = "1.9"; // Take full space
+            analyzeButton.textContent = "Show Results";
+        }
+
+        // Resize Three.js scene
+        resizeThreeJsScene();
+    });
+}
+
+
+// A dictionary that given bar size, returns bar diameter
+const rebarDia = {
+    3: 0.375,
+    4: 0.5,
+    5: 0.625,
+    6: 0.75,
+    7: 0.875,
+    8: 1.0,
+    9: 1.128,
+    10: 1.27,
+    11: 1.41,
+    14: 1.693,
+    18: 2.257
+};
+
+
+
+// Function to add a simple point at given (x, y) coordinates
+export function addRebar(x, y, barSize, scene, sprite) {
+    
+    console.log(sprite)
+
+    if (!(barSize in rebarDia)) {
+        console.error("Invalid rebar size:", barSize);
+        return;
+    }
+
+    // Create rebar geometry
+    const tempDotGeo = new THREE.BufferGeometry();
+    tempDotGeo.setAttribute('position', new THREE.Float32BufferAttribute([x, y, 0], 3));
+ 
+    const selectedDotMaterial = new THREE.PointsMaterial({ size: rebarDia[barSize], map: sprite, transparent: true, color: 'blue'});
+
+    // Create the rebar point
+    const tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
+    tempDot.isRebar = true;
+    tempDot.rebarSize = barSize;
+
+    // Add to the Three.js scene
+    scene.add(tempDot);
+
+    console.log("Rebar point added to scene:", tempDot);
+}
+

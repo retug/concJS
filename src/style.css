@@ -16,59 +16,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  display: flex;
-  height: 100vh;
-  margin: 0;
-}
-
-#userResults, #materialsandShapes {
-  width: 16.666%; /* 1/6 of the width */
-  padding: 10px;
-  border-right: 1px solid #ccc;
-  overflow: auto;
-}
-
-#materialsandShapes {
-  border-left: 1px solid #ccc;
-  border-right: none;
-}
-
-#middleColumn {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-#concGui {
-  flex: 1;
-  background-color: #e0e0e0;
-  padding: 0;  /* Remove extra padding */
-  border-bottom: 1px solid #ccc;
-  position: relative;
-  width: 100%;  /* Ensure it fills #middleColumn */
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden; /* Prevent content overflow */
-}
-
-canvas {
-  display: block;  /* Remove default inline behavior */
-  width: 100% !important;  /* Force full width */
-  height: 100% !important; /* Force full height */
-}
-
-
-#results {
-  flex: 1;
-  background-color: #d0d0d0;
-  padding: 10px;
-}
-
-
-
 .toggle-button {
   width: 20px;
   height: 20px;
@@ -312,6 +259,62 @@ canvas {
   padding: 4px;
   text-align: center;
 }
+
+/* General Page Layout */
+body {
+  display: flex;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden; /* Prevents horizontal scrolling */
+  width: 100vw; /* Ensures full viewport width */
+}
+
+/* User Results and Materials & Shapes */
+#userResults, #materialsandShapes {
+  width: 16.667%;
+  min-width: 16.667%;
+  max-width: 16.667%;
+  padding: 10px;
+  border-right: 1px solid #ccc;
+  transition: width 0.3s ease-in-out; /* Smooth transition */
+  overflow: hidden; /* Prevents content from affecting layout */
+}
+
+/* Specific Styling for Materials and Shapes */
+#materialsandShapes {
+  border-left: 1px solid #ccc;
+  border-right: none;
+  flex: 0 0 16.667%;
+  width: 16.667%;
+}
+
+/* Middle Column Takes Remaining Space */
+#middleColumn {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Takes all available space */
+  height: 100%;
+  overflow: hidden; /* Ensures no horizontal overflow */
+  min-width: 0; /* Prevents flex overflow issues */
+}
+
+/* Ensure #concGui and #results Fit Properly */
+#concGui, #results {
+  width: 100%;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+/* Drag Bar for Resizing */
+#drag-bar {
+  height: 5px;
+  background: red;
+  cursor: row-resize;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+}
+
 
 
 

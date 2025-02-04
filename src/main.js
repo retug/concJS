@@ -1,25 +1,43 @@
 import './style.css';
 import * as THREE from 'three';
-import {OrbitControls} from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js'
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
-import {resizeThreeJsScene} from './threeJSscenefunctions.js'
+import {resizeThreeJsScene, setupDragAndAnalyze, addRebar } from './threeJSscenefunctions.js'
+
+
+const loader = new THREE.TextureLoader();
+let sprite = null; // Store the loaded texture globally
+
+// Load rebar sprite texture and store it
+loader.load('/static/disc.png', function(texture) {
+    console.log("Texture Loaded:", texture);
+    sprite = texture; // Store the loaded texture
+}, undefined, function(error) {
+    console.error("Texture Load Error:", error);
+});
+/////////////////////////////end dot///////////////
 
 
 // Attach the function to the global window object
 window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
 window.addEventListener('resize', resizeThreeJsScene);
 document.addEventListener("DOMContentLoaded", () => {
+  setupDragAndAnalyze();
   toggleShapeButtons();
   populateMaterialDropdown();
-   // Call this function after populating default materials initially
-   populateRebarDropdown();
+  populateRebarDropdown();
 
   document.getElementById("materialDropdown").addEventListener("change", updateChartAndTable);
   document.getElementById("addRow").addEventListener("click", addUserDefinedRow);
   document.getElementById("saveMaterial").addEventListener("click", saveUserDefinedMaterial);
-  document.getElementById("addShapestoScene").addEventListener('click', () => addShapeToScene(scene));
-
+  document.getElementById("addShapestoScene").addEventListener("click", () => {
+    if (!sprite) {
+      console.warn("Texture not yet loaded, please wait.");
+      return;
+    }
+    addShapeToScene(scene, sprite);
+  });
 });
 
 
@@ -33,7 +51,13 @@ const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('canvas')
 })
 
-scene.background = new THREE.Color( 0xffffff );
+
+// scene.background = new THREE.Color( 0xffffff );
+scene.background = new THREE.Color( 0x808080 );
+
+// Export camera and renderer for use in other files
+export { camera, renderer, scene };
+
 
 renderer.setSize(concGui.offsetWidth, concGui.offsetHeight)
 renderer.setPixelRatio(window.devicePixelRatio)
@@ -47,7 +71,8 @@ var dot = new THREE.Points( dotGeometry, dotMaterial );
 
 dot.isReference = true
 scene.add( dot );
-/////////////////////////////end dot///////////////
+
+addRebar(5, 10, '18', scene, sprite);
 
 const light = new THREE.DirectionalLight(0xffffff, 1)
 light.position.set(0, -1, 5)
