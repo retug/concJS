@@ -3,19 +3,11 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
-import {resizeThreeJsScene, setupDragAndAnalyze, addRebar } from './threeJSscenefunctions.js'
+import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking  } from './threeJSscenefunctions.js'
 
 
 const loader = new THREE.TextureLoader();
 let sprite = null; // Store the loaded texture globally
-
-// // Load rebar sprite texture and store it
-// loader.load('/static/disc.png', function(texture) {
-//     console.log("Texture Loaded:", texture);
-//     sprite = texture; // Store the loaded texture
-// }, undefined, function(error) {
-//     console.error("Texture Load Error:", error);
-// });
 
 function loadTexture(url) {
   return new Promise((resolve, reject) => {
@@ -35,13 +27,12 @@ function loadTexture(url) {
   });
 }
 
-
 async function initScene() {
   try {
       sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
 
       console.log("Sprite texture loaded, adding rebar...");
-      addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
+      // addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
   } catch (error) {
       console.error("Failed to load texture:", error);
   }
@@ -127,6 +118,25 @@ const divisions = 20;
 const gridHelper = new THREE.GridHelper( size, divisions );
 gridHelper.rotation.x=Math.PI/2; //gets grid oriented in XY axis
 scene.add( gridHelper );
+
+// Assuming `concGui` is your top-level div
+const topDiv = document.querySelector('#concGui');
+
+// Create a reference plane for intersection detection
+const planeGeometry = new THREE.PlaneGeometry(50, 50);
+const planeMaterial = new THREE.MeshBasicMaterial({ visible: false });
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+scene.add(plane);
+
+// Create the intersection point marker
+const intersectionPointGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+const intersectionPointMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const intersectionPoint = new THREE.Mesh(intersectionPointGeometry, intersectionPointMaterial);
+intersectionPoint.visible = false;
+scene.add(intersectionPoint);
+
+// Call the function to enable mouse tracking
+setupMouseTracking(topDiv, plane, intersectionPoint);
 
 renderer.render( scene, camera );
 

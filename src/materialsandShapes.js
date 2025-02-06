@@ -7,10 +7,12 @@ import * as THREE from 'three';
 import { defaultMaterials } from "./materials.js";
 import { resizeThreeJsScene, setupDragAndAnalyze } from "./threeJSscenefunctions.js";
 import { addRebar, rebarDia } from './threeJSscenefunctions.js';
+import { materialAO } from 'three/tsl';
 
 
 export function toggleMaterialsAndShapesDiv() {
     const materialsAndShapes = document.getElementById('materialsandShapes');
+    console.log(materialsAndShapes)
     const userResults = document.getElementById('userResults');
     const middleColumn = document.getElementById('middleColumn');
     const shapeContent = document.getElementById('shapeContent');
@@ -20,6 +22,7 @@ export function toggleMaterialsAndShapesDiv() {
 
     if (shapeContent.style.display === 'none') {
         // Reopen: Reset width to exactly 16.667%
+        materialsAndShapes.style.display = 'block';
         shapeContent.style.display = 'block';
         materialsAndShapes.style.width = '16.667%';
         materialsAndShapes.style.flex = '0 0 16.667%'; // Prevent flex from overriding width
@@ -31,7 +34,9 @@ export function toggleMaterialsAndShapesDiv() {
         button.style.position = 'static'; 
     } else {
         // Close: Collapse `#materialsandShapes`
+        materialsAndShapes.style.display = 'none';
         shapeContent.style.display = 'none';
+
         materialsAndShapes.style.width = '0';
         materialsAndShapes.style.flex = '0 0 0';
         materialsAndShapes.style.overflow = 'hidden';

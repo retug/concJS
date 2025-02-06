@@ -137,3 +137,40 @@ export function addRebar(x, y, barSize, scene, sprite) {
     console.log("Rebar point added to scene:", tempDot);
 }
 
+
+export function setupMouseTracking(threeJSDiv, plane, intersectionPoint) {
+    const mouse = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+
+    threeJSDiv.addEventListener("mousemove", (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / (rect.right - rect.left)) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / (rect.bottom - rect.top)) * 2 + 1;
+
+        // Update the raycaster
+        raycaster.setFromCamera(mouse, camera);
+
+        // Check for intersection with the plane
+        const intersects = raycaster.intersectObject(plane);
+
+        if (intersects.length > 0) {
+            const intersectPoint = intersects[0].point;
+
+            // Update the position of the intersection point and make it visible
+            intersectionPoint.position.copy(intersectPoint);
+            intersectionPoint.visible = true;
+
+            // Update the displayed X and Y values
+            const X = document.getElementById("xVal");
+            const Y = document.getElementById("yVal");
+            if (X && Y) {
+                X.innerHTML = intersectPoint.x.toFixed(2);
+                Y.innerHTML = intersectPoint.y.toFixed(2);
+            }
+        } else {
+            // Hide the point if there's no intersection
+            intersectionPoint.visible = false;
+        }
+    });
+}
+
