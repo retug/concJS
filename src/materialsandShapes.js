@@ -6,7 +6,7 @@ import { ConcShape } from './concShape.js'; // Adjust path as needed
 import * as THREE from 'three';
 import { defaultMaterials } from "./materials.js";
 import { resizeThreeJsScene, setupDragAndAnalyze } from "./threeJSscenefunctions.js";
-import { addRebar } from './threeJSscenefunctions.js';
+import { addRebar, rebarDia } from './threeJSscenefunctions.js';
 
 
 export function toggleMaterialsAndShapesDiv() {
@@ -90,55 +90,6 @@ export function createRectangleShape(length, width) {
     ];
 }
 
-// export function addShapeToScene(scene) {  // Accept scene as a parameter
-//     const activeShape = getActiveShape();
-//     if (!activeShape) {
-//         console.warn('No active shape selected');
-//         return;
-//     }
-
-//     const length = parseFloat(document.getElementById('length_input').value);
-//     const width = parseFloat(document.getElementById('width_input').value);
-//     if (isNaN(length) || isNaN(width) || length <= 0 || width <= 0) {
-//         console.warn('Invalid length or width');
-//         return;
-//     }
-
-//     // Get the selected concrete material
-//     const materialNameConc = document.getElementById("concrete_mat").value;
-//     const selectedMaterialConc = defaultMaterials.find(material => material.name === materialNameConc);
-
-//     if (!selectedMaterialConc) {
-//         console.warn(`Material "${materialName}" not found in default materials.`);
-//         return;
-//     }
-
-//     // Get the selected rebar material
-//     const materialNameRebar = document.getElementById("rebar_mat").value;
-//     const selectedMaterialRebar = defaultMaterials.find(material => material.name === materialNameRebar);
-//     console.log(selectedMaterialRebar)
-//     if (!selectedMaterialRebar) {
-//         console.warn(`Material "${materialName}" not found in default materials.`);
-//         return;
-//     }
-
-
-//     let concShape;
-//     if (activeShape === 'rectangle') {
-//         const points = createRectangleShape(length, width);
-//         concShape = new ConcShape(points, selectedMaterialConc);
-//     } else {
-//         console.warn('Only rectangle shape is currently implemented');
-//         return;
-//     }
-
-//     concShape.generateMesh();
-//     scene.add(concShape.mesh);  // Use the passed scene
-//     console.log(concShape)
-
-//     addEvenlySpacedPoints(concShape, 4, offset, scene, sprite)
-// }
-
 export function addShapeToScene(scene, sprite) { // Accept sprite as a parameter
     const activeShape = getActiveShape();
     if (!activeShape) {
@@ -178,6 +129,21 @@ export function addShapeToScene(scene, sprite) { // Accept sprite as a parameter
         return;
     }
 
+    // Get the rebar offset value from input
+    const rebarOffset = parseFloat(document.getElementById('rebar_offset').value);
+    if (isNaN(rebarOffset) || rebarOffset < 0) {
+        console.warn('Invalid rebar offset, using default value 2 inches.');
+        rebarOffset = 2; // Default to 2 inches if invalid
+    }
+    const rebarSize = parseFloat(document.getElementById('rebar').value);
+    console.log(rebarSize)
+    const rebarDiameter = rebarDia[rebarSize];
+    console.log(rebarDiameter)
+    if (!rebarDiameter) {
+        console.error("Invalid rebar size:", rebarSize);
+        return;
+    }
+
     let concShape;
     if (activeShape === 'rectangle') {
         const points = createRectangleShape(length, width);
@@ -192,14 +158,15 @@ export function addShapeToScene(scene, sprite) { // Accept sprite as a parameter
 
     console.log("Concrete shape added:", concShape);
 
+    console.log("Offset Specd:", rebarOffset);
     // Call addEvenlySpacedPoints with the segment count from input
-    addEvenlySpacedPoints(concShape.baseshape, segmentCount, 0, scene, sprite);
+    addEvenlySpacedPointsAlongCurve(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
 }
 
 
 
 // Function to create evenly spaced rebar points around the shape
-export function addEvenlySpacedPoints(shape, segmentCount, offset = 0, scene, sprite) {
+export function addEvenlySpacedPointswithOffset(shape, segmentCount, offset = 0, scene, sprite, rebarSize) {
     if (!shape || !sprite) {
         console.error("Invalid shape or texture (sprite) missing.");
         return;
@@ -213,7 +180,7 @@ export function addEvenlySpacedPoints(shape, segmentCount, offset = 0, scene, sp
     const points = [];
 
     for (let i = 0; i <= segmentCount; i++) {
-        const u = i / segmentCount;
+        const u = (i) / segmentCount;
         const point = path.getPointAt(u);
 
         if (!point) continue;  // Ensure point exists
@@ -231,9 +198,97 @@ export function addEvenlySpacedPoints(shape, segmentCount, offset = 0, scene, sp
         points.push(offsetPoint);
 
         // Add rebar at the computed point
-        addRebar(offsetPoint.x, offsetPoint.y, '18', scene, sprite);
+        addRebar(offsetPoint.x, offsetPoint.y, rebarSize, scene, sprite);
     }
 
     console.log("Rebar points added:", points);
+}
+
+// Function to create evenly spaced rebar points along an offset contour
+export function addEvenlySpacedPointsAlongCurve(baseShape, segmentCount, offset, scene, sprite, rebarSize) {
+    if (!baseShape || !(baseShape instanceof THREE.Shape) || !sprite) {
+        console.error("Invalid shape or missing texture (sprite). ");
+        return;
+    }
+
+    // Offset the shape
+    const offsetShape = OffsetContour(offset, baseShape);
+    if (!offsetShape) {
+        console.error("Failed to generate offset shape.");
+        return;
+    }
+    console.log("Offset Specd:", offsetShape);
+
+
+    // Create a path from the offset shape
+    const path = new THREE.Path(offsetShape.getPoints());
+    const totalLength = path.getLength();
+    const segmentLength = totalLength / segmentCount;
+    const points = [];
+
+    for (let i = 0; i <= segmentCount - 1; i++) {
+        const u = i / segmentCount;
+        const point = path.getPointAt(u);
+        if (!point) continue;
+        points.push(point);
+
+        // Add rebar at the computed point
+        addRebar(point.x, point.y, rebarSize, scene, sprite);
+    }
+
+    console.log("Rebar points added to offset curve:", points);
+}
+
+
+function OffsetContour(offset, shape) {
+    let points = shape.getPoints().slice(0, -1); // Exclude the last point
+    console.log("your base object points are", points)
+    let result = [];
+    offset = new THREE.BufferAttribute(new Float32Array([offset, 0, 0]), 3);
+
+    for (let i = 0; i < points.length; i++) {
+        let v1 = new THREE.Vector2().subVectors(points[i - 1 < 0 ? points.length - 1 : i - 1], points[i]);
+        let v2 = new THREE.Vector2().subVectors(points[i + 1 == points.length ? 0 : i + 1], points[i]);
+        let angle = v2.angle() - v1.angle();
+        let halfAngle = angle * 0.5;
+  
+        let hA = halfAngle;
+        let tA = v2.angle() + Math.PI * 0.5;
+  
+        let shift = Math.tan(hA - Math.PI * 0.5);
+        let shiftMatrix = new THREE.Matrix4().set(
+               1, 0, 0, 0, 
+          -shift, 1, 0, 0,
+               0, 0, 1, 0,
+               0, 0, 0, 1
+        );
+  
+  
+        let tempAngle = tA;
+        let rotationMatrix = new THREE.Matrix4().set(
+          Math.cos(tempAngle), -Math.sin(tempAngle), 0, 0,
+          Math.sin(tempAngle),  Math.cos(tempAngle), 0, 0,
+                            0,                    0, 1, 0,
+                            0,                    0, 0, 1
+        );
+  
+        let translationMatrix = new THREE.Matrix4().set(
+          1, 0, 0, points[i].x,
+          0, 1, 0, points[i].y,
+          0, 0, 1, 0,
+          0, 0, 0, 1,
+        );
+  
+        let cloneOffset = offset.clone();
+
+        cloneOffset.applyMatrix4(shiftMatrix);
+        cloneOffset.applyMatrix4(rotationMatrix);
+        cloneOffset.applyMatrix4(translationMatrix);
+
+        result.push(new THREE.Vector2(cloneOffset.getX(0), cloneOffset.getY(0)));
+      }
+      console.log("your results are: ", result)
+      result.push(result[0].clone()); // Ensure the shape is closed
+      return new THREE.Shape(result); //Returns an offset shape
 }
 

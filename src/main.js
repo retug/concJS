@@ -52,8 +52,8 @@ const renderer = new THREE.WebGLRenderer({
 })
 
 
-// scene.background = new THREE.Color( 0xffffff );
-scene.background = new THREE.Color( 0x808080 );
+scene.background = new THREE.Color( 0xffffff );
+
 
 // Export camera and renderer for use in other files
 export { camera, renderer, scene };

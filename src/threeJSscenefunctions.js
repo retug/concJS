@@ -96,7 +96,7 @@ export function setupDragAndAnalyze() {
 
 
 // A dictionary that given bar size, returns bar diameter
-const rebarDia = {
+export const rebarDia = {
     3: 0.375,
     4: 0.5,
     5: 0.625,
@@ -115,8 +115,6 @@ const rebarDia = {
 // Function to add a simple point at given (x, y) coordinates
 export function addRebar(x, y, barSize, scene, sprite) {
     
-    console.log(sprite)
-
     if (!(barSize in rebarDia)) {
         console.error("Invalid rebar size:", barSize);
         return;

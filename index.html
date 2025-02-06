@@ -151,8 +151,8 @@
               required
             />
           </div>
-          <!-- Rebar Mat Dropdown -->
-          <div class="col-span-4">
+          <!-- Rebar Mat & Offset Inputs -->
+          <div class="col-span-2">
             <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_mat">
               Rebar Material
             </label>
@@ -163,6 +163,21 @@
             >
             </select>
           </div>
+
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_offset">
+              Rebar Offset (in)
+            </label>
+            <input
+              type="number"
+              id="rebar_offset"
+              name="rebar_offset"
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 rounded leading-tight focus:outline-none focus:bg-white"
+              value="2"
+              step="0.1"
+            />
+          </div>
+
           <div class="col-span-4 ">
             <button id="addShapestoScene" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">Add To Scene</button>
           </div>
