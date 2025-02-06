@@ -90,7 +90,123 @@ export function createRectangleShape(length, width) {
     ];
 }
 
-export function addShapeToScene(scene, sprite) { // Accept sprite as a parameter
+//Function to Create Barbell
+function createCurvedRectangleShape(length, width) {
+    const curvedRectangleShape = new THREE.Shape();
+  
+    // Calculate radii and offsets
+    const radius = length / 2;
+    const halfWidth = width / 2;
+  
+    // Start path at the bottom-left corner of the left arc
+    curvedRectangleShape.moveTo(-radius, -halfWidth);
+    const centerX = length / 2 - width / 2;
+  
+    // Draw the left arc
+    curvedRectangleShape.absarc(
+      -centerX,
+      0,
+      width / 2,
+      Math.PI / 2,
+      -Math.PI / 2,
+      false
+    );
+  
+    // Draw the top line
+    curvedRectangleShape.lineTo(centerX, -halfWidth);
+  
+    // Draw the right arc
+    curvedRectangleShape.absarc(
+      centerX,
+      0,
+      width / 2,
+      -Math.PI / 2,
+      Math.PI / 2,
+      false
+    );
+  
+    // Draw the bottom line
+    curvedRectangleShape.lineTo(centerX, halfWidth);
+    // Automatically close the path
+    curvedRectangleShape.closePath();
+  
+    return curvedRectangleShape;
+  }
+
+// export function addShapeToScene(scene, sprite) { // Accept sprite as a parameter
+//     const activeShape = getActiveShape();
+//     if (!activeShape) {
+//         console.warn('No active shape selected');
+//         return;
+//     }
+
+//     const length = parseFloat(document.getElementById('length_input').value);
+//     const width = parseFloat(document.getElementById('width_input').value);
+//     if (isNaN(length) || isNaN(width) || length <= 0 || width <= 0) {
+//         console.warn('Invalid length or width');
+//         return;
+//     }
+
+//     // Get the segment count (number of rebars) from input
+//     const segmentCount = parseInt(document.getElementById('rebar_quantity').value);
+//     if (isNaN(segmentCount) || segmentCount < 1) {
+//         console.warn('Invalid rebar quantity');
+//         return;
+//     }
+
+//     // Get the selected concrete material
+//     const materialNameConc = document.getElementById("concrete_mat").value;
+//     const selectedMaterialConc = defaultMaterials.find(material => material.name === materialNameConc);
+
+//     if (!selectedMaterialConc) {
+//         console.warn(`Material "${materialNameConc}" not found in default materials.`);
+//         return;
+//     }
+
+//     // Get the selected rebar material
+//     const materialNameRebar = document.getElementById("rebar_mat").value;
+//     const selectedMaterialRebar = defaultMaterials.find(material => material.name === materialNameRebar);
+
+//     if (!selectedMaterialRebar) {
+//         console.warn(`Material "${materialNameRebar}" not found in default materials.`);
+//         return;
+//     }
+
+//     // Get the rebar offset value from input
+//     const rebarOffset = parseFloat(document.getElementById('rebar_offset').value);
+//     if (isNaN(rebarOffset) || rebarOffset < 0) {
+//         console.warn('Invalid rebar offset, using default value 2 inches.');
+//         rebarOffset = 2; // Default to 2 inches if invalid
+//     }
+//     const rebarSize = parseFloat(document.getElementById('rebar').value);
+//     console.log(rebarSize)
+//     const rebarDiameter = rebarDia[rebarSize];
+//     console.log(rebarDiameter)
+//     if (!rebarDiameter) {
+//         console.error("Invalid rebar size:", rebarSize);
+//         return;
+//     }
+
+//     let concShape;
+//     if (activeShape === 'rectangle') {
+//         const points = createRectangleShape(length, width);
+//         concShape = new ConcShape(points, selectedMaterialConc);
+//     } else {
+//         console.warn('Only rectangle shape is currently implemented');
+//         return;
+//     }
+
+//     concShape.generateMesh();
+//     scene.add(concShape.mesh);
+
+//     console.log("Concrete shape added:", concShape);
+
+//     console.log("Offset Specd:", rebarOffset);
+//     // Call addEvenlySpacedPoints with the segment count from input
+//     addEvenlySpacedPointsAlongCurve(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
+// }
+
+export function addShapeToScene(scene, sprite) { 
     const activeShape = getActiveShape();
     if (!activeShape) {
         console.warn('No active shape selected');
@@ -104,68 +220,70 @@ export function addShapeToScene(scene, sprite) { // Accept sprite as a parameter
         return;
     }
 
-    // Get the segment count (number of rebars) from input
     const segmentCount = parseInt(document.getElementById('rebar_quantity').value);
     if (isNaN(segmentCount) || segmentCount < 1) {
         console.warn('Invalid rebar quantity');
         return;
     }
 
-    // Get the selected concrete material
     const materialNameConc = document.getElementById("concrete_mat").value;
     const selectedMaterialConc = defaultMaterials.find(material => material.name === materialNameConc);
-
     if (!selectedMaterialConc) {
         console.warn(`Material "${materialNameConc}" not found in default materials.`);
         return;
     }
 
-    // Get the selected rebar material
     const materialNameRebar = document.getElementById("rebar_mat").value;
     const selectedMaterialRebar = defaultMaterials.find(material => material.name === materialNameRebar);
-
     if (!selectedMaterialRebar) {
         console.warn(`Material "${materialNameRebar}" not found in default materials.`);
         return;
     }
 
-    // Get the rebar offset value from input
-    const rebarOffset = parseFloat(document.getElementById('rebar_offset').value);
+    let rebarOffset = parseFloat(document.getElementById('rebar_offset').value);
     if (isNaN(rebarOffset) || rebarOffset < 0) {
         console.warn('Invalid rebar offset, using default value 2 inches.');
-        rebarOffset = 2; // Default to 2 inches if invalid
+        rebarOffset = 2;
     }
+
     const rebarSize = parseFloat(document.getElementById('rebar').value);
-    console.log(rebarSize)
     const rebarDiameter = rebarDia[rebarSize];
-    console.log(rebarDiameter)
     if (!rebarDiameter) {
         console.error("Invalid rebar size:", rebarSize);
         return;
     }
 
     let concShape;
+    
     if (activeShape === 'rectangle') {
         const points = createRectangleShape(length, width);
         concShape = new ConcShape(points, selectedMaterialConc);
+    } else if (activeShape === 'barbell') {
+        const barbellShape = createCurvedRectangleShape(length, width);
+        concShape = new ConcShape(barbellShape, selectedMaterialConc);
     } else {
-        console.warn('Only rectangle shape is currently implemented');
+        console.warn('Only rectangle and barbell shapes are currently implemented');
         return;
     }
 
     concShape.generateMesh();
     scene.add(concShape.mesh);
-
     console.log("Concrete shape added:", concShape);
 
-    console.log("Offset Specd:", rebarOffset);
-    // Call addEvenlySpacedPoints with the segment count from input
-    addEvenlySpacedPointsAlongCurve(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
+    console.log("Offset Specified:", rebarOffset);
+
+    if (activeShape === 'barbell') {
+        addEvenlySpacedPointswithOffset(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
+    } else {
+        addEvenlySpacedPointsAlongCurve(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
+    }
 }
 
 
 
+
 // Function to create evenly spaced rebar points around the shape
+//Use this function with Bar Bells
 export function addEvenlySpacedPointswithOffset(shape, segmentCount, offset = 0, scene, sprite, rebarSize) {
     if (!shape || !sprite) {
         console.error("Invalid shape or texture (sprite) missing.");
@@ -179,7 +297,7 @@ export function addEvenlySpacedPointswithOffset(shape, segmentCount, offset = 0,
     const segmentLength = totalLength / segmentCount;
     const points = [];
 
-    for (let i = 0; i <= segmentCount; i++) {
+    for (let i = 0; i <= segmentCount-1; i++) {
         const u = (i) / segmentCount;
         const point = path.getPointAt(u);
 
@@ -205,6 +323,7 @@ export function addEvenlySpacedPointswithOffset(shape, segmentCount, offset = 0,
 }
 
 // Function to create evenly spaced rebar points along an offset contour
+//Use this function with Rectangles and Squares.
 export function addEvenlySpacedPointsAlongCurve(baseShape, segmentCount, offset, scene, sprite, rebarSize) {
     if (!baseShape || !(baseShape instanceof THREE.Shape) || !sprite) {
         console.error("Invalid shape or missing texture (sprite). ");
@@ -239,7 +358,8 @@ export function addEvenlySpacedPointsAlongCurve(baseShape, segmentCount, offset,
     console.log("Rebar points added to offset curve:", points);
 }
 
-
+//Given a shape, create the offset shape. Useful for Squares and Rectangles and Generating evenly
+//spaced rebar across the cross section
 function OffsetContour(offset, shape) {
     let points = shape.getPoints().slice(0, -1); // Exclude the last point
     console.log("your base object points are", points)
@@ -287,7 +407,6 @@ function OffsetContour(offset, shape) {
 
         result.push(new THREE.Vector2(cloneOffset.getX(0), cloneOffset.getY(0)));
       }
-      console.log("your results are: ", result)
       result.push(result[0].clone()); // Ensure the shape is closed
       return new THREE.Shape(result); //Returns an offset shape
 }

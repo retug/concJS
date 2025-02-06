@@ -9,20 +9,51 @@ import {resizeThreeJsScene, setupDragAndAnalyze, addRebar } from './threeJSscene
 const loader = new THREE.TextureLoader();
 let sprite = null; // Store the loaded texture globally
 
-// Load rebar sprite texture and store it
-loader.load('/static/disc.png', function(texture) {
-    console.log("Texture Loaded:", texture);
-    sprite = texture; // Store the loaded texture
-}, undefined, function(error) {
-    console.error("Texture Load Error:", error);
-});
-/////////////////////////////end dot///////////////
+// // Load rebar sprite texture and store it
+// loader.load('/static/disc.png', function(texture) {
+//     console.log("Texture Loaded:", texture);
+//     sprite = texture; // Store the loaded texture
+// }, undefined, function(error) {
+//     console.error("Texture Load Error:", error);
+// });
+
+function loadTexture(url) {
+  return new Promise((resolve, reject) => {
+      const loader = new THREE.TextureLoader();
+      loader.load(
+          url,
+          (texture) => {
+              console.log("Texture Loaded:", texture);
+              resolve(texture);
+          },
+          undefined,
+          (error) => {
+              console.error("Texture Load Error:", error);
+              reject(error);
+          }
+      );
+  });
+}
+
+
+async function initScene() {
+  try {
+      sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
+
+      console.log("Sprite texture loaded, adding rebar...");
+      addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
+  } catch (error) {
+      console.error("Failed to load texture:", error);
+  }
+}
+
 
 
 // Attach the function to the global window object
 window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
 window.addEventListener('resize', resizeThreeJsScene);
 document.addEventListener("DOMContentLoaded", () => {
+  initScene(); // Initialize scene after texture loads
   setupDragAndAnalyze();
   toggleShapeButtons();
   populateMaterialDropdown();
@@ -51,9 +82,7 @@ const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('canvas')
 })
 
-
 scene.background = new THREE.Color( 0xffffff );
-
 
 // Export camera and renderer for use in other files
 export { camera, renderer, scene };
@@ -72,7 +101,7 @@ var dot = new THREE.Points( dotGeometry, dotMaterial );
 dot.isReference = true
 scene.add( dot );
 
-addRebar(5, 10, '18', scene, sprite);
+
 
 const light = new THREE.DirectionalLight(0xffffff, 1)
 light.position.set(0, -1, 5)
