@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
-import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking  } from './threeJSscenefunctions.js'
+import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking, setupMouseInteractions } from './threeJSscenefunctions.js'
 
 
 const loader = new THREE.TextureLoader();
@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
+  
 
   document.getElementById("materialDropdown").addEventListener("change", updateChartAndTable);
   document.getElementById("addRow").addEventListener("click", addUserDefinedRow);
@@ -137,6 +138,7 @@ scene.add(intersectionPoint);
 
 // Call the function to enable mouse tracking
 setupMouseTracking(topDiv, plane, intersectionPoint);
+setupMouseInteractions(topDiv);
 
 renderer.render( scene, camera );
 

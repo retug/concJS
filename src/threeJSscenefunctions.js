@@ -1,5 +1,7 @@
-import { camera, renderer, scene } from "./main.js"; // Import camera & renderer
+import { camera, renderer, scene } from "./main.js"; 
 import * as THREE from 'three';
+import { SelectionBox } from 'three/examples/jsm/interactive/SelectionBox.js';
+import { SelectionHelper } from 'three/examples/jsm/interactive/SelectionHelper.js';
 
 
 export function resizeThreeJsScene() {
@@ -174,3 +176,59 @@ export function setupMouseTracking(threeJSDiv, plane, intersectionPoint) {
     });
 }
 
+export function setupMouseInteractions(threeJSDiv) {
+    
+    const mouse = new THREE.Vector2();
+    let middlemouse = 0;
+
+    // SelectionBox
+    const selectionBox = new SelectionBox(camera, scene);
+    const helper = new SelectionHelper(renderer, "selectBox");
+
+    // Selection Box Styling
+    const selectionBoxDiv = document.createElement("div");
+
+
+    document.body.appendChild(selectionBoxDiv);
+
+
+    // Handle selection box events
+    let isSelecting = false;
+
+    threeJSDiv.addEventListener("pointerdown", function (event) {
+        if (event.button === 0) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            // Normalize mouse coordinates within concGui
+            mouse.x = ((event.clientX - rect.left) / (rect.right - rect.left)) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / (rect.bottom - rect.top)) * 2 + 1;
+                
+            console.log(`X: ${mouse.x}, Y: ${mouse.y}`);
+    
+            isSelecting = true;
+            selectionBox.startPoint.set(mouse.x-1, mouse.y, 0.5);
+        }
+    });
+    
+    threeJSDiv.addEventListener("pointermove", function (event) {
+        if (isSelecting) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            // Normalize mouse coordinates within concGui
+            mouse.x = ((event.clientX - rect.left) / (rect.right - rect.left)) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / (rect.bottom - rect.top)) * 2 + 1;
+            console.log(`Pointer Move - X: ${mouse.x}, Y: ${mouse.y}`);
+            selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
+        }
+    });
+
+    threeJSDiv.addEventListener("pointerup", function (event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        // Normalize mouse coordinates within concGui
+        mouse.x = ((event.clientX - rect.left) / (rect.right - rect.left)) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / (rect.bottom - rect.top)) * 2 + 1;
+    
+        console.log(`Pointer Up - X: ${mouse.x}, Y: ${mouse.y}`);
+    
+        selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
+        isSelecting = false;
+    });
+}
