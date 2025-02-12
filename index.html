@@ -8,9 +8,115 @@
   </head>
   <body>
     <div id="userResults" class="column resizable">
-        <h3>User Results</h3>
-        <p>Content for user results.</p>
-        <button id="analyze-button">Anlayze Shape</button>
+        <div id="userInput" class="p-3 bg-gray-400 py-1">
+          <div class="border-b-2 text-lg">User Input </div>
+          <div class="grid grid-cols-4 gap-4 grid-flow-row py-1">
+            <div class="col-start-1 col-end-3">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="X_Vals">
+                  X
+                </label>
+                <form action="" method="get" class="form-example"></form>
+                <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" name="X" id="X_Vals" style="" placeholder="Input Value" fdprocessedid="1mz9nw">
+            </div>
+            <div class="col-start-3 col-end-5">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="Y_Vals">
+                  Y
+              </label>
+              <form action="" method="get" class="form-example"></form>
+              <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4  leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" name="Y" id="Y_Vals" placeholder="Input Value" required="" fdprocessedid="y6864i">
+            </div>
+            <div class="col-start-1 col-end-5">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_Vals">
+            Rebar Size
+          </label>
+              <select class="lock appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="rebar_Vals" fdprocessedid="7by2ng">
+                <option value="3"> #3</option>
+                <option value="4"> #4</option>
+                <option value="5"> #5</option>
+                <option value="6"> #6</option>
+                <option value="7"> #7</option>
+                <option value="8"> #8</option>
+                <option value="9"> #9</option>
+                <option value="10"> #10</option>
+                <option value="11"> #11</option>
+                <option value="14"> #14</option>
+                <option value="18"> #18</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="userBtns" class="p-3 py-2 bg-gray-400">
+          <div class="border-b-2 text-lg"> Add to View </div>
+          <div class="grid grid-cols-4 gap-1 grid-flow-row py-2 p-1">
+            <button id="addPointBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="7aqvht">Point</button>
+            <button id="addRebarBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="yy90b">Rebar</button>
+            <button id="addPolyBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="716c3o">Conc</button>
+            <button id="addHoleBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="djanu5">Hole</button>
+    
+          </div>
+        </div>
+        <div id="userSelection" class="bg-gray-400 p-3 py-2">
+          <div class="border-b-2 text-lg">Current Selection </div>
+          <div class="grid grid-cols-4 gap-0 grid-flow-row pt-2 pb-0">
+            <button id="Points" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
+                                       rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="61h4q">Points</button>
+            <button id="Rebar" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
+                                      rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="rgrc2j">Rebar</button>
+            <button id="Conc" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
+                                     rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="2u4m6e">Concrete</button>
+          </div>
+            <table id="pointInfo" class="border-separate border border-slate-500 twoColTable" style="width:100%">
+            <thead>
+              <tr><th class="bg-gray-900 text-white">X</th>
+              <th class="bg-gray-900 text-white">Y</th>
+            </tr></thead>
+            <tbody id="pointData">            
+            </tbody>
+          </table>
+          <table id="rebarInfo" class="border-separate border border-slate-500" style="width:100%">
+            <thead>
+              <tr><th class="bg-gray-900 text-white">X</th>
+              <th class="bg-gray-900 text-white">Y</th>
+              <th class="bg-gray-900 text-white">Rebar</th>
+            </tr></thead>
+            <tbody id="rebarData">            
+            </tbody>
+          </table>
+          <table id="concInfo" class="border-separate border border-slate-500" style="width:100%">
+            <thead>
+              <tr><th class="bg-gray-900 text-white">Concrete Shapes</th>
+            </tr></thead>
+            <tbody id="concData"> 
+            </tbody>
+          </table>
+        </div>
+        <div id="analysisInput" class="p-3 bg-gray-400 py-1">
+          <div class="border-b-2 text-lg">Analysis Input </div>
+          <div class="grid grid-cols-4 gap-4 grid-flow-row py-1">
+            <div class="col-start-1 col-end-3">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="edgeSpa">
+                  Edge Spa (in)
+                </label>
+                <form action="" method="get" class="form-example"></form>
+                <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" name="edge_Spa" id="edgeSpa" min="0.5" value="1" fdprocessedid="jipxi8">
+            </div>
+            <div class="col-start-3 col-end-5">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="intSpa">
+                  Interior Spa (in)
+              </label>
+              <form action="" method="get" class="form-example"></form>
+              <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4  leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" min="0.5" name="int_Spa" id="intSpa" value="1" required="" fdprocessedid="ncwktk">
+            </div>
+          </div>
+        </div>
+        <div id="analysis" class="bg-gray-400 p-3 py-2">
+          <div class="border-b-2 text-lg"> Analysis </div>
+          <div class="grid grid-cols-4 gap-1 grid-flow-row py-2 p-1">
+            <div class="col-start-1 col-end-4">
+              <button id="analyze-button" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="urit3x">Generate PM</button>
+            </div>
+          </div>
+        </div>
     </div>
 
     <div id="middleColumn">
