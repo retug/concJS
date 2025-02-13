@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
-import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking, setupMouseInteractions, addPoint  } from './threeJSscenefunctions.js'
+import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking, setupMouseInteractions, addPoint, addRebarToScene   } from './threeJSscenefunctions.js'
 
 
 const loader = new THREE.TextureLoader();
@@ -38,6 +38,10 @@ async function initScene() {
   }
 }
 
+// ✅ Export a function to get the loaded sprite
+export function getSprite() {
+  return sprite;
+}
 
 
 // Attach the function to the global window object
@@ -63,6 +67,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 document.getElementById("addPointBtn").addEventListener("click", addPoint)
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("addRebarBtn").addEventListener("click", () => {
+      if (!sprite) {
+          console.warn("Texture not yet loaded, please wait.");
+          return;
+      }
+      addRebarToScene(sprite);
+  });
+});
 
 
 const concGui = document.querySelector('#concGui');

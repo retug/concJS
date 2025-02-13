@@ -322,6 +322,28 @@ body {
   /* THIS MUST BE FIXED, NOT ABOSULTE */
 }
 
+/* Ensure tables fit inside the div and do not expand beyond their container */
+#rebarInfo, #pointInfo, #concInfo {
+  width: 100%;
+  table-layout: fixed; /* Ensures the table stays within the container */
+  border-collapse: collapse; /* Avoid extra spacing issues */
+}
+
+/* Prevent individual cells from overflowing */
+#rebarInfo td, #pointInfo td, #concInfo td {
+  overflow: hidden;
+  white-space: nowrap; /* Prevents text from wrapping onto new lines */
+  text-overflow: ellipsis; /* If text is too long, it gets truncated with '...' */
+  max-width: 1px; /* ✅ Ensures cells do not expand beyond div */
+}
+
+/* Ensure input fields fit properly inside table cells */
+.numDropDown {
+  width: 100%; /* ✅ Makes sure inputs stay inside table cells */
+  box-sizing: border-box; /* Ensures padding/borders don’t increase width */
+}
+
+
 
 
 
