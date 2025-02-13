@@ -232,3 +232,22 @@ export function setupMouseInteractions(threeJSDiv) {
         isSelecting = false;
     });
 }
+
+export function addPoint() {
+    var X1 = parseFloat(document.getElementById("X_Vals").value);
+    var Y1 = parseFloat(document.getElementById("Y_Vals").value);
+  
+    if (isNaN(X1) || isNaN(Y1)) {
+      console.error("Invalid input for X or Y");
+      return;
+    }
+  
+    var tempDotGeo = new THREE.BufferGeometry();
+    tempDotGeo.setAttribute('position', new THREE.Float32BufferAttribute([X1, Y1, 0], 3));
+  
+    var selectedDotMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0x00FF00 });
+    var tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
+    
+    scene.add(tempDot);
+    console.log(`Added point at (${X1}, ${Y1})`);
+  }

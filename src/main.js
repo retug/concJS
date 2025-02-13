@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
-import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking, setupMouseInteractions } from './threeJSscenefunctions.js'
+import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking, setupMouseInteractions, addPoint  } from './threeJSscenefunctions.js'
 
 
 const loader = new THREE.TextureLoader();
@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addShapeToScene(scene, sprite);
   });
 });
+document.getElementById("addPointBtn").addEventListener("click", addPoint)
 
 
 const concGui = document.querySelector('#concGui');
@@ -92,6 +93,25 @@ var dot = new THREE.Points( dotGeometry, dotMaterial );
 
 dot.isReference = true
 scene.add( dot );
+
+// Function to update dot position dynamically
+function updateDotPosition() {
+  let X = parseFloat(document.getElementById("X_Vals").value) || 0;
+  let Y = parseFloat(document.getElementById("Y_Vals").value) || 0;
+
+  // Update the position attribute of the existing dotGeometry
+  let newPosition = new Float32Array([X, Y, 0]); 
+  dot.geometry.attributes.position.array.set(newPosition);
+  dot.geometry.attributes.position.needsUpdate = true; // Required for Three.js to recognize changes
+
+  console.log(`Updated dot position to: (${X}, ${Y})`);
+}
+
+// Attach event listeners to X and Y input fields
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("X_Vals").addEventListener("input", updateDotPosition);
+  document.getElementById("Y_Vals").addEventListener("input", updateDotPosition);
+});
 
 
 
