@@ -26,6 +26,15 @@ export class ConcShape {
         } else {
             throw new Error("Invalid input: Must be an array of points or a THREE.Shape");
         }
+        // ✅ Apply existing holes (if any)
+        this.holes.forEach(hole => this.baseshape.holes.push(hole));
+    }
+
+    addHole(holePoints) {
+        const hole = this.createShapeFromPoints(holePoints);
+        this.holes.push(hole);
+        this.baseshape.holes.push(hole); // ✅ Add hole to the main shape
+        this.generateMesh();
     }
 
     createShapeFromPoints(points) {

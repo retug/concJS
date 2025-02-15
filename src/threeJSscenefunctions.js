@@ -519,6 +519,72 @@ export function addConcGeo(allSelectedPnts) {
     }
 }
 
+export function addHoleToShape(selectedConcShape, allSelectedPnts) {
+    if (!selectedConcShape || !allSelectedPnts || allSelectedPnts.length < 3) {
+        console.error("Invalid selection: A concrete shape and at least 3 points are required.");
+        return;
+    }
+
+    // ✅ Convert selected points into a hole
+    const holePoints = allSelectedPnts.map(pnt =>
+        new THREE.Vector2(
+            pnt.geometry.attributes.position.array[0],
+            pnt.geometry.attributes.position.array[1]
+        )
+    );
+
+    // ✅ Remove existing shape from scene
+    if (selectedConcShape.mesh) {
+        scene.remove(selectedConcShape.mesh);
+    }
+    console.log(selectedConcShape)
+    // ✅ Add the hole to the shape
+    selectedConcShape.addHole(holePoints);
+
+    // ✅ Generate and add the updated shape to the scene
+    if (selectedConcShape.mesh) {
+        scene.add(selectedConcShape.mesh);
+    } else {
+        console.error("Failed to generate updated concrete mesh.");
+    }
+}
+
 export function getAllSelectedPnts() {
     return allSelectedPnts; // ✅ Returns the current selected points
 }
+
+export function getSelectedConcShape() {
+    return allSelectedConc[0]; // ✅ Returns the first current selected concrete
+}
+
+// ✅ Move delete function to global scope
+export function deleteSelectedElements() {
+    console.log("deleteSelectedElements() function triggered");
+
+    // ✅ Delete selected points
+    for (const pnt of allSelectedPnts) {
+        console.log("Removing point:", pnt);
+        scene.remove(pnt);
+    }
+    allSelectedPnts = []; // ✅ Clear selection array
+    document.getElementById("pointData").innerHTML = "";
+
+    // ✅ Delete selected rebar
+    for (const rebar of allSelectedRebar) {
+        console.log("Removing rebar:", rebar);
+        scene.remove(rebar);
+    }
+    allSelectedRebar = []; // ✅ Clear selection array
+    document.getElementById("rebarData").innerHTML = "";
+
+    // ✅ Delete selected concrete shapes
+    for (const concShape of allSelectedConc) {
+        if (concShape.mesh) {
+            console.log("Removing concrete shape:", concShape.mesh);
+            scene.remove(concShape.mesh);
+        }
+    }
+    allSelectedConc = []; // ✅ Clear selection array
+    document.getElementById("concData").innerHTML = "";
+}
+

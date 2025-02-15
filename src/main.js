@@ -62,6 +62,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
+  const addHoleBtn = document.getElementById("addHoleBtn");
+    if (addHoleBtn) {
+        addHoleBtn.addEventListener("click", () => {
+            console.log("Hole button clicked! Adding hole...");
+            SceneFunctions.addHoleToShape(SceneFunctions.getSelectedConcShape(), SceneFunctions.getAllSelectedPnts());
+        });
+    }
+
   // Attach event listeners for material and rebar handling
   document.getElementById("materialDropdown").addEventListener("change", updateChartAndTable);
   document.getElementById("addRow").addEventListener("click", addUserDefinedRow);
@@ -73,6 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
       }
       addShapeToScene(scene, sprite);
+  });
+
+  document.addEventListener('keyup', function (e) {
+    if (e.key === "Delete") {
+        console.log("Delete key pressed, attempting to delete elements...");
+        SceneFunctions.deleteSelectedElements();
+    }
   });
 });
 
@@ -89,6 +104,9 @@ document.addEventListener("DOMContentLoaded", () => {
       SceneFunctions.addRebarToScene(sprite);
   });
 });
+
+
+
 
 
 const concGui = document.querySelector('#concGui');
