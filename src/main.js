@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
           console.warn("Texture not yet loaded, please wait.");
           return;
       }
-      SceneFunctions.addShapeToScene(scene, sprite);
+      addShapeToScene(scene, sprite);
   });
 });
 

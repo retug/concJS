@@ -55,5 +55,6 @@ export class ConcShape {
         const geometry = new THREE.ShapeGeometry(this.baseshape);
         const meshMaterial = new THREE.MeshStandardMaterial({ color: 0xE5E5E5, transparent: true, opacity: 0.4 });
         this.mesh = new THREE.Mesh(geometry, meshMaterial);
+        this.mesh.userData.concShape = this; // ✅ Store ConcShape instance in the mesh
     }
 }

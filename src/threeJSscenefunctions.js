@@ -157,10 +157,6 @@ export function addRebar(x, y, barSize, scene, sprite) {
 
     // ✅ Add to the scene
     scene.add(tempDot);
-
-    console.log(`Rebar added at (${x}, ${y}) with bar size #${barSize} and material ${selectedMaterialName}`);
-    console.log("Material Properties:", materialObject);
-
     return tempDot; // ✅ Return the new rebar object
 }
 
@@ -253,7 +249,13 @@ export function setupMouseInteractions(threeJSDiv) {
     function resetSelections() {
         for (const pnt of allSelectedPnts) pnt.material.color.set(0x00FF00);
         for (const pnt of allSelectedRebar) pnt.material.color.setHSL(0.0, 0.0, 0.5);
-        for (const pnt of allSelectedConc) pnt.material.color.set(0xE5E5E5);
+        
+        for (const concShape of allSelectedConc) {
+            console.log('your concrete shape is a instance of concrete shape?', concShape instanceof ConcShape )
+            if (concShape instanceof ConcShape && concShape.mesh && concShape.mesh.material) { // ✅ Ensure valid `ConcShape`
+                concShape.mesh.material.color.set(0xE5E5E5);
+            }
+        }
         allSelectedPnts = [];
         allSelectedRebar = [];
         allSelectedConc = [];
@@ -266,8 +268,13 @@ export function setupMouseInteractions(threeJSDiv) {
                 obj.material.color.set(0xFF7F00);
             } else if (obj.isRebar === true && obj.constructor.name === "Points") {
                 obj.material.color.set(0xFF7F00);
-            } else if (obj.constructor.name === "Mesh") {
+            }
+            else if (obj.constructor.name === "Mesh") {
                 obj.material.color.set(0xFF7F00);
+
+            } 
+            else if (obj instanceof ConcShape) {
+                obj.mesh.material.color.set(0xFF7F00);
             }
         }
     }
@@ -278,8 +285,11 @@ export function setupMouseInteractions(threeJSDiv) {
                 allSelectedPnts.push(obj);
             } else if (obj.isRebar === true && obj.constructor.name === "Points") {
                 allSelectedRebar.push(obj);
-            } else if (obj.constructor.name === "Mesh") {
-                allSelectedConc.push(obj);
+            } else if (obj.constructor.name === "Mesh" && obj.userData.concShape) {
+                console.log('Your selected mesh contains ConcShape:', obj.userData.concShape);
+                console.log(obj)
+                // allSelectedConc.push(obj);
+                allSelectedConc.push(obj.userData.concShape);
             }
         }
         updateTables();
@@ -329,8 +339,27 @@ export function setupMouseInteractions(threeJSDiv) {
             rebarTable.appendChild(row);
         });
 
+        // ✅ Update concrete table
+        const concTable = document.getElementById("concData");
+        concTable.innerHTML = "";
+        allSelectedConc.forEach(concShape => {
+            let row = document.createElement("tr");
+
+            let materialDropdown = createMaterialDropdown(concShape.material.name, newMaterial => {
+                concShape.material = defaultMaterials.find(mat => mat.name === newMaterial) || concShape.material;
+                updateTables();
+                
+            });
+
+            row.appendChild(wrapInTableCell(materialDropdown)); // ✅ Add material dropdown for concrete
+            concTable.appendChild(row);
+        });
+
+
+
         document.getElementById("pointsSelected").innerText = allSelectedPnts.length;
         document.getElementById("rebarSelected").innerText = allSelectedRebar.length;
+        document.getElementById("concSelected").innerText = allSelectedConc.length;
     }
 
     function createInputField(value, callback) {
