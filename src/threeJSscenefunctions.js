@@ -3,6 +3,14 @@ import * as THREE from 'three';
 import { SelectionBox } from 'three/examples/jsm/interactive/SelectionBox.js';
 import { SelectionHelper } from 'three/examples/jsm/interactive/SelectionHelper.js';
 import { defaultMaterials } from "./materials.js";
+import { ConcShape } from './concShape.js';
+
+
+
+let allSelectedPnts = []; // ✅ Declare globally so it is accessible everywhere
+let allSelectedRebar = [];
+let allSelectedConc = [];
+
 
 
 export function resizeThreeJsScene() {
@@ -201,9 +209,9 @@ export function setupMouseInteractions(threeJSDiv) {
     const selectionBox = new SelectionBox(camera, scene);
     const helper = new SelectionHelper(renderer, "selectBox");
 
-    let allSelectedPnts = [];
-    let allSelectedRebar = [];
-    let allSelectedConc = [];
+    // let allSelectedPnts = [];
+    // let allSelectedRebar = [];
+    // let allSelectedConc = [];
 
     threeJSDiv.addEventListener("pointerdown", function (event) {
         if (event.button === 1) {
@@ -308,10 +316,16 @@ export function setupMouseInteractions(threeJSDiv) {
             let barDiaInput = createDropdown(rebar.rebarSize, newSize => {
                 replaceRebar(rebar, rebar.geometry.attributes.position.array[0], rebar.geometry.attributes.position.array[1], newSize);
             });
+
+            let materialDropdown = createMaterialDropdown(rebar.materialData.name, newMaterial => {
+                rebar.materialData = defaultMaterials.find(mat => mat.name === newMaterial) || rebar.materialData;
+                updateTables(); // ✅ Update the table when material changes
+            });
     
             row.appendChild(wrapInTableCell(Xinput));
             row.appendChild(wrapInTableCell(Yinput));
             row.appendChild(wrapInTableCell(barDiaInput));
+            row.appendChild(wrapInTableCell(materialDropdown)); // ✅ Add material dropdown
             rebarTable.appendChild(row);
         });
 
@@ -323,15 +337,44 @@ export function setupMouseInteractions(threeJSDiv) {
         let input = document.createElement("input");
         input.type = "number";
         input.value = value;
-        input.classList.add("numDropDown");
+        input.min = "0";
+        input.step = "0.1";
+        input.placeholder = "Enter value";
+
+        // ✅ Apply the new class for consistent styling
+        input.className = "appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-2 leading-tight focus:outline-none focus:bg-white";
         input.addEventListener("change", () => callback(parseFloat(input.value) || 0));
         return input;
+    }
+
+    function createMaterialDropdown(selectedMaterial, callback) {
+        let dropdown = document.createElement("select");
+    
+        // Apply Tailwind-style classes for consistent styling
+        dropdown.className = "appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-2 leading-tight focus:outline-none focus:bg-white";
+    
+        defaultMaterials.forEach(material => {
+            let option = document.createElement("option");
+            option.value = material.name;
+            option.text = material.name;
+            if (material.name === selectedMaterial) {
+                option.selected = true; // ✅ Keep last selected material
+            }
+            dropdown.appendChild(option);
+        });
+    
+        dropdown.addEventListener("change", () => callback(dropdown.value));
+    
+        return dropdown;
     }
 
     function createDropdown(selectedValue, callback) {
         let dropdown = document.createElement("select");
     
         let options = [3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 18];
+
+        // Apply Tailwind-style classes
+        dropdown.className = "appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-2 pr-8 rounded leading-tight focus:outline-none focus:bg-white";
     
         options.forEach(value => {
             let option = document.createElement("option");
@@ -413,4 +456,40 @@ export function addPoint() {
     }
     // Call addRebar function
     addRebar(X, Y, barSize, scene, sprite);
+}
+
+export function addConcGeo(allSelectedPnts) {
+    if (!allSelectedPnts || allSelectedPnts.length < 3) {
+        console.error("Not enough points to create a shape.");
+        return;
+    }
+
+    // ✅ Convert Three.js Points objects to an array of Vector2 points
+    const pointsArray = allSelectedPnts.map(pnt => 
+        new THREE.Vector2(
+            pnt.geometry.attributes.position.array[0], 
+            pnt.geometry.attributes.position.array[1]
+        )
+    );
+
+    // ✅ Create a ConcShape instance
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xE5E5E5,
+        transparent: true,
+        opacity: 0.4
+    });
+
+    const concShape = new ConcShape(pointsArray, material);
+
+    // ✅ Generate and add the mesh to the scene
+    concShape.generateMesh();
+    if (concShape.mesh) {
+        scene.add(concShape.mesh);
+    } else {
+        console.error("Failed to generate concrete mesh.");
+    }
+}
+
+export function getAllSelectedPnts() {
+    return allSelectedPnts; // ✅ Returns the current selected points
 }

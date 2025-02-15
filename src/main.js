@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
-import {resizeThreeJsScene, setupDragAndAnalyze, addRebar, setupMouseTracking, setupMouseInteractions, addPoint, addRebarToScene   } from './threeJSscenefunctions.js'
+import * as SceneFunctions from './threeJSscenefunctions.js';
 
 
 const loader = new THREE.TextureLoader();
@@ -44,36 +44,49 @@ export function getSprite() {
 }
 
 
-// Attach the function to the global window object
-window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
-window.addEventListener('resize', resizeThreeJsScene);
 document.addEventListener("DOMContentLoaded", () => {
   initScene(); // Initialize scene after texture loads
-  setupDragAndAnalyze();
+  window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
+  window.addEventListener('resize', SceneFunctions.resizeThreeJsScene);
+  SceneFunctions.setupDragAndAnalyze();
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
-  
 
+  // Attach addConcGeo to the "Conc" button
+  const addPolyBtn = document.getElementById("addPolyBtn");
+  if (addPolyBtn) {
+      addPolyBtn.addEventListener("click", () => {
+          console.log("Conc button clicked! Generating concrete shape...");
+          SceneFunctions.addConcGeo(SceneFunctions.getAllSelectedPnts());
+      });
+  }
+
+  // Attach event listeners for material and rebar handling
   document.getElementById("materialDropdown").addEventListener("change", updateChartAndTable);
   document.getElementById("addRow").addEventListener("click", addUserDefinedRow);
   document.getElementById("saveMaterial").addEventListener("click", saveUserDefinedMaterial);
+
   document.getElementById("addShapestoScene").addEventListener("click", () => {
-    if (!sprite) {
-      console.warn("Texture not yet loaded, please wait.");
-      return;
-    }
-    addShapeToScene(scene, sprite);
+      if (!sprite) {
+          console.warn("Texture not yet loaded, please wait.");
+          return;
+      }
+      SceneFunctions.addShapeToScene(scene, sprite);
   });
 });
-document.getElementById("addPointBtn").addEventListener("click", addPoint)
+
+// Attach addPoint function to the button
+document.getElementById("addPointBtn").addEventListener("click", SceneFunctions.addPoint);
+
+// Attach addRebarToScene function properly
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("addRebarBtn").addEventListener("click", () => {
       if (!sprite) {
           console.warn("Texture not yet loaded, please wait.");
           return;
       }
-      addRebarToScene(sprite);
+      SceneFunctions.addRebarToScene(sprite);
   });
 });
 
@@ -170,8 +183,8 @@ intersectionPoint.visible = false;
 scene.add(intersectionPoint);
 
 // Call the function to enable mouse tracking
-setupMouseTracking(topDiv, plane, intersectionPoint);
-setupMouseInteractions(topDiv);
+SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
+SceneFunctions.setupMouseInteractions(topDiv);
 
 renderer.render( scene, camera );
 
