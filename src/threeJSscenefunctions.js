@@ -115,46 +115,45 @@ export const rebarDia = {
 
 
 
-// Function to add a rebar point at (x, y) with a selected size and material
 export function addRebar(x, y, barSize, scene, sprite) {
     if (!(barSize in rebarDia)) {
         console.error("Invalid rebar size:", barSize);
-        return;
+        return null; // ✅ Return null if barSize is invalid
     }
 
-    // Get the selected material from the dropdown
     let selectedMaterialName = document.getElementById("rebar_mat").value;
-
-    // Find the corresponding material in defaultMaterials
     let materialObject = defaultMaterials.find(mat => mat.name === selectedMaterialName);
 
     if (!materialObject) {
         console.error("Material not found:", selectedMaterialName);
-        return;
+        return null; // ✅ Return null if material is not found
     }
 
-    // Create rebar geometry
+    // ✅ Create rebar geometry
     const tempDotGeo = new THREE.BufferGeometry();
     tempDotGeo.setAttribute('position', new THREE.Float32BufferAttribute([x, y, 0], 3));
 
-    const selectedDotMaterial = new THREE.PointsMaterial({ 
-        size: rebarDia[barSize], 
-        map: sprite, 
-        transparent: true, 
-        color: 'blue' 
+    // ✅ Create rebar material
+    const selectedDotMaterial = new THREE.PointsMaterial({
+        size: rebarDia[barSize], // ✅ Use correct size from `rebarDia`
+        map: sprite,
+        transparent: true,
+        color: 0xFF7F00 // ✅ Changed from 'blue' to 0xFF7F00
     });
 
-    // Create the rebar point
+    // ✅ Create Three.js Points object
     const tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
-    tempDot.isRebar = true;
-    tempDot.rebarSize = barSize;
-    tempDot.materialData = materialObject; // Store material class instance with the rebar point
+    tempDot.isRebar = true; // ✅ Mark as rebar
+    tempDot.rebarSize = barSize; // ✅ Store rebar size
+    tempDot.materialData = materialObject; // ✅ Store material data
 
-    // Add to the Three.js scene
+    // ✅ Add to the scene
     scene.add(tempDot);
 
     console.log(`Rebar added at (${x}, ${y}) with bar size #${barSize} and material ${selectedMaterialName}`);
     console.log("Material Properties:", materialObject);
+
+    return tempDot; // ✅ Return the new rebar object
 }
 
 
@@ -294,16 +293,27 @@ export function setupMouseInteractions(threeJSDiv) {
         const rebarTable = document.getElementById("rebarData");
         rebarTable.innerHTML = "";
         allSelectedRebar.forEach(rebar => {
-        let row = document.createElement("tr");
-        let Xinput = createInputField(rebar.geometry.attributes.position.array[0], newX => replaceRebar(rebar, newX, rebar.geometry.attributes.position.array[1], rebar.rebarSize));
-        let Yinput = createInputField(rebar.geometry.attributes.position.array[1], newY => replaceRebar(rebar, rebar.geometry.attributes.position.array[0], newY, rebar.rebarSize));
-        let barDiaInput = createDropdown(rebar.rebarSize, newSize => replaceRebar(rebar, rebar.geometry.attributes.position.array[0], rebar.geometry.attributes.position.array[1], newSize));
-
-        row.appendChild(wrapInTableCell(Xinput));
-        row.appendChild(wrapInTableCell(Yinput));
-        row.appendChild(wrapInTableCell(barDiaInput));
-        rebarTable.appendChild(row);
-    });
+            let row = document.createElement("tr");
+    
+            let Xinput = createInputField(
+                rebar.geometry.attributes.position.array[0], 
+                newX => replaceRebar(rebar, newX, rebar.geometry.attributes.position.array[1], rebar.rebarSize)
+            );
+    
+            let Yinput = createInputField(
+                rebar.geometry.attributes.position.array[1], 
+                newY => replaceRebar(rebar, rebar.geometry.attributes.position.array[0], newY, rebar.rebarSize)
+            );
+    
+            let barDiaInput = createDropdown(rebar.rebarSize, newSize => {
+                replaceRebar(rebar, rebar.geometry.attributes.position.array[0], rebar.geometry.attributes.position.array[1], newSize);
+            });
+    
+            row.appendChild(wrapInTableCell(Xinput));
+            row.appendChild(wrapInTableCell(Yinput));
+            row.appendChild(wrapInTableCell(barDiaInput));
+            rebarTable.appendChild(row);
+        });
 
         document.getElementById("pointsSelected").innerText = allSelectedPnts.length;
         document.getElementById("rebarSelected").innerText = allSelectedRebar.length;
@@ -320,16 +330,22 @@ export function setupMouseInteractions(threeJSDiv) {
 
     function createDropdown(selectedValue, callback) {
         let dropdown = document.createElement("select");
+    
         let options = [3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 18];
+    
         options.forEach(value => {
             let option = document.createElement("option");
             option.value = value;
             option.text = `#${value}`;
-            if (value == selectedValue) option.selected = true;
+            if (value == selectedValue) {
+                option.selected = true; // ✅ Keep last selected value
+            }
             dropdown.appendChild(option);
         });
+    
         dropdown.classList.add("numDropDown");
         dropdown.addEventListener("change", () => callback(parseInt(dropdown.value)));
+    
         return dropdown;
     }
 
@@ -353,31 +369,20 @@ export function setupMouseInteractions(threeJSDiv) {
         updateTables();
     }
 
+
     function replaceRebar(oldRebar, newX, newY, barSize) {
         const sprite = getSprite(); // Get the loaded sprite
         const oldIndex = allSelectedRebar.indexOf(oldRebar);
-    
         if (oldIndex === -1) return; // Ensure old rebar exists in the selection list
-    
         scene.remove(oldRebar); // Remove the old rebar from the scene
-    
-        // ✅ Create new rebar at updated position and store reference
-        addRebar(newX, newY, barSize, scene, sprite);
-    
-        // ✅ Manually create a new Three.js Points object for selection tracking
-        const tempDotGeo = new THREE.BufferGeometry();
-        tempDotGeo.setAttribute('position', new THREE.Float32BufferAttribute([newX, newY, 0], 3));
-    
-        const selectedDotMaterial = new THREE.PointsMaterial({ size: 0.5, color: 'blue' });
-        const newRebarPoint = new THREE.Points(tempDotGeo, selectedDotMaterial);
-        
-    
-        // ✅ Replace the rebar in `allSelectedRebar` at the same index
-        allSelectedRebar[oldIndex] = newRebarPoint;
-    
+        // ✅ Create new rebar and store reference properly
+        const newRebar = addRebar(newX, newY, barSize, scene, sprite);
+        // ✅ Store the correct rebar object in `allSelectedRebar`
+        allSelectedRebar[oldIndex] = newRebar;    
         updateTables(); // ✅ Keep rebar in the table after update
     }
 }
+
 
 export function addPoint() {
     var X1 = parseFloat(document.getElementById("X_Vals").value);
@@ -395,7 +400,6 @@ export function addPoint() {
     var tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
     
     scene.add(tempDot);
-    console.log(`Added point at (${X1}, ${Y1})`);
   }
 
   export function addRebarToScene(sprite) {
@@ -405,12 +409,8 @@ export function addPoint() {
     let barSize = document.getElementById("rebar_Vals").value;
 
     if (!barSize) {
-        console.error("Invalid rebar size selected");
         return;
     }
-
-    console.log(`Adding rebar at (${X}, ${Y}) with bar size #${barSize}`);
-
     // Call addRebar function
     addRebar(X, Y, barSize, scene, sprite);
 }
