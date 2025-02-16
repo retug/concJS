@@ -103,7 +103,44 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       SceneFunctions.addRebarToScene(sprite);
   });
+  const generatePMMBtn = document.getElementById("generatePMM-button");
+  if (generatePMMBtn) {
+      generatePMMBtn.addEventListener("click", () => {
+          console.log("Generate PM button clicked! Creating FEM mesh...");
+
+          // Get the selected concrete shape
+          const selectedConcShape = SceneFunctions.getSelectedConcShape();
+          if (!selectedConcShape) {
+              console.warn("No concrete shape selected!");
+              return;
+          }
+
+          // Read input values for edge and interior spacing
+          const edgeSpacing = parseFloat(document.getElementById("edgeSpa").value);
+          const interiorSpacing = parseFloat(document.getElementById("intSpa").value);
+
+          if (isNaN(edgeSpacing) || isNaN(interiorSpacing)) {
+              console.error("Invalid edge or interior spacing input!");
+              return;
+          }
+
+          // Generate FEM mesh for the selected concrete shape
+          selectedConcShape.generateFEMMesh(interiorSpacing, edgeSpacing);
+
+          // Plot the generated FEM mesh elements in the scene
+          if (selectedConcShape.FEMmesh && selectedConcShape.FEMmesh.length > 0) {
+              selectedConcShape.FEMmesh.forEach(mesh => {
+                  scene.add(mesh);
+              });
+
+              console.log("FEM mesh successfully plotted in the scene.");
+          } else {
+              console.error("FEM mesh generation failed or returned empty.");
+          }
+      });
+  }
 });
+
 
 
 

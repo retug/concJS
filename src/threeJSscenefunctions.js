@@ -91,7 +91,7 @@ export function setupDragAndAnalyze() {
             dragBar.style.display = "block";
             concGui.style.flex = "1";
             results.style.flex = "1";
-            analyzeButton.textContent = "Analyze Shape";
+            analyzeButton.textContent = "Close Results";
         } else {
             // Hide results
             results.style.display = "none";
