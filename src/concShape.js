@@ -13,6 +13,9 @@
 import * as THREE from 'three';
 import Delaunator from 'delaunator';
 import { scene } from "./main.js"; 
+import { rebarDia } from './threeJSscenefunctions.js';
+import Plotly from 'plotly.js-dist-min';
+
 
 export class ConcShape {
     constructor(input, material, holes = []) {
@@ -377,7 +380,7 @@ export class ConcShape {
         console.log(`🎯 Transformed Centroid at ${angle}°: U=${transformedCentroid.u}, V=${transformedCentroid.v}`);
     }
 
-    // Generate Strain Profiles for the PM Analysis
+    // Generate Strain Profiles for the PMM Analysis, returns [m and b] of y = mx +b linear strain equation
     generateStrains(angle) {
         // ✅ Ensure the transformed FEM centroids exist for the given angle
         if (!this.transformedFEMcentroids[angle]) {
@@ -411,7 +414,7 @@ export class ConcShape {
         // ✅ Define strain limits
         let epsilon_c = -0.003;  // Concrete crushing strain
         let epsilon_t = 0.025;   // Maximum tension strain
-        let steps = 10;          // Number of steps for profile generation
+        let steps = 25;          // Number of steps for profile generation
 
         // ✅ Initialize strain profiles
         let strainProfileCtoT = [];
@@ -496,6 +499,16 @@ export class ConcShape {
 
         // Get material properties
         let concMaterial = this.material;  // ✅ Concrete material stored in class
+
+        // ✅ Ensure PMM dictionary exists
+        if (!this.PMMresults) {
+            this.PMMresults = {};
+        }
+
+        // ✅ Ensure the angle entry exists in PMMresults
+        if (!this.PMMresults[angle]) {
+            this.PMMresults[angle] = { P: [], Mu: [], Mv: [] };
+        }
     
         //looping through each stress strain profile
         for (var strainProfile of this.strainProfiles[angle]) {
@@ -507,16 +520,29 @@ export class ConcShape {
             let steelMomentU = 0
     
     
-            for (let concEle of this.FEMmesh) {
-                //Using the materials class .stress function, generate the given force from the given strain profile. Stress(strain)*area
-                let concStrain = this.strainFunction(strainProfile[0], concEle.centroid.v, strainProfile[1]);
+            for (let i = 0; i < this.FEMmesh.length; i++) {
+                let concEle = this.FEMmesh[i]; // Get the concrete element
+                let transformedConc = this.transformedFEMcentroids[angle].conc[i]; // Get the transformed coordinates
+            
+                if (!transformedConc) {
+                    console.warn(`⚠️ Missing transformed centroid for concrete element at index ${i}`);
+                    continue;
+                }
+            
+                // ✅ Use transformed V coordinate
+                let concStrain = this.strainFunction(strainProfile[0], transformedConc.v, strainProfile[1]);
                 let nodalConcForce = concMaterial.stress(concStrain) * concEle.area;
-                concForce += nodalConcForce
-                concMomentV += nodalConcForce*(centriodV-concEle.centroid.v)
-                concMomentU += nodalConcForce*(centriodU-concEle.centroid.u)
+            
+                // ✅ Debugging logs
+                // console.log(concEle);
+                // console.log(`Original V: ${concEle.centroid.v}, Transformed V: ${transformedConc.v}`);
+            
+                concForce += nodalConcForce;
+                concMomentV += nodalConcForce * (centroidV - transformedConc.v);
+                concMomentU += nodalConcForce * (centroidU - transformedConc.u);
             }
             
-            for (let rebar of rebarObjects) {
+            for (let rebar of this.rebarObjects) {
                 //area times stress(strain)
                 let steelMaterial = rebar.materialData; // ✅ Retrieve steel material
                 let transformedRebar = rebar.transformed[angle]; // ✅ Get transformed U/V at angle
@@ -527,17 +553,106 @@ export class ConcShape {
     
                 let rebarStrain = this.strainFunction(strainProfile[0], transformedRebar.v, strainProfile[1]);
                 let nodalSteelForce = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2 * steelMaterial.stress(rebarStrain);
+                // console.log(rebarDia[rebar.rebarSize]) size is correct
+                // console.log(steelMaterial) //Material is correct
+                // console.log(rebarStrain) //strain appears correct
+                // console.log(steelMaterial.stress(rebarStrain)) //stress appears correct
+
                 steelForce += nodalSteelForce
-                steelMomentV += nodalSteelForce*(centriodV-transformedRebar.v)
-                steelMomentU += nodalSteelForce*(centriodU-transformedRebar.u)
+                steelMomentV += nodalSteelForce*(centroidV-transformedRebar.v)
+                steelMomentU += nodalSteelForce*(centroidU-transformedRebar.u)
             }
+            console.log('your steel force is', steelForce)
+            console.log('your conc force is', concForce)
             let resultForce=steelForce+concForce
-            totalForceArray.push(resultForce)
+            totalAxialForceArray.push(resultForce)
             totalMomentVArray.push((-steelMomentV-concMomentV)/12)
             totalMomentUArray.push((-steelMomentU-concMomentU)/12)
-        
             }
-        return [totalAxialForceArray, totalMomentUArray, totalMomentVArray]
+        // ✅ Store results in dictionary
+        this.PMMresults[angle].P.push(totalAxialForceArray);
+        this.PMMresults[angle].Mu.push(totalMomentUArray);
+        this.PMMresults[angle].Mv.push(totalMomentVArray);
+
+        console.log("PMM Results Data:", this.PMMresults);
+
+    }
+
+    plotPMMResults() {
+        if (!this.PMMresults || Object.keys(this.PMMresults).length === 0) {
+            console.error("❌ No PMM results available to plot.");
+            return;
+        }
+    
+        // Extract P, Mu, Mv from PMMresults dictionary
+        let P_values = [];
+        let Mu_values = [];
+        let Mv_values = [];
+        let angles = [];
+    
+        for (let angle in this.PMMresults) {
+            P_values.push(...this.PMMresults[angle].P.flat());
+            Mu_values.push(...this.PMMresults[angle].Mu.flat());
+            Mv_values.push(...this.PMMresults[angle].Mv.flat());
+            angles.push(...Array(this.PMMresults[angle].P.flat().length).fill(Number(angle))); // Store angles as numbers
+        }
+    
+        console.log("your P values are", P_values);
+        console.log("your Mu values are", Mu_values);
+        console.log("your Mv values are", Mv_values);
+        console.log("your angles are", angles);
+    
+        // Remove existing content and add a new div for Plotly
+        let resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
+    
+        // ✅ Scatter Plot (Points)
+        let scatterTrace = {
+            x: Mu_values,
+            y: Mv_values,
+            z: P_values,
+            mode: "markers",
+            type: "scatter3d",
+            marker: {
+                size: 5,
+                color: angles, // Color by angle
+                colorscale: "Viridis",
+                opacity: 0.8
+            },
+            name: "PMM Data"
+        };
+    
+        // ✅ Line Plot (Connecting the points)
+        let lineTrace = {
+            x: Mu_values,
+            y: Mv_values,
+            z: P_values,
+            mode: "lines",
+            type: "scatter3d",
+            line: {
+                color: "black",
+                width: 2
+            },
+            name: "PMM Curve"
+        };
+    
+        // ✅ Find axis limits to make them equal
+        let minVal = Math.min(...Mu_values, ...Mv_values, ...P_values);
+        let maxVal = Math.max(...Mu_values, ...Mv_values, ...P_values);
+    
+        let layout = {
+            title: "3D P-M Interaction Diagram",
+            scene: {
+                xaxis: { title: "Mu (kip-ft)", range: [minVal, maxVal] },
+                yaxis: { title: "Mv (kip-ft)", range: [minVal, maxVal] },
+                zaxis: { title: "P (kips)", range: [minVal, maxVal] },
+                aspectmode: "cube" // ✅ Forces equal scaling on all axes
+            },
+            margin: { l: 0, r: 0, b: 0, t: 50 }
+        };
+    
+        // ✅ Render the plot with both traces
+        Plotly.newPlot("pmPlot", [scatterTrace, lineTrace], layout);
     }
 }
 

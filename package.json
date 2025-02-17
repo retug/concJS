@@ -19,6 +19,7 @@
     "@tailwindcss/vite": "^4.0.0",
     "chart.js": "^4.4.7",
     "delaunator": "^5.0.1",
+    "plotly.js-dist-min": "^3.0.0",
     "three": "^0.172.0"
   }
 }
