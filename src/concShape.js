@@ -21,8 +21,13 @@ export class ConcShape {
         this.mesh = null; // base polygon with any holes
         this.FEMmesh = []; // ✅ Stores the FEM triangular elements
         this.results = { angle: 0, data: [] }; // To store analysis results [P, Mx, My]
+        this.transformedFEMcentroids = {}; // ✅ Initialize as an empty object
+        this.transformedRebarcentriods = {angle: 0, data: []} // Stores transformed coordinates at a given angle, in the UV space
         this.basePolyXY = []; // ✅ Stores exterior polygon points
         this.holesPolyXY = []; // ✅ Stores hole points
+        this.FEMarea = 0;  // ✅ Total FEM area
+        this.centroidX = 0; // ✅ X coordinate of centroid
+        this.centroidY = 0; // ✅ Y coordinate of centroid
         
         if (Array.isArray(input)) {
             // If input is an array of points
@@ -95,20 +100,15 @@ export class ConcShape {
             hole.curves.map(curve => [curve.v1.x, curve.v1.y])
         );
 
-        console.log('Stored basePolyXY:', this.basePolyXY);
-        console.log('Stored holesPolyXY:', this.holesPolyXY);
 
         let minSize = parseFloat(document.getElementById("intSpa").value);
         let edgeSize = parseFloat(document.getElementById("edgeSpa").value);
 
         // Generate interior and boundary points
         let createdPnts = this.generateCirclePnts(center, radius, minSize);
-        console.log('your created points are ', createdPnts)
         let [boundaryPnts, holePnts] = this.generateBoundaryPnts(this.basePolyXY, this.holesPolyXY, edgeSize);
-        console.log('your boundary points are ', boundaryPnts)
         let generatedPnts = [];
         for (let circlePnt of createdPnts) {
-            console.log('your current point is', circlePnt)
             let TF = this.rayCasting(circlePnt);
             if (TF[0] === true) {
                 generatedPnts.push(circlePnt);
@@ -124,6 +124,7 @@ export class ConcShape {
         let concElements = this.drawTrianglesThree(triangleXY);
 
         this.FEMmesh = concElements; // ✅ Store generated FEM mesh
+        console.log(this)
     }
      /** ✅ Updated rayCasting to use stored class properties */
      rayCasting(point) {
@@ -229,9 +230,11 @@ export class ConcShape {
             console.error("Scene is not defined or is not a valid Three.js scene.");
             return [];
         }
+
         let concElements = [];
-        let area = 0;
-        let concCentroidX = 0, concCentroidY = 0;
+        this.FEMarea = 0; // ✅ Reset total area
+        this.centroidX = 0; // ✅ Reset centroidX
+        this.centroidY = 0; // ✅ Reset centroidY
 
         for (let tri of positionTri) {
             let geometry = new THREE.BufferGeometry();
@@ -254,12 +257,100 @@ export class ConcShape {
             if (this.rayCasting([mesh.centroid.x, mesh.centroid.y])[0]) {
                 scene.add(mesh);
                 concElements.push(mesh);
-                area += mesh.area;
-                concCentroidX += mesh.area * mesh.centroid.x;
-                concCentroidY += mesh.area * mesh.centroid.y;
+
+                // ✅ Update FEMarea and centroid
+                this.FEMarea += mesh.area;
+                this.centroidX += mesh.area * mesh.centroid.x;
+                this.centroidY += mesh.area * mesh.centroid.y;
             }
         }
 
-        return [concElements, [concCentroidX / area, concCentroidY / area]];
+        // ✅ Compute final centroid
+        if (this.FEMarea > 0) {
+            this.centroidX /= this.FEMarea;
+            this.centroidY /= this.FEMarea;
+        } else {
+            console.warn("Total FEM area is zero, cannot compute centroid.");
+        }
+
+        return concElements;
+    }
+
+    // /**
+    //  * ✅ Transforms the centroids of the FEMmesh into the U-V coordinate system at a given angle θ.
+    //  * @param {number} angle - Rotation angle in **degrees**
+    //  */
+    // transformCoordinatesAtAngle(angle) {
+    //     if (!this.FEMmesh || this.FEMmesh.length === 0) {
+    //         console.error("❌ FEM mesh is empty, cannot transform coordinates.");
+    //         return;
+    //     }
+    
+    //     // ✅ Ensure transformedFEMcentroids is initialized
+    //     if (!this.transformedFEMcentroids) {
+    //         this.transformedFEMcentroids = {}; 
+    //     }
+    
+    //     const radians = (Math.PI / 180) * angle; // Convert degrees to radians
+    //     const cosTheta = Math.cos(radians);
+    //     const sinTheta = Math.sin(radians);
+    
+    //     let transformedPoints = this.FEMmesh.map(mesh => {
+    //         let u = cosTheta * (mesh.centroid.x - this.centroidX) + sinTheta * (mesh.centroid.y - this.centroidY);
+    //         let v = -sinTheta * (mesh.centroid.x - this.centroidX) + cosTheta * (mesh.centroid.y - this.centroidY);
+    //         return [u, v];
+    //     });
+    
+    //     // ✅ Store the transformed points in the dictionary
+    //     this.transformedFEMcentroids[angle] = transformedPoints;
+    
+    //     console.log(`✅ Transformed FEM centroids at ${angle}° stored successfully.`);
+    // }
+    transformCoordinatesAtAngle(angle, allSelectedRebar) {
+        if (!this.FEMmesh || this.FEMmesh.length === 0) {
+            console.error("❌ FEM mesh is empty, cannot transform coordinates.");
+            return;
+        }
+    
+        if (!this.transformedFEMcentroids) {
+            this.transformedFEMcentroids = {};
+        }
+    
+        const radians = (Math.PI / 180) * angle; // Convert degrees to radians
+        const cosTheta = Math.cos(radians);
+        const sinTheta = Math.sin(radians);
+    
+        // ✅ Transform Concrete Centroids
+        let transformedConcrete = this.FEMmesh.map(mesh => {
+            let u = cosTheta * (mesh.centroid.x - this.centroidX) + sinTheta * (mesh.centroid.y - this.centroidY);
+            let v = -sinTheta * (mesh.centroid.x - this.centroidX) + cosTheta * (mesh.centroid.y - this.centroidY);
+            return { u, v };
+        });
+    
+        // ✅ Transform Rebar Centroids
+        console.log("YOUR SELECTED REBAR IS THE FOLLOWING")
+        console.log(allSelectedRebar)
+        let transformedRebar = allSelectedRebar.map(rebar => {
+            let u = cosTheta * (rebar.position.x - this.centroidX) + sinTheta * (rebar.position.y - this.centroidY);
+            let v = -sinTheta * (rebar.position.x - this.centroidX) + cosTheta * (rebar.position.y - this.centroidY);
+            return { u, v };
+        });
+    
+        // ✅ Store both transformed concrete and rebar data
+        this.transformedFEMcentroids[angle] = {
+            angle: angle,
+            conc: transformedConcrete,  // ✅ Store concrete mesh UV data
+            rebar: transformedRebar     // ✅ Store rebar UV data
+        };
+    
+        // ✅ Log the min/max U and V values
+        const allUV = [...transformedConcrete, ...transformedRebar];
+        const uVals = allUV.map(p => p.u);
+        const vVals = allUV.map(p => p.v);
+        
+        console.log(`✅ Transformed FEM centroids at ${angle}° stored successfully.`);
+        console.log(`🔹 Min U: ${Math.min(...uVals)}, Max U: ${Math.max(...uVals)}`);
+        console.log(`🔹 Min V: ${Math.min(...vVals)}, Max V: ${Math.max(...vVals)}`);
     }
 }
+

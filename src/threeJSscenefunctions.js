@@ -285,9 +285,8 @@ export function setupMouseInteractions(threeJSDiv) {
                 allSelectedPnts.push(obj);
             } else if (obj.isRebar === true && obj.constructor.name === "Points") {
                 allSelectedRebar.push(obj);
+                console.log(allSelectedRebar)
             } else if (obj.constructor.name === "Mesh" && obj.userData.concShape) {
-                console.log('Your selected mesh contains ConcShape:', obj.userData.concShape);
-                console.log(obj)
                 // allSelectedConc.push(obj);
                 allSelectedConc.push(obj.userData.concShape);
             }
@@ -555,6 +554,11 @@ export function getAllSelectedPnts() {
 
 export function getSelectedConcShape() {
     return allSelectedConc[0]; // ✅ Returns the first current selected concrete
+}
+
+export function getAllSelectedRebar() {
+    console.log("🔹 Returning all selected rebar:", allSelectedRebar);
+    return allSelectedRebar; // ✅ Ensure this function is defined and exported
 }
 
 // ✅ Move delete function to global scope

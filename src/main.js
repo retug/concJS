@@ -115,6 +115,16 @@ document.addEventListener("DOMContentLoaded", () => {
               return;
           }
 
+           // ✅ Get selected rebar
+          const selectedRebar = SceneFunctions.getAllSelectedRebar();
+          if (!selectedRebar || selectedRebar.length === 0) {
+              console.warn("❌ No rebar selected!");
+          } else {
+              console.log(`✅ Found ${selectedRebar.length} selected rebar.`);
+          }
+
+          
+
           // Read input values for edge and interior spacing
           const edgeSpacing = parseFloat(document.getElementById("edgeSpa").value);
           const interiorSpacing = parseFloat(document.getElementById("intSpa").value);
@@ -137,6 +147,10 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.error("FEM mesh generation failed or returned empty.");
           }
+          
+          // ✅ Transform coordinates for 45-degree angle
+          selectedConcShape.transformCoordinatesAtAngle(45, selectedRebar);
+
       });
   }
 });

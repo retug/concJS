@@ -32,6 +32,29 @@ export class StructuralMaterial {
       }
       return true;
     }
+
+    // ✅ Interpolates stress values based on input strain
+    stress(strain) {
+      const strainData = this.strainData;
+      const stressData = this.stressData;
+
+      // ✅ If strain is out of range, return 0 stress
+      if (strain < strainData[0] || strain > strainData[strainData.length - 1]) {
+          return 0;
+      }
+
+      // ✅ Loop through the stress-strain data and interpolate
+      for (let i = 0; i < strainData.length - 1; i++) {
+          if (strain >= strainData[i] && strain <= strainData[i + 1]) {
+              // Linear interpolation formula
+              return stressData[i] + 
+                  ((strain - strainData[i]) * (stressData[i + 1] - stressData[i])) / 
+                  (strainData[i + 1] - strainData[i]);
+          }
+      }
+
+      return 0; // Should never reach here
+  }
   }
   
   export const defaultMaterials = [
@@ -53,14 +76,14 @@ export class StructuralMaterial {
         "fy60ksi",
         "steel",
         "normal",
-        [0, 60000, 60000, 60000, 10],
-        [0, 0.00207, 0.005, 0.01, 0.1]
+        [-10, -60000, -60000, -60000, 0, 60000, 60000, 60000, 10],
+        [-0.02, -0.01, -0.005, -0.00207, 0, 0.00207, 0.005, 0.01, 0.02]
       ),
       new StructuralMaterial(
         "fye75ksi",
         "steel",
-        "normal",
-        [0, 60000, 75000, 75000, 10],
-        [0, 0.00207, 0.005, 0.01, 0.1]
+        "expected",
+        [-10, -75000, -75000, -60000, 0, 60000, 75000, 75000, 10],
+        [-0.02, -0.01, -0.005, -0.00207, 0, 0.00207, 0.005, 0.01, 0.02]
       ),
   ];
