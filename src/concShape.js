@@ -20,14 +20,18 @@ export class ConcShape {
         this.holes = holes;
         this.mesh = null; // base polygon with any holes
         this.FEMmesh = []; // ✅ Stores the FEM triangular elements
-        this.results = { angle: 0, data: [] }; // To store analysis results [P, Mx, My]
+        this.PMMresults = { }; // To store analysis results {angle: [P, Mu, Mv]}
         this.transformedFEMcentroids = {}; // ✅ Initialize as an empty object
-        this.transformedRebarcentriods = {angle: 0, data: []} // Stores transformed coordinates at a given angle, in the UV space
+        
+
         this.basePolyXY = []; // ✅ Stores exterior polygon points
         this.holesPolyXY = []; // ✅ Stores hole points
         this.FEMarea = 0;  // ✅ Total FEM area
         this.centroidX = 0; // ✅ X coordinate of centroid
         this.centroidY = 0; // ✅ Y coordinate of centroid
+        this.strainProfiles = {} //This will store all of the strain profiles for a given NA angle
+
+        this.rebarObjects = [] // ✅ Initialize rebarObjects on creation
         
         if (Array.isArray(input)) {
             // If input is an array of points
@@ -42,6 +46,12 @@ export class ConcShape {
         // ✅ Apply existing holes (if any)
         this.holes.forEach(hole => this.baseshape.holes.push(hole));
     }
+
+    // ✅ Stores Three.js Points objects directly
+    initializeRebarObjects(allSelectedRebar) {
+        this.rebarObjects = allSelectedRebar; // Store Three.js Points directly
+    }
+
 
     addHole(holePoints) {
         const hole = this.createShapeFromPoints(holePoints);
@@ -276,81 +286,245 @@ export class ConcShape {
         return concElements;
     }
 
-    // /**
-    //  * ✅ Transforms the centroids of the FEMmesh into the U-V coordinate system at a given angle θ.
-    //  * @param {number} angle - Rotation angle in **degrees**
-    //  */
-    // transformCoordinatesAtAngle(angle) {
-    //     if (!this.FEMmesh || this.FEMmesh.length === 0) {
-    //         console.error("❌ FEM mesh is empty, cannot transform coordinates.");
-    //         return;
+    //This data will be orgainzed the following way. this.transformedFEMcentroids[45]; will return results at 45 degrees.
+    // {
+    //     45: {  // 🔹 Angle (key)
+    //         angle: 45,  // 🔹 The transformation angle
+    //         conc: [  // 🔹 Transformed concrete FEM mesh centroids (U, V)
+    //             { u: 1.5, v: 3.2 },
+    //             { u: -2.1, v: 4.0 },
+    //         ],
+    //         rebar: [  // 🔹 Transformed rebar centroids (U, V)
+    //             { u: -3.2, v: 5.5 },
+    //             { u: 4.8, v: -1.2 }
+    //         ]
+    //         centroidCoordinates : { "u": 0, "v": 0 }
+    //     },
+
+    //     90: {  // 🔹 Another transformation at 90 degrees
+    //         angle: 90,
+    //         conc: [
+    //             { u: 3.2, v: -1.5 },
+    //             { u: 4.0, v: 2.1 },
+    //         ],
+    //         rebar: [
+    //             { u: 5.5, v: 3.2 },
+    //             { u: -1.2, v: -4.8 }
+    //         ]
+    //         centroidCoordinates : { u: 0, v: 0 }
     //     }
-    
-    //     // ✅ Ensure transformedFEMcentroids is initialized
-    //     if (!this.transformedFEMcentroids) {
-    //         this.transformedFEMcentroids = {}; 
-    //     }
-    
-    //     const radians = (Math.PI / 180) * angle; // Convert degrees to radians
-    //     const cosTheta = Math.cos(radians);
-    //     const sinTheta = Math.sin(radians);
-    
-    //     let transformedPoints = this.FEMmesh.map(mesh => {
-    //         let u = cosTheta * (mesh.centroid.x - this.centroidX) + sinTheta * (mesh.centroid.y - this.centroidY);
-    //         let v = -sinTheta * (mesh.centroid.x - this.centroidX) + cosTheta * (mesh.centroid.y - this.centroidY);
-    //         return [u, v];
-    //     });
-    
-    //     // ✅ Store the transformed points in the dictionary
-    //     this.transformedFEMcentroids[angle] = transformedPoints;
-    
-    //     console.log(`✅ Transformed FEM centroids at ${angle}° stored successfully.`);
     // }
-    transformCoordinatesAtAngle(angle, allSelectedRebar) {
+
+    // ✅ Transforms coordinates at a given angle
+    transformCoordinatesAtAngle(angle) {
         if (!this.FEMmesh || this.FEMmesh.length === 0) {
             console.error("❌ FEM mesh is empty, cannot transform coordinates.");
             return;
         }
-    
+
         if (!this.transformedFEMcentroids) {
             this.transformedFEMcentroids = {};
         }
-    
+
         const radians = (Math.PI / 180) * angle; // Convert degrees to radians
         const cosTheta = Math.cos(radians);
         const sinTheta = Math.sin(radians);
-    
+
         // ✅ Transform Concrete Centroids
         let transformedConcrete = this.FEMmesh.map(mesh => {
             let u = cosTheta * (mesh.centroid.x - this.centroidX) + sinTheta * (mesh.centroid.y - this.centroidY);
             let v = -sinTheta * (mesh.centroid.x - this.centroidX) + cosTheta * (mesh.centroid.y - this.centroidY);
             return { u, v };
         });
-    
-        // ✅ Transform Rebar Centroids
-        console.log("YOUR SELECTED REBAR IS THE FOLLOWING")
-        console.log(allSelectedRebar)
-        let transformedRebar = allSelectedRebar.map(rebar => {
-            let u = cosTheta * (rebar.position.x - this.centroidX) + sinTheta * (rebar.position.y - this.centroidY);
-            let v = -sinTheta * (rebar.position.x - this.centroidX) + cosTheta * (rebar.position.y - this.centroidY);
+
+        // ✅ Transform Rebar Centroids (Stored in `rebarObjects`)
+        let transformedRebar = this.rebarObjects.map(rebar => {
+            let rebarX = rebar.geometry.attributes.position.array[0]
+            let rebarY = rebar.geometry.attributes.position.array[1]
+ 
+            let u = cosTheta * (rebarX - this.centroidX) + sinTheta * (rebarY - this.centroidY);
+            let v = -sinTheta * (rebarX - this.centroidX) + cosTheta * (rebarY - this.centroidY);
+            
+            // ✅ Store transformed coordinates inside the rebar object
+            if (!rebar.transformed) rebar.transformed = {}; // Ensure dictionary exists
+            rebar.transformed[angle] = { u, v };
+
             return { u, v };
         });
-    
-        // ✅ Store both transformed concrete and rebar data
+
+        // ✅ Transform Centroid Coordinates
+        let transformedCentroid = {
+            u: cosTheta * (this.centroidX - this.centroidX) + sinTheta * (this.centroidY - this.centroidY),
+            v: -sinTheta * (this.centroidX - this.centroidX) + cosTheta * (this.centroidY - this.centroidY)
+        };
+
+        // ✅ Store transformed data in the dictionary
         this.transformedFEMcentroids[angle] = {
             angle: angle,
-            conc: transformedConcrete,  // ✅ Store concrete mesh UV data
-            rebar: transformedRebar     // ✅ Store rebar UV data
+            conc: transformedConcrete,         // ✅ Store concrete mesh UV data
+            rebar: this.rebarObjects,          // ✅ Store rebar objects with UV data
+            centroidCoordinates: transformedCentroid  // ✅ Store transformed centroid
         };
-    
+
         // ✅ Log the min/max U and V values
-        const allUV = [...transformedConcrete, ...transformedRebar];
+        const allUV = [...transformedConcrete, ...this.rebarObjects.map(rebar => rebar.transformed[angle])];
         const uVals = allUV.map(p => p.u);
         const vVals = allUV.map(p => p.v);
-        
+
         console.log(`✅ Transformed FEM centroids at ${angle}° stored successfully.`);
         console.log(`🔹 Min U: ${Math.min(...uVals)}, Max U: ${Math.max(...uVals)}`);
         console.log(`🔹 Min V: ${Math.min(...vVals)}, Max V: ${Math.max(...vVals)}`);
+        console.log(`🎯 Transformed Centroid at ${angle}°: U=${transformedCentroid.u}, V=${transformedCentroid.v}`);
+    }
+
+    // Generate Strain Profiles for the PM Analysis
+    generateStrains(angle) {
+        // ✅ Ensure the transformed FEM centroids exist for the given angle
+        if (!this.transformedFEMcentroids[angle]) {
+            console.error(`❌ No transformed FEM centroids found for angle ${angle}`);
+            return;
+        }
+
+        // ✅ Extract transformed rebar and concrete locations
+        let rebarLocations = this.transformedFEMcentroids[angle].rebar.map(p => p.v); // Get only V coordinates
+        let concLocations = this.transformedFEMcentroids[angle].conc.map(p => p.v);  // Get only V coordinates
+
+        if (!rebarLocations.length || !concLocations.length) {
+            console.error("❌ Rebar or Concrete locations are empty. Cannot generate strain profiles.");
+            return;
+        }
+
+        // ✅ Find min/max V positions for rebar and concrete
+        let rebarMax = Math.max(...rebarLocations);
+        let rebarMin = Math.min(...rebarLocations);
+        let concMax = Math.max(...concLocations);
+        let concMin = Math.min(...concLocations);
+
+        console.log(`🔹 Angle ${angle}°:`);
+        console.log(`   ✅ Rebar Max: ${rebarMax}, Min: ${rebarMin}`);
+        console.log(`   ✅ Concrete Max: ${concMax}, Min: ${concMin}`);
+
+        // ✅ Define strain limits
+        let epsilon_c = -0.003;  // Concrete crushing strain
+        let epsilon_t = 0.025;   // Maximum tension strain
+        let steps = 10;          // Number of steps for profile generation
+
+        // ✅ Initialize strain profiles
+        let strainProfileCtoT = [];
+        let strainProfileTtoT = [];
+        let strainProfileTtoC = [];
+        let strainProfileCtoC = [];
+
+        // ✅ Compute slope steps
+        let slopeStepCtoT = ((epsilon_t - epsilon_c) / (concMax - rebarMin)) / (steps - 1);
+        let slopeStepTtoT = ((epsilon_c - epsilon_t) / (concMax - rebarMin)) / (steps - 1);
+        let slopeStepTtoC = -((epsilon_c - epsilon_t) / (rebarMax - concMin)) / (steps - 1);
+        let slopeStepCtoC = -((epsilon_c - epsilon_t) / (rebarMax - concMin)) / (steps - 1);
+
+        // ✅ Generate strain profiles
+        for (let i = 0; i < steps; i++) {
+            // ✅ Compression to Tension (C to T)
+            strainProfileCtoT.push([
+                -i * slopeStepCtoT, 
+                epsilon_c - (-i * slopeStepCtoT) * concMax
+            ]);
+
+            // ✅ Tension Failure to Tension (T to T)
+            strainProfileTtoT.push([
+                -(epsilon_t - epsilon_c) / (concMax - rebarMin) - slopeStepTtoT * i,
+                epsilon_t - (-(epsilon_t - epsilon_c) / (concMax - rebarMin) - slopeStepTtoT * i) * rebarMin
+            ]);
+
+            // ✅ Tension to Compression (T to C)
+            strainProfileTtoC.push([
+                slopeStepTtoC * i,
+                epsilon_t - (i * slopeStepTtoC) * rebarMax
+            ]);
+
+            // ✅ Compression to Compression (C to C)
+            strainProfileCtoC.push([
+                -((epsilon_c - epsilon_t) / (rebarMax - concMin)) - slopeStepCtoC * i,
+                epsilon_c - slopeStepCtoC * -(steps - 1 - i) * -concMin
+            ]);
+        }
+
+        // ✅ Combine all strain profiles
+        let strainProfile = strainProfileCtoT.concat(strainProfileTtoT, strainProfileTtoC, strainProfileCtoC);
+
+        console.log(`✅ Generated strain profile for angle ${angle}:`, strainProfile);
+
+        // ✅ Store strain profile in the class dictionary
+        if (!this.strainProfiles) {
+            this.strainProfiles = {}; 
+        }
+        this.strainProfiles[angle] = strainProfile;
+
+        return strainProfile;
+    }
+
+    //assumes a linear strain distribution
+    strainFunction(m, x, b) {
+        return m*x+b
+    }
+  
+    // Given the angle, generate the associated P, Mu, Mv.
+    generatePMM(angle) {
+        if (!this.transformedFEMcentroids[angle]) {
+            console.error(`❌ No transformed centroids found for angle ${angle}`);
+            return;
+        }
+        
+        if (!this.strainProfiles[angle]) {
+            console.error(`❌ No strain profiles found for angle ${angle}`);
+            return;
+        }
+    
+    
+        console.log(`🔹 Generating PMM for angle ${angle}°...`);
+    
+        let totalAxialForceArray = []
+        let totalMomentUArray = []
+        let totalMomentVArray = []
+
+        // Retrieve centroid coordinates in U-V space
+        let centroidU = this.transformedFEMcentroids[angle].centroidCoordinates.u;
+        let centroidV = this.transformedFEMcentroids[angle].centroidCoordinates.v;
+
+        // Get material properties
+        let concMaterial = this.material;  // ✅ Concrete material stored in class
+    
+        //looping through each stress strain profile
+        for (var strainProfile of this.strainProfiles[angle]) {
+        let concForce = 0
+        let concMomentV = 0
+        let concMomentU = 0
+        let steelForce = 0
+        let steelMomentV = 0
+        let steelMomentU = 0
+    
+    
+        for (var concEle of concElements) {
+            //Using the materials class .stress function, generate the given force from the given strain profile. Stress(strain)*area
+            let nodalConcForce = concMaterial.stress(strainFunction(strainProfile[0],concEle.centriod.v, strainProfile[1]))*concEle.area
+            concForce += nodalConcForce
+            concMomentV += nodalConcForce*(centriodV-concCentriod[1])
+            concMomentU += nodalConcForce*(centriodU-concCentriod[1])
+        }
+        
+        for (var steelRebar of rebarShapes) {
+            //area times stress(strain)
+            let nodalSteelForce = Math.PI/4*rebarDia[steelRebar.rebarSize]**2*steelMaterial.stress(strainFunction(strainProfile[0],steelElement.v, strainProfile[1]))
+            steelForce += nodalSteelForce
+            steelMomentV += nodalSteelForce*(centriodV-concCentriod[1])
+            steelMomentU += nodalSteelForce*(centriodU-concCentriod[1])
+        }
+        let resultForce=steelForce+concForce
+        totalForceArray.push(resultForce)
+        totalMomentVArray.push((-steelMomentV-concMomentV)/12)
+        totalMomentUArray.push((-steelMomentU-concMomentU)/12)
+    
+        }
+        return [totalAxialForceArray, totalMomentUArray, totalMomentVArray]
     }
 }
 

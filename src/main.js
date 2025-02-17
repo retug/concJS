@@ -120,8 +120,14 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!selectedRebar || selectedRebar.length === 0) {
               console.warn("❌ No rebar selected!");
           } else {
-              console.log(`✅ Found ${selectedRebar.length} selected rebar.`);
+              console.log(`✅ Found rebar,`, selectedRebar);
           }
+
+        // ✅ Fire initializeRebarObjects() independently
+        selectedConcShape.initializeRebarObjects(selectedRebar);
+        
+
+        
 
           
 
@@ -150,15 +156,14 @@ document.addEventListener("DOMContentLoaded", () => {
           
           // ✅ Transform coordinates for 45-degree angle
           selectedConcShape.transformCoordinatesAtAngle(45, selectedRebar);
+          // ✅ Generate Strain profiles for the given angle
+          selectedConcShape.generateStrains(45);
+
+          console.log(`✅ rebar objects.`, selectedConcShape.rebarObjects);
 
       });
   }
 });
-
-
-
-
-
 
 const concGui = document.querySelector('#concGui');
 
