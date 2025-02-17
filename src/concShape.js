@@ -386,8 +386,12 @@ export class ConcShape {
         }
 
         // ✅ Extract transformed rebar and concrete locations
-        let rebarLocations = this.transformedFEMcentroids[angle].rebar.map(p => p.v); // Get only V coordinates
         let concLocations = this.transformedFEMcentroids[angle].conc.map(p => p.v);  // Get only V coordinates
+
+        // ✅ Extract transformed rebar V coordinates
+        let rebarLocations = this.rebarObjects
+        .map(rebar => rebar.transformed[angle]?.v) // ✅ Access transformed V values
+        .filter(v => v !== undefined); // ✅ Filter out undefined values
 
         if (!rebarLocations.length || !concLocations.length) {
             console.error("❌ Rebar or Concrete locations are empty. Cannot generate strain profiles.");
@@ -495,35 +499,44 @@ export class ConcShape {
     
         //looping through each stress strain profile
         for (var strainProfile of this.strainProfiles[angle]) {
-        let concForce = 0
-        let concMomentV = 0
-        let concMomentU = 0
-        let steelForce = 0
-        let steelMomentV = 0
-        let steelMomentU = 0
+            let concForce = 0
+            let concMomentV = 0
+            let concMomentU = 0
+            let steelForce = 0
+            let steelMomentV = 0
+            let steelMomentU = 0
     
     
-        for (var concEle of concElements) {
-            //Using the materials class .stress function, generate the given force from the given strain profile. Stress(strain)*area
-            let nodalConcForce = concMaterial.stress(strainFunction(strainProfile[0],concEle.centriod.v, strainProfile[1]))*concEle.area
-            concForce += nodalConcForce
-            concMomentV += nodalConcForce*(centriodV-concCentriod[1])
-            concMomentU += nodalConcForce*(centriodU-concCentriod[1])
-        }
+            for (let concEle of this.FEMmesh) {
+                //Using the materials class .stress function, generate the given force from the given strain profile. Stress(strain)*area
+                let concStrain = this.strainFunction(strainProfile[0], concEle.centroid.v, strainProfile[1]);
+                let nodalConcForce = concMaterial.stress(concStrain) * concEle.area;
+                concForce += nodalConcForce
+                concMomentV += nodalConcForce*(centriodV-concEle.centroid.v)
+                concMomentU += nodalConcForce*(centriodU-concEle.centroid.u)
+            }
+            
+            for (let rebar of rebarObjects) {
+                //area times stress(strain)
+                let steelMaterial = rebar.materialData; // ✅ Retrieve steel material
+                let transformedRebar = rebar.transformed[angle]; // ✅ Get transformed U/V at angle
+                if (!transformedRebar) {
+                    console.warn(`⚠️ No transformed coordinates for rebar at angle ${angle}`);
+                    continue;
+                }
+    
+                let rebarStrain = this.strainFunction(strainProfile[0], transformedRebar.v, strainProfile[1]);
+                let nodalSteelForce = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2 * steelMaterial.stress(rebarStrain);
+                steelForce += nodalSteelForce
+                steelMomentV += nodalSteelForce*(centriodV-transformedRebar.v)
+                steelMomentU += nodalSteelForce*(centriodU-transformedRebar.u)
+            }
+            let resultForce=steelForce+concForce
+            totalForceArray.push(resultForce)
+            totalMomentVArray.push((-steelMomentV-concMomentV)/12)
+            totalMomentUArray.push((-steelMomentU-concMomentU)/12)
         
-        for (var steelRebar of rebarShapes) {
-            //area times stress(strain)
-            let nodalSteelForce = Math.PI/4*rebarDia[steelRebar.rebarSize]**2*steelMaterial.stress(strainFunction(strainProfile[0],steelElement.v, strainProfile[1]))
-            steelForce += nodalSteelForce
-            steelMomentV += nodalSteelForce*(centriodV-concCentriod[1])
-            steelMomentU += nodalSteelForce*(centriodU-concCentriod[1])
-        }
-        let resultForce=steelForce+concForce
-        totalForceArray.push(resultForce)
-        totalMomentVArray.push((-steelMomentV-concMomentV)/12)
-        totalMomentUArray.push((-steelMomentU-concMomentU)/12)
-    
-        }
+            }
         return [totalAxialForceArray, totalMomentUArray, totalMomentVArray]
     }
 }
