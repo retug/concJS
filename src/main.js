@@ -91,6 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+
+
 // Attach addPoint function to the button
 document.getElementById("addPointBtn").addEventListener("click", SceneFunctions.addPoint);
 
@@ -153,15 +155,17 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.error("FEM mesh generation failed or returned empty.");
           }
-          
+          let angle = 45;
           // ✅ Transform coordinates for 45-degree angle
-          selectedConcShape.transformCoordinatesAtAngle(0, selectedRebar);
+          selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
           // ✅ Generate Strain profiles for the given angle
-          selectedConcShape.generateStrains(0);
+          selectedConcShape.generateStrains(angle);
 
           console.log(`✅ rebar objects.`, selectedConcShape.rebarObjects);
-          selectedConcShape.generatePMM(0)
+          selectedConcShape.generatePMM(angle)
           selectedConcShape.plotPMMResults();
+          selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][5]);
+          selectedConcShape.setupResultsControls();
 
       });
   }
@@ -180,7 +184,7 @@ const renderer = new THREE.WebGLRenderer({
 scene.background = new THREE.Color( 0xffffff );
 
 // Export camera and renderer for use in other files
-export { camera, renderer, scene };
+export { camera, renderer, scene, controls };
 
 
 renderer.setSize(concGui.offsetWidth, concGui.offsetHeight)

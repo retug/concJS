@@ -12,7 +12,7 @@
 
 import * as THREE from 'three';
 import Delaunator from 'delaunator';
-import { scene } from "./main.js"; 
+import { scene, controls } from "./main.js"; 
 import { rebarDia } from './threeJSscenefunctions.js';
 import Plotly from 'plotly.js-dist-min';
 
@@ -23,7 +23,8 @@ export class ConcShape {
         this.holes = holes;
         this.mesh = null; // base polygon with any holes
         this.FEMmesh = []; // ✅ Stores the FEM triangular elements
-        this.PMMresults = { }; // To store analysis results {angle: [P, Mu, Mv]}
+        this.PMMXYresults = { }; // To store analysis results {angle: [P, Mx, My]}
+        this.PMMUVresults = { }; // To store analysis results {angle: [P, Mu, Mv]}
         this.transformedFEMcentroids = {}; // ✅ Initialize as an empty object
         
 
@@ -288,7 +289,7 @@ export class ConcShape {
 
         return concElements;
     }
-
+    // FUTURE WORK FW, need to get rid of this, everything will be handled with default three.js elements. no need to make this and map indexes back and forth
     //This data will be orgainzed the following way. this.transformedFEMcentroids[45]; will return results at 45 degrees.
     // {
     //     45: {  // 🔹 Angle (key)
@@ -337,6 +338,9 @@ export class ConcShape {
         let transformedConcrete = this.FEMmesh.map(mesh => {
             let u = cosTheta * (mesh.centroid.x - this.centroidX) + sinTheta * (mesh.centroid.y - this.centroidY);
             let v = -sinTheta * (mesh.centroid.x - this.centroidX) + cosTheta * (mesh.centroid.y - this.centroidY);
+            // ✅ Store transformed coordinates inside the rebar object
+            if (!mesh.transformedCentroid) mesh.transformedCentroid = {}; // Ensure dictionary exists
+            mesh.transformedCentroid[angle] = {u, v}
             return { u, v };
         });
 
@@ -349,8 +353,8 @@ export class ConcShape {
             let v = -sinTheta * (rebarX - this.centroidX) + cosTheta * (rebarY - this.centroidY);
             
             // ✅ Store transformed coordinates inside the rebar object
-            if (!rebar.transformed) rebar.transformed = {}; // Ensure dictionary exists
-            rebar.transformed[angle] = { u, v };
+            if (!rebar.transformedCentroid) rebar.transformedCentroid = {}; // Ensure dictionary exists
+            rebar.transformedCentroid[angle] = { u, v };
 
             return { u, v };
         });
@@ -370,7 +374,7 @@ export class ConcShape {
         };
 
         // ✅ Log the min/max U and V values
-        const allUV = [...transformedConcrete, ...this.rebarObjects.map(rebar => rebar.transformed[angle])];
+        const allUV = [...transformedConcrete, ...this.rebarObjects.map(rebar => rebar.transformedCentroid[angle])];
         const uVals = allUV.map(p => p.u);
         const vVals = allUV.map(p => p.v);
 
@@ -393,7 +397,7 @@ export class ConcShape {
 
         // ✅ Extract transformed rebar V coordinates
         let rebarLocations = this.rebarObjects
-        .map(rebar => rebar.transformed[angle]?.v) // ✅ Access transformed V values
+        .map(rebar => rebar.transformedCentroid[angle]?.v) // ✅ Access transformed V values
         .filter(v => v !== undefined); // ✅ Filter out undefined values
 
         if (!rebarLocations.length || !concLocations.length) {
@@ -469,6 +473,15 @@ export class ConcShape {
         return strainProfile;
     }
 
+    // Function to convert Mu and Mv to Mx and My
+    convertUVtoXY(angle, Mu, Mv) {
+        let radians = (Math.PI / 180) * angle;
+        let Mx = Mu * Math.cos(radians) - Mv * Math.sin(radians);
+        let My = Mu * Math.sin(radians) + Mv * Math.cos(radians);
+        return { Mx, My };
+    }   
+
+
     //assumes a linear strain distribution
     strainFunction(m, x, b) {
         return m*x+b
@@ -492,6 +505,9 @@ export class ConcShape {
         let totalAxialForceArray = []
         let totalMomentUArray = []
         let totalMomentVArray = []
+        let totalMomentXArray = []
+        let totalMomentYArray = []
+
 
         // Retrieve centroid coordinates in U-V space
         let centroidU = this.transformedFEMcentroids[angle].centroidCoordinates.u;
@@ -500,14 +516,17 @@ export class ConcShape {
         // Get material properties
         let concMaterial = this.material;  // ✅ Concrete material stored in class
 
-        // ✅ Ensure PMM dictionary exists
-        if (!this.PMMresults) {
-            this.PMMresults = {};
+        if (!this.PMMUVresults) {
+            this.PMMUVresults = {};
         }
-
-        // ✅ Ensure the angle entry exists in PMMresults
-        if (!this.PMMresults[angle]) {
-            this.PMMresults[angle] = { P: [], Mu: [], Mv: [] };
+        if (!this.PMMXYresults) {
+            this.PMMXYresults = {};
+        }
+        if (!this.PMMUVresults[angle]) {
+            this.PMMUVresults[angle] = { P: [], Mu: [], Mv: [] };
+        }
+        if (!this.PMMXYresults[angle]) {
+            this.PMMXYresults[angle] = { P: [], Mx: [], My: [] };
         }
     
         //looping through each stress strain profile
@@ -529,13 +548,9 @@ export class ConcShape {
                     continue;
                 }
             
-                // ✅ Use transformed V coordinate
                 let concStrain = this.strainFunction(strainProfile[0], transformedConc.v, strainProfile[1]);
                 let nodalConcForce = concMaterial.stress(concStrain) * concEle.area;
             
-                // ✅ Debugging logs
-                // console.log(concEle);
-                // console.log(`Original V: ${concEle.centroid.v}, Transformed V: ${transformedConc.v}`);
             
                 concForce += nodalConcForce;
                 concMomentV += nodalConcForce * (centroidV - transformedConc.v);
@@ -545,7 +560,7 @@ export class ConcShape {
             for (let rebar of this.rebarObjects) {
                 //area times stress(strain)
                 let steelMaterial = rebar.materialData; // ✅ Retrieve steel material
-                let transformedRebar = rebar.transformed[angle]; // ✅ Get transformed U/V at angle
+                let transformedRebar = rebar.transformedCentroid[angle]; // ✅ Get transformed U/V at angle
                 if (!transformedRebar) {
                     console.warn(`⚠️ No transformed coordinates for rebar at angle ${angle}`);
                     continue;
@@ -553,106 +568,165 @@ export class ConcShape {
     
                 let rebarStrain = this.strainFunction(strainProfile[0], transformedRebar.v, strainProfile[1]);
                 let nodalSteelForce = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2 * steelMaterial.stress(rebarStrain);
-                // console.log(rebarDia[rebar.rebarSize]) size is correct
-                // console.log(steelMaterial) //Material is correct
-                // console.log(rebarStrain) //strain appears correct
-                // console.log(steelMaterial.stress(rebarStrain)) //stress appears correct
 
                 steelForce += nodalSteelForce
                 steelMomentV += nodalSteelForce*(centroidV-transformedRebar.v)
                 steelMomentU += nodalSteelForce*(centroidU-transformedRebar.u)
             }
-            console.log('your steel force is', steelForce)
-            console.log('your conc force is', concForce)
-            let resultForce=steelForce+concForce
-            totalAxialForceArray.push(resultForce)
-            totalMomentVArray.push((-steelMomentV-concMomentV)/12)
-            totalMomentUArray.push((-steelMomentU-concMomentU)/12)
-            }
-        // ✅ Store results in dictionary
-        this.PMMresults[angle].P.push(totalAxialForceArray);
-        this.PMMresults[angle].Mu.push(totalMomentUArray);
-        this.PMMresults[angle].Mv.push(totalMomentVArray);
+            let resultForce = (steelForce + concForce)/1000;
+            let Mu = (-steelMomentU - concMomentU) / 12;
+            let Mv = (-steelMomentV - concMomentV) / 12;
+            let { Mx, My } = this.convertUVtoXY(angle, Mu, Mv);
 
-        console.log("PMM Results Data:", this.PMMresults);
+            totalAxialForceArray.push(resultForce);
+            totalMomentUArray.push(Mu);
+            totalMomentVArray.push(Mv);
+            totalMomentXArray.push(Mx);
+            totalMomentYArray.push(My);
+        }
 
+        this.PMMUVresults[angle].P.push(totalAxialForceArray);
+        this.PMMUVresults[angle].Mu.push(totalMomentUArray);
+        this.PMMUVresults[angle].Mv.push(totalMomentVArray);
+        this.PMMXYresults[angle].P.push(totalAxialForceArray);
+        this.PMMXYresults[angle].Mx.push(totalMomentXArray);
+        this.PMMXYresults[angle].My.push(totalMomentYArray);
     }
+    
 
+    // Modify the plot function to format hover tooltips
     plotPMMResults() {
-        if (!this.PMMresults || Object.keys(this.PMMresults).length === 0) {
-            console.error("❌ No PMM results available to plot.");
+        if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
+            console.error("❌ No PMM XY results available to plot.");
             return;
         }
-    
-        // Extract P, Mu, Mv from PMMresults dictionary
+
         let P_values = [];
-        let Mu_values = [];
-        let Mv_values = [];
+        let Mx_values = [];
+        let My_values = [];
         let angles = [];
-    
-        for (let angle in this.PMMresults) {
-            P_values.push(...this.PMMresults[angle].P.flat());
-            Mu_values.push(...this.PMMresults[angle].Mu.flat());
-            Mv_values.push(...this.PMMresults[angle].Mv.flat());
-            angles.push(...Array(this.PMMresults[angle].P.flat().length).fill(Number(angle))); // Store angles as numbers
+
+        for (let angle in this.PMMXYresults) {
+            P_values.push(...this.PMMXYresults[angle].P.flat());
+            Mx_values.push(...this.PMMXYresults[angle].Mx.flat());
+            My_values.push(...this.PMMXYresults[angle].My.flat());
+            angles.push(...Array(this.PMMXYresults[angle].P.flat().length).fill(Number(angle)));
         }
-    
-        console.log("your P values are", P_values);
-        console.log("your Mu values are", Mu_values);
-        console.log("your Mv values are", Mv_values);
-        console.log("your angles are", angles);
-    
-        // Remove existing content and add a new div for Plotly
-        let resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
-    
-        // ✅ Scatter Plot (Points)
+
         let scatterTrace = {
-            x: Mu_values,
-            y: Mv_values,
+            x: Mx_values,
+            y: My_values,
             z: P_values,
             mode: "markers",
             type: "scatter3d",
-            marker: {
-                size: 5,
-                color: angles, // Color by angle
-                colorscale: "Viridis",
-                opacity: 0.8
-            },
-            name: "PMM Data"
+            marker: { size: 5, color: angles, colorscale: "Viridis", opacity: 0.8 },
+            name: "PMM Data",
+            hovertemplate: "P - %{z:.1f} (k)<br>" +
+                        "Mx - %{x:.1f} (kip*ft)<br>" +
+                        "My - %{y:.1f} (kip*ft)"
         };
-    
-        // ✅ Line Plot (Connecting the points)
-        let lineTrace = {
-            x: Mu_values,
-            y: Mv_values,
-            z: P_values,
-            mode: "lines",
-            type: "scatter3d",
-            line: {
-                color: "black",
-                width: 2
-            },
-            name: "PMM Curve"
-        };
-    
-        // ✅ Find axis limits to make them equal
-        let minVal = Math.min(...Mu_values, ...Mv_values, ...P_values);
-        let maxVal = Math.max(...Mu_values, ...Mv_values, ...P_values);
-    
+
         let layout = {
             title: "3D P-M Interaction Diagram",
             scene: {
-                xaxis: { title: "Mu (kip-ft)", range: [minVal, maxVal] },
-                yaxis: { title: "Mv (kip-ft)", range: [minVal, maxVal] },
-                zaxis: { title: "P (kips)", range: [minVal, maxVal] },
-                aspectmode: "cube" // ✅ Forces equal scaling on all axes
+                xaxis: { title: "Mx (kip-ft)" },
+                yaxis: { title: "My (kip-ft)" },
+                zaxis: { title: "P (k)" },
+                aspectmode: "cube"
             },
             margin: { l: 0, r: 0, b: 0, t: 50 }
         };
-    
-        // ✅ Render the plot with both traces
-        Plotly.newPlot("pmPlot", [scatterTrace, lineTrace], layout);
+        let resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
+        Plotly.newPlot("pmPlot", [scatterTrace], layout);
+    }
+
+    generate3dStressPlot(angle, strainProfile) {
+        //this function will update the 3d scene, plotting the stress of each element in the scene.
+        //given the angle and strainProfile, calculate the stress at the centroid of all concrete elemments given strain.
+        //Then modify concrete FEMmesh z index to plot stress, times a factor say 2 (stress/2 for 4ksi concrete is 2 units of displacment.) apply this to all FEMmesh objects in the scene.
+        // let positions = mesh.geometry.attributes.position.array, positions[i + 2] = zOffset; positions[i + 5] = zOffset; positions[i + 8] = zOffset;
+        // do a similar process for all rebarObjects in the scene. offset the rebar point object by its stress with some factor say stress/5
+        // Function to calculate stress based on strain profile
+        // Function to calculate stress based on strain profile, U, and V values
+
+        const concreteScaleFactor = 4; // Adjust as needed
+        const rebarScaleFactor = 5; // Adjust as needed
+
+        function calculateStress(element, strainProfile, angle, concreteMat) {
+            console.log(element)
+            let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
+            if (!transformed) {
+                console.warn(`⚠️ No transformed coordinates for element at angle ${angle}`);
+                return 0;
+            }
+            
+            let strain = strainProfile[0] * transformed.v + strainProfile[1];
+            if (element instanceof THREE.Mesh) {
+                console.log("THIS IS A CONCERETE ELEMENT")
+
+                return concreteMat.stress(strain);
+                
+            }
+            else {
+                console.log("THIS IS A REBAR ELEMENT")
+                return element.materialData.stress(strain);
+            }
+            
+        }
+
+        // Iterate through all FEMmesh objects in the scene
+        const concreteMat = this.material
+        this.FEMmesh.forEach((object) => {
+            if (!object.geometry || !object.geometry.attributes.position) {
+                console.warn("⚠️ Invalid FEM mesh object.");
+                return;
+            }
+
+            let positions = object.geometry.attributes.position.array;
+            let stress = calculateStress(object, strainProfile, angle, concreteMat);
+            let zOffset = (stress / 4000) * concreteScaleFactor; // Assuming 4 ksi concrete
+
+            // Modify z-coordinates of vertices
+            for (let i = 2; i < positions.length; i += 9) {
+                positions[i] += zOffset;
+                if (positions[i + 3] !== undefined) positions[i + 3] += zOffset;
+                if (positions[i + 6] !== undefined) positions[i + 6] += zOffset;
+            }
+            
+            object.geometry.attributes.position.needsUpdate = true;
+        });
+        
+        // Iterate through all rebar objects
+        this.rebarObjects.forEach((object) => {
+            console.log(object)
+            if (!object.position) {
+                console.warn("⚠️ Invalid rebar object.");
+                return;
+            }
+            
+            let stress = calculateStress(object, strainProfile, angle, concreteMat);
+            let zOffset = (stress / 5) * rebarScaleFactor;
+            
+            // Apply offset to rebar position
+            object.position.z += zOffset;
+            object.geometry.attributes.position.needsUpdate = true;
+        });
+    }
+    setupResultsControls(){
+        console.log("Setting up results controls...");
+        // Remove mouse interactions setup
+        console.log(controls)
+        if (typeof SceneFunctions !== 'undefined' && SceneFunctions.setupMouseInteractions) {
+            delete SceneFunctions.setupMouseInteractions;
+        }
+        
+        // Re-enable orbit controls rotation
+        if (typeof controls !== 'undefined') {
+            controls.enableRotate = true;
+            controls.mouseButtons = {MIDDLE: THREE.MOUSE.ROTATE}
+            console.log(controls)
+        }
     }
 }
 
