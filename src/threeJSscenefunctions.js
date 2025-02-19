@@ -549,7 +549,14 @@ export function addConcGeo(allSelectedPnts) {
         opacity: 0.4
     });
 
-    const concShape = new ConcShape(pointsArray, material);
+    const materialNameConc = document.getElementById("concrete_mat").value;
+    const selectedMaterialConc = defaultMaterials.find(material => material.name === materialNameConc);
+    if (!selectedMaterialConc) {
+        console.warn(`Material "${materialNameConc}" not found in default materials.`);
+        return;
+    }
+
+    const concShape = new ConcShape(pointsArray, selectedMaterialConc);
 
     // ✅ Generate and add the mesh to the scene
     concShape.generateMesh();
