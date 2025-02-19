@@ -98,9 +98,8 @@ document.getElementById("addPointBtn").addEventListener("click", SceneFunctions.
 
 // Attach addRebarToScene function properly
 document.addEventListener("DOMContentLoaded", () => {
-  let mouseTrackingHandler; // Store event listener reference
-  // Ensure threeJSDiv is properly defined before calling setupMouseTracking
-  const threeJSDiv = document.getElementById("concGui"); // Replace with actual container ID
+
+  
   document.getElementById("addRebarBtn").addEventListener("click", () => {
       if (!sprite) {
           console.warn("Texture not yet loaded, please wait.");
@@ -108,11 +107,22 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       SceneFunctions.addRebarToScene(sprite);
   });
+
+
   const generatePMMBtn = document.getElementById("generatePMM-button");
   if (generatePMMBtn) {
       generatePMMBtn.addEventListener("click", () => {
           console.log("Generate PM button clicked! Creating FEM mesh...");
+          const threeJSDiv = document.getElementById("concGui");
 
+          if (mouseTrackingHandler) {
+            threeJSDiv.removeEventListener("mousemove", mouseTrackingHandler);
+            console.log("✅ Mouse tracking disabled.");
+            mouseTrackingHandler = null; // Prevents multiple removals
+          } else {
+              console.warn("⚠️ Mouse tracking was already disabled or not assigned properly.");
+          }
+            
           // Get the selected concrete shape
           const selectedConcShape = SceneFunctions.getSelectedConcShape();
           if (!selectedConcShape) {
@@ -127,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.log(`✅ Found rebar,`, selectedRebar);
           }
-        threeJSDiv.removeEventListener("mousemove", mouseTrackingHandler);
+        
         // ✅ Fire initializeRebarObjects() independently
         selectedConcShape.initializeRebarObjects(selectedRebar);
         
@@ -173,6 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 });
+
 
 const concGui = document.querySelector('#concGui');
 
@@ -266,11 +277,11 @@ intersectionPoint.visible = false;
 scene.add(intersectionPoint);
 
 // Call the function to enable mouse tracking
-// Store the event listener reference
-let mouseTrackingHandler;
+
 
 // Call the function to enable mouse tracking and store the handler
-mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
+let mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
+console.log("MOUSE TRACKING HANDLER IS", mouseTrackingHandler)
 SceneFunctions.setupMouseInteractions(topDiv);
 // SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
 

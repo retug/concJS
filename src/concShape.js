@@ -284,8 +284,6 @@ export class ConcShape {
             // Remove all objects from the scene that are not FEMmesh objects
             scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj));
 
-            // Log all mesh objects in the scene
-            console.log("All Mesh Objects in Scene:", scene.children.filter(obj => obj instanceof THREE.Mesh));
         }
 
         // ✅ Compute final centroid
@@ -389,10 +387,6 @@ export class ConcShape {
         const uVals = allUV.map(p => p.u);
         const vVals = allUV.map(p => p.v);
 
-        console.log(`✅ Transformed FEM centroids at ${angle}° stored successfully.`);
-        console.log(`🔹 Min U: ${Math.min(...uVals)}, Max U: ${Math.max(...uVals)}`);
-        console.log(`🔹 Min V: ${Math.min(...vVals)}, Max V: ${Math.max(...vVals)}`);
-        console.log(`🎯 Transformed Centroid at ${angle}°: U=${transformedCentroid.u}, V=${transformedCentroid.v}`);
     }
 
     // Generate Strain Profiles for the PMM Analysis, returns [m and b] of y = mx +b linear strain equation
@@ -665,7 +659,6 @@ export class ConcShape {
         const rebarScaleFactor = 5; // Adjust as needed
 
         function calculateStress(element, strainProfile, angle, concreteMat) {
-            console.log(element)
             let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
             if (!transformed) {
                 console.warn(`⚠️ No transformed coordinates for element at angle ${angle}`);
@@ -674,13 +667,11 @@ export class ConcShape {
             
             let strain = strainProfile[0] * transformed.v + strainProfile[1];
             if (element instanceof THREE.Mesh) {
-                console.log("THIS IS A CONCERETE ELEMENT")
 
                 return concreteMat.stress(strain);
                 
             }
             else {
-                console.log("THIS IS A REBAR ELEMENT")
                 return element.materialData.stress(strain);
             }
             
@@ -723,7 +714,6 @@ export class ConcShape {
                 colors[i - 2] = 1 - normalizedZ;
                 colors[i - 1] = 0;
                 colors[i] = normalizedZ;
-                console.log(colors)
             }
 
             object.geometry.attributes.position.needsUpdate = true;
@@ -732,7 +722,6 @@ export class ConcShape {
         
         // Iterate through all rebar objects
         this.rebarObjects.forEach((object) => {
-            console.log(object)
             if (!object.position) {
                 console.warn("⚠️ Invalid rebar object.");
                 return;
