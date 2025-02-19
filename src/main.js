@@ -122,6 +122,17 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.warn("⚠️ Mouse tracking was already disabled or not assigned properly.");
           }
+
+          // ✅ Disable Mouse Interactions
+          if (mouseInteractionHandlers) {
+            threeJSDiv.removeEventListener("pointerdown", mouseInteractionHandlers.onPointerDown);
+            threeJSDiv.removeEventListener("pointermove", mouseInteractionHandlers.onPointerMove);
+            threeJSDiv.removeEventListener("pointerup", mouseInteractionHandlers.onPointerUp);
+            console.log("✅ Mouse interactions disabled.");
+            mouseInteractionHandlers = null;
+          } else {
+              console.warn("⚠️ Mouse interactions were already disabled or not assigned properly.");
+          }
             
           // Get the selected concrete shape
           const selectedConcShape = SceneFunctions.getSelectedConcShape();
@@ -282,8 +293,8 @@ scene.add(intersectionPoint);
 // Call the function to enable mouse tracking and store the handler
 let mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
 console.log("MOUSE TRACKING HANDLER IS", mouseTrackingHandler)
-SceneFunctions.setupMouseInteractions(topDiv);
 // SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
+let mouseInteractionHandlers = SceneFunctions.setupMouseInteractions(topDiv);
 
 renderer.render( scene, camera );
 

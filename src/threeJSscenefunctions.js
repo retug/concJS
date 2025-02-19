@@ -214,7 +214,18 @@ export function setupMouseInteractions(threeJSDiv) {
     // let allSelectedRebar = [];
     // let allSelectedConc = [];
 
-    threeJSDiv.addEventListener("pointerdown", function (event) {
+    // threeJSDiv.addEventListener("pointerdown", function (event) {
+    //     if (event.button === 1) {
+    //         middlemouse = 1;
+    //     } else if (event.button === 0) {
+    //         isLeftMouseDown = true;
+    //         if (!event.ctrlKey) resetSelections();
+    //         setMousePosition(event);
+    //         selectionBox.startPoint.set(mouse.x, mouse.y, 0.5);
+    //     }
+    // });
+
+    function onPointerDown(event) {
         if (event.button === 1) {
             middlemouse = 1;
         } else if (event.button === 0) {
@@ -223,17 +234,37 @@ export function setupMouseInteractions(threeJSDiv) {
             setMousePosition(event);
             selectionBox.startPoint.set(mouse.x, mouse.y, 0.5);
         }
-    });
+    }
 
-    threeJSDiv.addEventListener("pointermove", function (event) {
+    // threeJSDiv.addEventListener("pointermove", function (event) {
+    //     if (middlemouse !== 1 && isLeftMouseDown) {
+    //         setMousePosition(event);
+    //         selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
+    //         applySelectionColors(selectionBox.select());
+    //     }
+    // });
+
+    function onPointerMove(event) {
         if (middlemouse !== 1 && isLeftMouseDown) {
             setMousePosition(event);
             selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
             applySelectionColors(selectionBox.select());
         }
-    });
+    }
 
-    threeJSDiv.addEventListener("pointerup", function (event) {
+    // threeJSDiv.addEventListener("pointerup", function (event) {
+    //     if (event.button === 0) isLeftMouseDown = false;
+    //     if (middlemouse !== 1) {
+    //         setMousePosition(event);
+    //         selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
+    //         const allSelected = selectionBox.select();
+    //         applySelectionColors(allSelected);
+    //         processSelection(allSelected);
+    //     }
+    //     middlemouse = 0;
+    // });
+
+    function onPointerUp(event) {
         if (event.button === 0) isLeftMouseDown = false;
         if (middlemouse !== 1) {
             setMousePosition(event);
@@ -243,7 +274,11 @@ export function setupMouseInteractions(threeJSDiv) {
             processSelection(allSelected);
         }
         middlemouse = 0;
-    });
+    }
+
+    threeJSDiv.addEventListener("pointerdown", onPointerDown);
+    threeJSDiv.addEventListener("pointermove", onPointerMove);
+    threeJSDiv.addEventListener("pointerup", onPointerUp);
 
     function setMousePosition(event) {
         const rect = renderer.domElement.getBoundingClientRect();
@@ -364,6 +399,7 @@ export function setupMouseInteractions(threeJSDiv) {
         document.getElementById("pointsSelected").innerText = allSelectedPnts.length;
         document.getElementById("rebarSelected").innerText = allSelectedRebar.length;
         document.getElementById("concSelected").innerText = allSelectedConc.length;
+
     }
 
     function createInputField(value, callback) {
@@ -457,6 +493,7 @@ export function setupMouseInteractions(threeJSDiv) {
         allSelectedRebar[oldIndex] = newRebar;    
         updateTables(); // ✅ Keep rebar in the table after update
     }
+    return { onPointerDown, onPointerMove, onPointerUp };
 }
 
 
@@ -596,4 +633,3 @@ export function deleteSelectedElements() {
     allSelectedConc = []; // ✅ Clear selection array
     document.getElementById("concData").innerHTML = "";
 }
-
