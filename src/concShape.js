@@ -698,24 +698,22 @@ export class ConcShape {
         
         // Second pass to update position and apply colors
         this.FEMmesh.forEach((object) => {
-            if (!object.geometry || !object.geometry.attributes.position) return;
-
             let positions = object.geometry.attributes.position.array;
             let colors = object.geometry.attributes.color.array;
             let stress = calculateStress(object, strainProfile, angle, concreteMat);
             let zOffset = (stress / 4000) * concreteScaleFactor;
-
-            for (let i = 2; i < positions.length; i += 9) {
-                positions[i] += zOffset;
-                if (positions[i + 3] !== undefined) positions[i + 3] += zOffset;
-                if (positions[i + 6] !== undefined) positions[i + 6] += zOffset;
-
-                let normalizedZ = (positions[i] - minZ) / (maxZ - minZ);
-                colors[i - 2] = 1 - normalizedZ;
-                colors[i - 1] = 0;
-                colors[i] = normalizedZ;
+        
+            for (let i = 0; i < positions.length; i += 3) { // Loop through ALL vertices
+                positions[i + 2] += zOffset; // Modify Z-coordinate
+        
+                let normalizedZ = (positions[i + 2] - minZ) / (maxZ - minZ);
+        
+                // Assign color per vertex
+                colors[i] = 1 - normalizedZ;  // Red channel
+                colors[i + 1] = 0;            // Green channel
+                colors[i + 2] = normalizedZ;  // Blue channel
             }
-
+        
             object.geometry.attributes.position.needsUpdate = true;
             object.geometry.attributes.color.needsUpdate = true;
         });
