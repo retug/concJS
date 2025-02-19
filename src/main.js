@@ -98,6 +98,9 @@ document.getElementById("addPointBtn").addEventListener("click", SceneFunctions.
 
 // Attach addRebarToScene function properly
 document.addEventListener("DOMContentLoaded", () => {
+  let mouseTrackingHandler; // Store event listener reference
+  // Ensure threeJSDiv is properly defined before calling setupMouseTracking
+  const threeJSDiv = document.getElementById("concGui"); // Replace with actual container ID
   document.getElementById("addRebarBtn").addEventListener("click", () => {
       if (!sprite) {
           console.warn("Texture not yet loaded, please wait.");
@@ -124,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.log(`✅ Found rebar,`, selectedRebar);
           }
-
+        threeJSDiv.removeEventListener("mousemove", mouseTrackingHandler);
         // ✅ Fire initializeRebarObjects() independently
         selectedConcShape.initializeRebarObjects(selectedRebar);
         
@@ -263,8 +266,13 @@ intersectionPoint.visible = false;
 scene.add(intersectionPoint);
 
 // Call the function to enable mouse tracking
-SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
+// Store the event listener reference
+let mouseTrackingHandler;
+
+// Call the function to enable mouse tracking and store the handler
+mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
 SceneFunctions.setupMouseInteractions(topDiv);
+// SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
 
 renderer.render( scene, camera );
 

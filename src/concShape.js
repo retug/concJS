@@ -89,7 +89,7 @@ export class ConcShape {
     generateMesh() {
         if (!this.baseshape) return;
         const geometry = new THREE.ShapeGeometry(this.baseshape);
-        const meshMaterial = new THREE.MeshStandardMaterial({ color: 0xE5E5E5, transparent: true, opacity: 0.4 });
+        const meshMaterial = new THREE.MeshStandardMaterial({ color: 0xE5E5E5, transparent: true, opacity: 0.4});
         this.mesh = new THREE.Mesh(geometry, meshMaterial);
         this.mesh.userData.concShape = this; // ✅ Store ConcShape instance in the mesh
     }
@@ -254,8 +254,12 @@ export class ConcShape {
             let geometry = new THREE.BufferGeometry();
             let vertices = new Float32Array(tri.flatMap(([x, y]) => [x, y, 0]));
             geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setAttribute(
+                "color",
+                new THREE.BufferAttribute(new Float32Array(vertices.length), 3)
+              );
 
-            let material = new THREE.MeshStandardMaterial({ wireframe: true });
+            let material = new THREE.MeshBasicMaterial({ wireframe: true, vertexColors: true });
             let mesh = new THREE.Mesh(geometry, material);
             mesh.area = Math.abs(
                 (tri[0][0] * tri[1][1] + tri[1][0] * tri[2][1] + tri[2][0] * tri[0][1]) - 
@@ -277,6 +281,11 @@ export class ConcShape {
                 this.centroidX += mesh.area * mesh.centroid.x;
                 this.centroidY += mesh.area * mesh.centroid.y;
             }
+            // Remove all objects from the scene that are not FEMmesh objects
+            scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj));
+
+            // Log all mesh objects in the scene
+            console.log("All Mesh Objects in Scene:", scene.children.filter(obj => obj instanceof THREE.Mesh));
         }
 
         // ✅ Compute final centroid
@@ -289,6 +298,8 @@ export class ConcShape {
 
         return concElements;
     }
+    
+    
     // FUTURE WORK FW, need to get rid of this, everything will be handled with default three.js elements. no need to make this and map indexes back and forth
     //This data will be orgainzed the following way. this.transformedFEMcentroids[45]; will return results at 45 degrees.
     // {
@@ -644,7 +655,7 @@ export class ConcShape {
     generate3dStressPlot(angle, strainProfile) {
         //this function will update the 3d scene, plotting the stress of each element in the scene.
         //given the angle and strainProfile, calculate the stress at the centroid of all concrete elemments given strain.
-        //Then modify concrete FEMmesh z index to plot stress, times a factor say 2 (stress/2 for 4ksi concrete is 2 units of displacment.) apply this to all FEMmesh objects in the scene.
+        // Then modify concrete FEMmesh z index to plot stress, times a factor say 2 (stress/2 for 4ksi concrete is 2 units of displacment.) apply this to all FEMmesh objects in the scene.
         // let positions = mesh.geometry.attributes.position.array, positions[i + 2] = zOffset; positions[i + 5] = zOffset; positions[i + 8] = zOffset;
         // do a similar process for all rebarObjects in the scene. offset the rebar point object by its stress with some factor say stress/5
         // Function to calculate stress based on strain profile
@@ -675,26 +686,48 @@ export class ConcShape {
             
         }
 
+        let minZ = Infinity, maxZ = -Infinity;
+
         // Iterate through all FEMmesh objects in the scene
         const concreteMat = this.material
+
         this.FEMmesh.forEach((object) => {
-            if (!object.geometry || !object.geometry.attributes.position) {
-                console.warn("⚠️ Invalid FEM mesh object.");
-                return;
-            }
+            if (!object.geometry || !object.geometry.attributes.position) return;
 
             let positions = object.geometry.attributes.position.array;
             let stress = calculateStress(object, strainProfile, angle, concreteMat);
-            let zOffset = (stress / 4000) * concreteScaleFactor; // Assuming 4 ksi concrete
+            let zOffset = (stress / 4000) * concreteScaleFactor;
 
-            // Modify z-coordinates of vertices
+            for (let i = 2; i < positions.length; i += 9) {
+                let newZ = positions[i] + zOffset;
+                minZ = Math.min(minZ, newZ);
+                maxZ = Math.max(maxZ, newZ);
+            }
+        });
+        
+        // Second pass to update position and apply colors
+        this.FEMmesh.forEach((object) => {
+            if (!object.geometry || !object.geometry.attributes.position) return;
+
+            let positions = object.geometry.attributes.position.array;
+            let colors = object.geometry.attributes.color.array;
+            let stress = calculateStress(object, strainProfile, angle, concreteMat);
+            let zOffset = (stress / 4000) * concreteScaleFactor;
+
             for (let i = 2; i < positions.length; i += 9) {
                 positions[i] += zOffset;
                 if (positions[i + 3] !== undefined) positions[i + 3] += zOffset;
                 if (positions[i + 6] !== undefined) positions[i + 6] += zOffset;
+
+                let normalizedZ = (positions[i] - minZ) / (maxZ - minZ);
+                colors[i - 2] = 1 - normalizedZ;
+                colors[i - 1] = 0;
+                colors[i] = normalizedZ;
+                console.log(colors)
             }
-            
+
             object.geometry.attributes.position.needsUpdate = true;
+            object.geometry.attributes.color.needsUpdate = true;
         });
         
         // Iterate through all rebar objects
@@ -712,6 +745,11 @@ export class ConcShape {
             object.position.z += zOffset;
             object.geometry.attributes.position.needsUpdate = true;
         });
+        // Log all mesh objects in the scene
+        console.log("All Mesh Objects in Scene:", scene.children.filter(obj => obj instanceof THREE.Mesh));
+        
+        // Log total number of FEMmesh objects
+        console.log("Total FEMmesh Objects:", this.FEMmesh.length);
     }
     setupResultsControls(){
         console.log("Setting up results controls...");
@@ -724,7 +762,9 @@ export class ConcShape {
         // Re-enable orbit controls rotation
         if (typeof controls !== 'undefined') {
             controls.enableRotate = true;
-            controls.mouseButtons = {MIDDLE: THREE.MOUSE.ROTATE}
+            controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
+            // controls.enablePan = true;
+            // controls.mouseButtons = {RIGHT: THREE.MOUSE.PAN}
             console.log(controls)
         }
     }
