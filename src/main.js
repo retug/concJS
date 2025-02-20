@@ -151,9 +151,19 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // ✅ Fire initializeRebarObjects() independently
         selectedConcShape.initializeRebarObjects(selectedRebar);
-        
 
-        
+        // Plot the generated FEM mesh elements in the scene
+        if (selectedConcShape.rebarObjects.length > 0) {
+          selectedConcShape.rebarObjects.forEach(rebar => {
+              scene.add(rebar);
+          });
+
+            console.log("Rebar successfully plotted in the scene.");
+        } else {
+            console.error("Rebar generation failed or returned empty.");
+        }
+
+
 
           
 
@@ -185,11 +195,17 @@ document.addEventListener("DOMContentLoaded", () => {
           // ✅ Generate Strain profiles for the given angle
           selectedConcShape.generateStrains(angle);
 
-          console.log(`✅ rebar objects.`, selectedConcShape.rebarObjects);
+
           selectedConcShape.generatePMM(angle)
+
           selectedConcShape.plotPMMResults();
+
           selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][5]);
+
           selectedConcShape.setupResultsControls();
+
+          
+
 
       });
   }

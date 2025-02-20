@@ -378,7 +378,7 @@ export class ConcShape {
         this.transformedFEMcentroids[angle] = {
             angle: angle,
             conc: transformedConcrete,         // ✅ Store concrete mesh UV data
-            rebar: this.rebarObjects,          // ✅ Store rebar objects with UV data
+            // rebar: this.rebarObjects,          // ✅ Store rebar objects with UV data
             centroidCoordinates: transformedCentroid  // ✅ Store transformed centroid
         };
 
@@ -717,26 +717,74 @@ export class ConcShape {
             object.geometry.attributes.position.needsUpdate = true;
             object.geometry.attributes.color.needsUpdate = true;
         });
-        
-        // Iterate through all rebar objects
+
+        let minZrebar = Infinity, maxZrebar = -Infinity;
+
         this.rebarObjects.forEach((object) => {
-            if (!object.position) {
-                console.warn("⚠️ Invalid rebar object.");
-                return;
-            }
-            
-            let stress = calculateStress(object, strainProfile, angle, concreteMat);
-            let zOffset = (stress / 5) * rebarScaleFactor;
-            
-            // Apply offset to rebar position
-            object.position.z += zOffset;
-            object.geometry.attributes.position.needsUpdate = true;
+            if (!object.geometry || !object.geometry.attributes.position) return;
+
+            // let positions = object.geometry.attributes.position.array;
+
+            let stress = calculateStress(object, strainProfile, angle, object.materialData);
+
+            let zOffset = (stress / 60000) * rebarScaleFactor;
+
+            // for (let i = 2; i < positions.length; i += 9) {
+            //     // let newZ = positions[i] + zOffset;
+            //     minZrebar = Math.min(minZ, newZ);
+            //     maxZrebar = Math.max(maxZ, newZ);
+            // }
         });
-        // Log all mesh objects in the scene
-        console.log("All Mesh Objects in Scene:", scene.children.filter(obj => obj instanceof THREE.Mesh));
+
+        // Second pass to update position and apply colors
+        this.rebarObjects.forEach((object) => {
+            // Get the position attribute
+            let positionAttribute = object.geometry.getAttribute('position');
+
+            // Access the underlying Float32Array
+            let p = positionAttribute.array;
+
+            console.log('your z value is', p[2]);
+
+            // Update the z value of the first vertex
+            p[2] = 1;
+
+            console.log("Updated position array:", p);
+
+            // Mark the attribute as needing an update
+            positionAttribute.needsUpdate = true;
+
+            console.log("Updated attribute:", object.geometry.getAttribute('position').array);
+            console.log(object);
+            scene.add(object)
+
+
+    //         // let colors = object.material.color
+    //         // console.log(p)
+    //         // let stress = calculateStress(object, strainProfile, angle, object.materialData);
+    //         // let zOffset = (stress / 60000) * rebarScaleFactor;
         
-        // Log total number of FEMmesh objects
-        console.log("Total FEMmesh Objects:", this.FEMmesh.length);
+    //         // // positions[2] += zOffset; // Modify Z-coordinate
+
+    //         //  p.array[2] = zOffset
+    //         //  object.geometry.attributes.position.needsUpdate = true;
+    //         //  console.group("updated P is the following")
+    //         //  console.log(p)
+            
+            
+    //         // ✅ Correctly update the Z position of each rebar point
+    //         // positions[2] += zOffset; // Modify Z-coordinate of the first point
+            
+    //         // let normalizedZ = (positions[i + 2] - minZ) / (maxZ - minZ);
+        
+    //         // // Assign color per vertex
+    //         // colors[i] = 1 - normalizedZ;  // Red channel
+    //         // colors[i + 1] = 0;            // Green channel
+    //         // colors[i + 2] = normalizedZ;  // Blue channel
+        
+        
+    //         // object.geometry.attributes.color.needsUpdate = true;
+         });
     }
 
     //Shift plus middle mouse button to rotate
