@@ -738,6 +738,8 @@ export class ConcShape {
         // Log total number of FEMmesh objects
         console.log("Total FEMmesh Objects:", this.FEMmesh.length);
     }
+
+    //Shift plus middle mouse button to rotate
     setupResultsControls(){
         console.log("Setting up results controls...");
         // Remove mouse interactions setup
@@ -746,14 +748,31 @@ export class ConcShape {
             delete SceneFunctions.setupMouseInteractions;
         }
         
-        // Re-enable orbit controls rotation
+        // Re-enable orbit controls rotation and panning
         if (typeof controls !== 'undefined') {
             controls.enableRotate = true;
-            controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
-            // controls.enablePan = true;
-            // controls.mouseButtons = {RIGHT: THREE.MOUSE.PAN}
-            console.log(controls)
+            controls.enablePan = true;
+            
+            // Assign default controls
+            // controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE; // Right mouse rotates
+            controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;   // Middle mouse pans
+    
+            // Assign Shift + Middle Mouse Button to Rotate
+            controls.keys = { SHIFT: THREE.MOUSE.ROTATE };
+    
+            console.log(controls);
         }
+
+        // Modify .selectBox CSS to be invisible
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .selectBox {
+                border: none !important;
+                background-color: transparent !important;
+                position: fixed !important;
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
 
