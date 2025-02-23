@@ -157,7 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
           selectedConcShape.rebarObjects.forEach(rebar => {
               scene.add(rebar);
           });
-
             console.log("Rebar successfully plotted in the scene.");
         } else {
             console.error("Rebar generation failed or returned empty.");
@@ -176,8 +175,18 @@ document.addEventListener("DOMContentLoaded", () => {
               return;
           }
 
-          // Generate FEM mesh for the selected concrete shape
+          // // Generate FEM mesh for the selected concrete shape
           selectedConcShape.generateFEMMesh(interiorSpacing, edgeSpacing);
+
+          //FIRST TEST FOR Points
+          console.log('FIRST TEST FOR POINTS')
+          console.log(scene)
+          scene.traverse((object) => {
+              if (object instanceof THREE.Points) {
+                  console.log(object);
+              }
+            });
+          
 
           // Plot the generated FEM mesh elements in the scene
           if (selectedConcShape.FEMmesh && selectedConcShape.FEMmesh.length > 0) {
@@ -194,19 +203,10 @@ document.addEventListener("DOMContentLoaded", () => {
           selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
           // ✅ Generate Strain profiles for the given angle
           selectedConcShape.generateStrains(angle);
-
-
           selectedConcShape.generatePMM(angle)
-
           selectedConcShape.plotPMMResults();
-
-          selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][5]);
-
+          selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][4]);
           selectedConcShape.setupResultsControls();
-
-          
-
-
       });
   }
 });
@@ -308,11 +308,10 @@ scene.add(intersectionPoint);
 
 // Call the function to enable mouse tracking and store the handler
 let mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
-console.log("MOUSE TRACKING HANDLER IS", mouseTrackingHandler)
-// SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
 let mouseInteractionHandlers = SceneFunctions.setupMouseInteractions(topDiv);
 
 renderer.render( scene, camera );
+console.log(scene)
 
 let frame = 0
 function animate() {

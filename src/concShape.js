@@ -282,7 +282,7 @@ export class ConcShape {
                 this.centroidY += mesh.area * mesh.centroid.y;
             }
             // Remove all objects from the scene that are not FEMmesh objects
-            scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj));
+            scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj) || obj.isRebar);
 
         }
 
@@ -657,6 +657,7 @@ export class ConcShape {
 
         const concreteScaleFactor = 4; // Adjust as needed
         const rebarScaleFactor = 5; // Adjust as needed
+        const arrowScaleFactor = 4;
 
         function calculateStress(element, strainProfile, angle, concreteMat) {
             let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
@@ -667,14 +668,21 @@ export class ConcShape {
             
             let strain = strainProfile[0] * transformed.v + strainProfile[1];
             if (element instanceof THREE.Mesh) {
-
                 return concreteMat.stress(strain);
-                
             }
             else {
                 return element.materialData.stress(strain);
             }
-            
+        }
+        //used to plot point at concrete stress location.
+        function calculateRebarNormalizedStress(element, strainProfile, angle, concreteMat) {
+            let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
+            if (!transformed) {
+                console.warn(`⚠️ No transformed coordinates for element at angle ${angle}`);
+                return 0;
+            }
+            let strain = strainProfile[0] * transformed.v + strainProfile[1];
+            return concreteMat.stress(strain);
         }
 
         let minZ = Infinity, maxZ = -Infinity;
@@ -726,14 +734,12 @@ export class ConcShape {
             // let positions = object.geometry.attributes.position.array;
 
             let stress = calculateStress(object, strainProfile, angle, object.materialData);
-
+            
+            
             let zOffset = (stress / 60000) * rebarScaleFactor;
-
-            // for (let i = 2; i < positions.length; i += 9) {
-            //     // let newZ = positions[i] + zOffset;
-            //     minZrebar = Math.min(minZ, newZ);
-            //     maxZrebar = Math.max(maxZ, newZ);
-            // }
+            let newZ = zOffset;
+            minZrebar = Math.min(minZ, newZ);
+            maxZrebar = Math.max(maxZ, newZ);
         });
 
         // Second pass to update position and apply colors
@@ -744,47 +750,106 @@ export class ConcShape {
             // Access the underlying Float32Array
             let p = positionAttribute.array;
 
-            console.log('your z value is', p[2]);
+            //let's plot the point at the location of the concrete stress to allow the point to be in the same position.
+            //the length of the arrow will be based on the actual rebar stress in the object
+            // start point of arrow head
+            let rebarNormalizestress  = calculateRebarNormalizedStress(object, strainProfile, angle, concreteMat);
+            let zOffsetRebar = (rebarNormalizestress / 4000) * concreteScaleFactor;
 
+            let stress = calculateStress(object, strainProfile, angle, object.materialData);
             // Update the z value of the first vertex
-            p[2] = 1;
-
-            console.log("Updated position array:", p);
-
+            p[2] = zOffsetRebar;
             // Mark the attribute as needing an update
             positionAttribute.needsUpdate = true;
 
-            console.log("Updated attribute:", object.geometry.getAttribute('position').array);
-            console.log(object);
-            scene.add(object)
+            // Normalize rebar stress for coloring
+            let normalizedStress = Math.abs(stress) / 60000; // Normalize for color mapping
+            normalizedStress = Math.min(normalizedStress, 1); // Ensure max value of 1
 
+            // Assign colors
+            let rebarColor = new THREE.Color();
+            if (stress < 0) {
+                // 🔴 **Compression: Fully Red if Normalized Stress = 1, otherwise Red-to-Purple**
+                let red = 1.0;  // Always fully red
+                let green = 0.0; // No green component
+                let blue = normalizedStress === 1 ? 0.0 : normalizedStress * 0.8; // Fully red if 1, else red to purple
 
-    //         // let colors = object.material.color
-    //         // console.log(p)
-    //         // let stress = calculateStress(object, strainProfile, angle, object.materialData);
-    //         // let zOffset = (stress / 60000) * rebarScaleFactor;
-        
-    //         // // positions[2] += zOffset; // Modify Z-coordinate
+                rebarColor.setRGB(red, green, blue);
+            } else {
+                // 🔵 **Tension: Fully Blue if Normalized Stress = 0, otherwise Blue-to-Green**
+                let red = 0.0; // No red component
+                let green = normalizedStress;  // Green increases with stress
+                let blue = normalizedStress === 0 ? 1.0 : 1.0 - (normalizedStress * 0.5); // Fully blue at 0 stress
 
-    //         //  p.array[2] = zOffset
-    //         //  object.geometry.attributes.position.needsUpdate = true;
-    //         //  console.group("updated P is the following")
-    //         //  console.log(p)
-            
-            
-    //         // ✅ Correctly update the Z position of each rebar point
-    //         // positions[2] += zOffset; // Modify Z-coordinate of the first point
-            
-    //         // let normalizedZ = (positions[i + 2] - minZ) / (maxZ - minZ);
-        
-    //         // // Assign color per vertex
-    //         // colors[i] = 1 - normalizedZ;  // Red channel
-    //         // colors[i + 1] = 0;            // Green channel
-    //         // colors[i + 2] = normalizedZ;  // Blue channel
-        
-        
-    //         // object.geometry.attributes.color.needsUpdate = true;
+                rebarColor.setRGB(red, green, blue);
+            }
+            object.material.color = rebarColor;
+
+            // Create and add arrow
+            let startX = p[0];
+            let startY = p[1];
+            let extrusionDepth = p[2];
+
+            let arrowDirection = new THREE.Vector3(0, 0, stress < 0 ? -1 : 1); // Flip for compression
+            let arrowLength = Math.abs(stress) / 60000 * arrowScaleFactor; // Scale by stress
+
+            let start, end;
+            if (stress < 0) {
+                // 📌 **Compression: Start in air, end at rebar**
+                start = [startX, startY, extrusionDepth + arrowLength];
+                end = [startX, startY, extrusionDepth];
+            } else {
+                // 📌 **Tension: Start at rebar, extend outward**
+                start = [startX, startY, extrusionDepth];
+                end = [startX, startY, extrusionDepth + arrowLength];
+            }
+
+            // Call the new custom arrow function
+            createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3);
+
          });
+         function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3) {
+            const arrowGroup = new THREE.Group();
+        
+            // Convert start and end to Vector3
+            const startVec = new THREE.Vector3(...start);
+            const endVec = new THREE.Vector3(...end);
+        
+            // Compute direction and length
+            const direction = new THREE.Vector3().subVectors(endVec, startVec);
+            const length = direction.length();
+            direction.normalize();
+        
+            // Create cylinder for the shaft
+            const shaftGeometry = new THREE.CylinderGeometry(thickness, thickness, length - coneSize, 12);
+            const shaftMaterial = new THREE.MeshBasicMaterial({ color: color });
+            const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+        
+            // Align the shaft along the Z-axis
+            shaft.position.set(0, 0, (length - coneSize) / 2);
+            shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction); // Align to direction
+        
+            // Create cone for the arrowhead
+            const coneGeometry = new THREE.ConeGeometry(coneSize * 1.5, coneSize, 12);
+            const coneMaterial = new THREE.MeshBasicMaterial({ color: color });
+            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+        
+            // Position and rotate the cone
+            cone.position.set(0, 0, length - coneSize / 2);
+            cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction); // Align to direction
+        
+            // Add shaft and cone to arrow group
+            arrowGroup.add(shaft);
+            arrowGroup.add(cone);
+        
+            // Position the entire arrow
+            arrowGroup.position.copy(startVec);
+            arrowGroup.lookAt(endVec);
+        
+            scene.add(arrowGroup);
+            return arrowGroup;
+        }
+        
     }
 
     //Shift plus middle mouse button to rotate

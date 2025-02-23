@@ -200,10 +200,7 @@ export function addShapeToScene(scene, sprite) {
 
     concShape.generateMesh();
     scene.add(concShape.mesh);
-    console.log("Concrete shape added:", concShape);
-
-    console.log("Offset Specified:", rebarOffset);
-
+    
     if (activeShape === 'barbell') {
         addEvenlySpacedPointswithOffset(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
     } else {
