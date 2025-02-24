@@ -12,9 +12,10 @@
 
 import * as THREE from 'three';
 import Delaunator from 'delaunator';
-import { scene, controls } from "./main.js"; 
-import { rebarDia } from './threeJSscenefunctions.js';
+import { scene, controls, camera, renderer } from "./main.js"; 
+import { rebarDia, setupRaycastingForResults  } from './threeJSscenefunctions.js';
 import Plotly from 'plotly.js-dist-min';
+// import * as SceneFunctions from './threeJSscenefunctions.js';
 
 
 export class ConcShape {
@@ -709,15 +710,13 @@ export class ConcShape {
         // ✅ Add Click Event Listener
         document.getElementById("pmPlot").on('plotly_click', (data) => {
             let clickedIndex = data.points[0].customdata; // Extract strain profile index
-            // let clickedAngle = data.points[0].marker.color; // Extract selected angle
-    
-            // ✅ Update global variables
             window.selectedStrainProfileIndex = clickedIndex;
-            // window.selectedAngle = clickedAngle;
-    
-            console.log(`✅ Selected Strain Profile Index: ${clickedIndex}`);
             window.selectedConcShape.generate3dStressPlot(window.selectedAngle, selectedConcShape.strainProfiles[window.selectedAngle][window.selectedStrainProfileIndex]);
-
+            // ✅ Reinitialize raycasting since scene was modified
+            setTimeout(() => {
+                console.log("🔄 Reinitializing raycasting after PMM selection...");
+                setupRaycastingForResults(scene, camera, renderer);
+            }, 100);
         });
     }
 
@@ -799,6 +798,8 @@ export class ConcShape {
         
             object.geometry.attributes.position.needsUpdate = true;
             object.geometry.attributes.color.needsUpdate = true;
+            object.geometry.computeBoundingBox()
+            object.geometry.computeBoundingSphere()
         });
 
         let minZrebar = Infinity, maxZrebar = -Infinity;
@@ -879,7 +880,7 @@ export class ConcShape {
                 end = [startX, startY, extrusionDepth + arrowLength];
             }
             // Call the new custom arrow function
-            createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
+            // createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
 
 
 

@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("FEM mesh generation failed or returned empty.");
           }
           let angle = 45;
-          let strainProfileIndex = 10; //For all of the strain profiles of a given angle. store it in a variable 
+          let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
           // ✅ Transform coordinates for 45-degree angle
           selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
           // ✅ Generate Strain profiles for the given angle
