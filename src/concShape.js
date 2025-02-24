@@ -606,25 +606,75 @@ export class ConcShape {
     }
     
 
-    // Modify the plot function to format hover tooltips
+    // // Modify the plot function to format hover tooltips
+    // plotPMMResults() {
+    //     if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
+    //         console.error("❌ No PMM XY results available to plot.");
+    //         return;
+    //     }
+
+    //     let P_values = [];
+    //     let Mx_values = [];
+    //     let My_values = [];
+    //     let angles = [];
+
+    //     for (let angle in this.PMMXYresults) {
+    //         P_values.push(...this.PMMXYresults[angle].P.flat());
+    //         Mx_values.push(...this.PMMXYresults[angle].Mx.flat());
+    //         My_values.push(...this.PMMXYresults[angle].My.flat());
+    //         angles.push(...Array(this.PMMXYresults[angle].P.flat().length).fill(Number(angle)));
+    //     }
+
+    //     let scatterTrace = {
+    //         x: Mx_values,
+    //         y: My_values,
+    //         z: P_values,
+    //         mode: "markers",
+    //         type: "scatter3d",
+    //         marker: { size: 5, color: angles, colorscale: "Viridis", opacity: 0.8 },
+    //         name: "PMM Data",
+    //         hovertemplate: "P - %{z:.1f} (k)<br>" +
+    //                     "Mx - %{x:.1f} (kip*ft)<br>" +
+    //                     "My - %{y:.1f} (kip*ft)"
+    //     };
+
+    //     let layout = {
+    //         title: "3D P-M Interaction Diagram",
+    //         scene: {
+    //             xaxis: { title: "Mx (kip-ft)" },
+    //             yaxis: { title: "My (kip-ft)" },
+    //             zaxis: { title: "P (k)" },
+    //             aspectmode: "cube"
+    //         },
+    //         margin: { l: 0, r: 0, b: 0, t: 50 }
+    //     };
+    //     let resultsDiv = document.getElementById("results");
+    //     resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
+    //     Plotly.newPlot("pmPlot", [scatterTrace], layout);
+    // }
+
     plotPMMResults() {
         if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
             console.error("❌ No PMM XY results available to plot.");
             return;
         }
-
+    
         let P_values = [];
         let Mx_values = [];
         let My_values = [];
         let angles = [];
-
+        let strainProfileIndices = [];
+    
+        // ✅ Collect PMM Data
         for (let angle in this.PMMXYresults) {
+            let numPoints = this.PMMXYresults[angle].P.flat().length;
             P_values.push(...this.PMMXYresults[angle].P.flat());
             Mx_values.push(...this.PMMXYresults[angle].Mx.flat());
             My_values.push(...this.PMMXYresults[angle].My.flat());
-            angles.push(...Array(this.PMMXYresults[angle].P.flat().length).fill(Number(angle)));
+            angles.push(...Array(numPoints).fill(Number(angle)));
+            strainProfileIndices.push(...Array.from({ length: numPoints }, (_, i) => i));
         }
-
+    
         let scatterTrace = {
             x: Mx_values,
             y: My_values,
@@ -635,9 +685,11 @@ export class ConcShape {
             name: "PMM Data",
             hovertemplate: "P - %{z:.1f} (k)<br>" +
                         "Mx - %{x:.1f} (kip*ft)<br>" +
-                        "My - %{y:.1f} (kip*ft)"
+                        "My - %{y:.1f} (kip*ft)<br>" +
+                        "Index - %{customdata}",
+            customdata: strainProfileIndices // Attach strain profile indices to each point
         };
-
+    
         let layout = {
             title: "3D P-M Interaction Diagram",
             scene: {
@@ -648,9 +700,25 @@ export class ConcShape {
             },
             margin: { l: 0, r: 0, b: 0, t: 50 }
         };
+    
         let resultsDiv = document.getElementById("results");
         resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
-        Plotly.newPlot("pmPlot", [scatterTrace], layout);
+    
+        let plot = Plotly.newPlot("pmPlot", [scatterTrace], layout);
+    
+        // ✅ Add Click Event Listener
+        document.getElementById("pmPlot").on('plotly_click', (data) => {
+            let clickedIndex = data.points[0].customdata; // Extract strain profile index
+            // let clickedAngle = data.points[0].marker.color; // Extract selected angle
+    
+            // ✅ Update global variables
+            window.selectedStrainProfileIndex = clickedIndex;
+            // window.selectedAngle = clickedAngle;
+    
+            console.log(`✅ Selected Strain Profile Index: ${clickedIndex}`);
+            window.selectedConcShape.generate3dStressPlot(window.selectedAngle, selectedConcShape.strainProfiles[window.selectedAngle][window.selectedStrainProfileIndex]);
+
+        });
     }
 
     generate3dStressPlot(angle, strainProfile) {
@@ -705,7 +773,7 @@ export class ConcShape {
             let zOffset = (stress / 4000) * concreteScaleFactor;
 
             for (let i = 2; i < positions.length; i += 9) {
-                let newZ = positions[i] + zOffset;
+                let newZ = zOffset;
                 minZ = Math.min(minZ, newZ);
                 maxZ = Math.max(maxZ, newZ);
             }
@@ -719,7 +787,7 @@ export class ConcShape {
             let zOffset = (stress / 4000) * concreteScaleFactor;
         
             for (let i = 0; i < positions.length; i += 3) { // Loop through ALL vertices
-                positions[i + 2] += zOffset; // Modify Z-coordinate
+                positions[i + 2] = zOffset; // Modify Z-coordinate
         
                 let normalizedZ = (positions[i + 2] - minZ) / (maxZ - minZ);
         
@@ -810,12 +878,13 @@ export class ConcShape {
                 start = [startX, startY, extrusionDepth];
                 end = [startX, startY, extrusionDepth + arrowLength];
             }
-
             // Call the new custom arrow function
             createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
 
-         });
-         function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3, stress) {
+
+
+        });
+        function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3, stress) {
             const arrowGroup = new THREE.Group();
         
             // Convert start and end to Vector3
@@ -865,8 +934,7 @@ export class ConcShape {
             scene.add(arrowGroup);
             return arrowGroup;
         }
-        
-        
+
     }
 
     //Shift plus middle mouse button to rotate

@@ -153,7 +153,8 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.log(`✅ Found rebar,`, selectedRebar);
           }
-        
+        // ✅ Get the selected concrete shape and set it as a global variable
+        window.selectedConcShape = SceneFunctions.getSelectedConcShape();
         // ✅ Fire initializeRebarObjects() independently
         selectedConcShape.initializeRebarObjects(selectedRebar);
 
@@ -197,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("FEM mesh generation failed or returned empty.");
           }
           let angle = 45;
-          let strainProfileIndex = 4; //For all of the strain profiles of a given angle. store it in a variable 
+          let strainProfileIndex = 10; //For all of the strain profiles of a given angle. store it in a variable 
           // ✅ Transform coordinates for 45-degree angle
           selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
           // ✅ Generate Strain profiles for the given angle
