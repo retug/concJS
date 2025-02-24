@@ -194,9 +194,9 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
       return;
   }
 
-  let strain, stress;
+  let strain, stress, selectedColor;
 
-  if (clickedObject.concMaterial) {
+  if (clickedObject.userData.concShape) {
       // Get strain and stress for concrete
       let concreteMat = clickedObject.userData.concShape.material;
       let transformed = clickedObject.transformedCentroid[angle];
@@ -208,6 +208,25 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
 
       strain = strainProfile[0] * transformed.v + strainProfile[1];
       stress = concreteMat.stress(strain);
+      // Extract color from mesh material
+      // ✅ Extract color from mesh geometry attributes
+      const colorAttribute = clickedObject.geometry.getAttribute("color");
+      if (colorAttribute) {
+          // Get first vertex color (assuming uniform coloring)
+          selectedColor = `rgb(
+              ${Math.round(colorAttribute.array[0] * 255)}, 
+              ${Math.round(colorAttribute.array[1] * 255)}, 
+              ${Math.round(colorAttribute.array[2] * 255)}
+          )`;
+      } else {
+          console.warn("⚠️ No color attribute found in mesh, defaulting to gray.");
+          selectedColor = "gray"; // Default fallback
+      }
+      console.log("YOUR SELECTED CONC COLOR")
+      console.log(selectedColor)
+
+      // ✅ Update the material dropdown based on selected object
+      updateMaterialDropdown(clickedObject);
   } else if (clickedObject.materialData) {
       // ✅ Get rebar material
       let rebarMat = clickedObject.materialData;
@@ -235,11 +254,19 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
           return;
       }
 
+      // ✅ Update the material dropdown based on selected object
+      updateMaterialDropdown(clickedObject);
+
       // ✅ Compute strain using the selected strain profile
       strain = strainProfile[0] * transformed.v + strainProfile[1];
 
       // ✅ Compute stress using rebar material
       stress = rebarMat.stress(strain);
+      // Extract color from rebar material
+      selectedColor = `rgb(${clickedObject.material.color.r * 255}, ${clickedObject.material.color.g * 255}, ${clickedObject.material.color.b * 255})`;
+
+      console.log("YOUR SELECTED REBAR COLOR")
+      console.log(selectedColor)
   }
 
     function findConcShapeForRebar(rebarObject) {
@@ -255,10 +282,44 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
   stressStrainChart.data.datasets[1] = {
       label: "Selected Point",
       data: [{ x: strain, y: stress }],
-      backgroundColor: "red",
-      borderColor: "red",
+      backgroundColor: selectedColor,
+      borderColor: selectedColor,
       pointRadius: 6
   };
 
   stressStrainChart.update();
+}
+
+
+function updateMaterialDropdown(clickedObject) {
+  const materialDropdown = document.getElementById("materialDropdown");
+
+  if (!materialDropdown) {
+      console.error("❌ Material dropdown not found!");
+      return;
+  }
+
+  let selectedMaterial = null;
+
+  if (clickedObject.userData.concShape) {
+      // ✅ Concrete Mesh selected
+      selectedMaterial = clickedObject.userData.concShape.material;
+  } else if (clickedObject.materialData) {
+      // ✅ Rebar selected
+      selectedMaterial = clickedObject.materialData;
+  } else {
+      console.warn("⚠️ No valid material found for the selected object.");
+      return;
+  }
+
+  // ✅ Update the dropdown to match the selected material
+  for (let option of materialDropdown.options) {
+      if (option.value === selectedMaterial.name) {
+          option.selected = true;
+          return;
+      }
+  }
+
+  // ✅ If material isn't found in the dropdown, select "Custom Material"
+  materialDropdown.value = "Custom Material";
 }

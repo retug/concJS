@@ -669,30 +669,42 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
+    
         // Set raycaster from camera through mouse
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(scene.children, true);
-
+        let intersects = raycaster.intersectObjects(scene.children, true);
+    
         if (intersects.length > 0) {
-            console.log("YOU CLICKED")
-            console.log(intersects)
-            const clickedObject = intersects[0].object;
-            if (clickedObject instanceof THREE.Mesh) {
-                console.log("Concrete Mesh Clicked:", clickedObject);
-                console.log("YOUR INDEX IS", window.selectedStrainProfileIndex)
-                if (clickedObject.concMaterial) {
-                    updateStressStrainChart(clickedObject.userData.concShape.material);
-                    
-                    plotSelectedPoint(clickedObject, window.selectedStrainProfileIndex, window.selectedAngle); //make this work with accessing this.strainProfiles
-                }
-            } else if (clickedObject instanceof THREE.Points) {
-                console.log("Rebar Point Clicked:", clickedObject);
-                console.log("YOUR INDEX IS", window.selectedStrainProfileIndex)
-                if (clickedObject.materialData) {
-                    updateStressStrainChart(clickedObject.materialData);
-                    plotSelectedPoint(clickedObject, window.selectedStrainProfileIndex, window.selectedAngle); //make this work with accessing this.strainProfiles
-                }
+            console.log("YOU CLICKED");
+            console.log(intersects);
+    
+            // ✅ Separate Points (Rebar) and Mesh (Concrete) objects
+            let pointsObjects = intersects.filter(i => i.object instanceof THREE.Points);
+            let meshObjects = intersects.filter(i => i.object instanceof THREE.Mesh);
+    
+            let selectedObject = null;
+    
+            if (pointsObjects.length > 0) {
+                // ✅ Prioritize Points objects (Rebar)
+                selectedObject = pointsObjects[0].object;
+            } else if (meshObjects.length > 0) {
+                // ✅ If no Points objects are found, select the first Mesh (Concrete)
+                selectedObject = meshObjects[0].object;
+            }
+    
+            if (!selectedObject) return; // ❌ No valid object found, exit.
+    
+            console.log("SELECTED OBJECT:", selectedObject);
+            console.log("YOUR INDEX IS", window.selectedStrainProfileIndex);
+    
+            if (selectedObject instanceof THREE.Mesh && selectedObject.userData) {
+                console.log("Concrete Mesh Clicked:", selectedObject);
+                updateStressStrainChart(selectedObject.userData.concShape.material);
+                plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
+            } else if (selectedObject instanceof THREE.Points && selectedObject.materialData) {
+                console.log("Rebar Point Clicked:", selectedObject);
+                updateStressStrainChart(selectedObject.materialData);
+                plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
             }
         }
     });
