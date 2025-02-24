@@ -170,3 +170,95 @@ export function saveUserDefinedMaterial() {
         }
     }
 }
+
+export function updateStressStrainChart(materialData) {
+  if (!materialData) {
+      console.warn("No material data found for this object.");
+      return;
+  }
+
+  // Update chart with material's stress-strain data
+  stressStrainChart.data.labels = materialData.strainData;
+  stressStrainChart.data.datasets[0].data = materialData.stressData;
+  stressStrainChart.update();
+
+  // Clear previous selected point (if any)
+  plotSelectedPoint(null); // Clears the previously plotted highlight
+}
+
+export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
+  if (!clickedObject) {
+      // Clear the previous point
+      stressStrainChart.data.datasets[1] = { data: [] }; 
+      stressStrainChart.update();
+      return;
+  }
+
+  let strain, stress;
+
+  if (clickedObject.concMaterial) {
+      // Get strain and stress for concrete
+      let concreteMat = clickedObject.userData.concShape.material;
+      let transformed = clickedObject.transformedCentroid[angle];
+
+
+      // ✅ Extract strain profile using the given index
+      let strainProfile = clickedObject.userData.concShape.strainProfiles[angle][strainProfileIndex];
+
+
+      strain = strainProfile[0] * transformed.v + strainProfile[1];
+      stress = concreteMat.stress(strain);
+  } else if (clickedObject.materialData) {
+      // ✅ Get rebar material
+      let rebarMat = clickedObject.materialData;
+
+      // ✅ Retrieve the transformed centroid for the clicked rebar
+      let transformed = clickedObject.transformedCentroid[angle];
+
+      if (!transformed) {
+          console.warn(`⚠️ No transformed coordinates for rebar element at angle ${angle}`);
+          return;
+      }
+
+      // ✅ Find the ConcShape that owns this rebar object
+      let parentConcShape = findConcShapeForRebar(clickedObject);
+      if (!parentConcShape) {
+          console.error("❌ Could not find the parent ConcShape for the selected rebar.");
+          return;
+      }
+
+      // ✅ Extract strain profile using the given index
+      let strainProfile = parentConcShape.strainProfiles[angle][strainProfileIndex];
+
+      if (!strainProfile) {
+          console.error(`❌ No strain profile found for angle ${angle} and index ${strainProfileIndex}`);
+          return;
+      }
+
+      // ✅ Compute strain using the selected strain profile
+      strain = strainProfile[0] * transformed.v + strainProfile[1];
+
+      // ✅ Compute stress using rebar material
+      stress = rebarMat.stress(strain);
+  }
+
+    function findConcShapeForRebar(rebarObject) {
+      for (let concShape of allConcShapes) {  // 🔹 `allConcShapes` should contain all instances of ConcShape
+          if (concShape.rebarObjects.includes(rebarObject)) {
+              return concShape;
+          }
+      }
+      return null;  // ❌ No matching ConcShape found
+  }
+
+  // ✅ Plot the selected stress-strain point on the chart
+  stressStrainChart.data.datasets[1] = {
+      label: "Selected Point",
+      data: [{ x: strain, y: stress }],
+      backgroundColor: "red",
+      borderColor: "red",
+      pointRadius: 6
+  };
+
+  stressStrainChart.update();
+}

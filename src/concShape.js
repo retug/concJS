@@ -36,6 +36,9 @@ export class ConcShape {
         this.strainProfiles = {} //This will store all of the strain profiles for a given NA angle
 
         this.rebarObjects = [] // ✅ Initialize rebarObjects on creation
+
+        // ✅ Register this ConcShape in the global list
+        window.allConcShapes.push(this);
         
         if (Array.isArray(input)) {
             // If input is an array of points
@@ -259,8 +262,12 @@ export class ConcShape {
                 new THREE.BufferAttribute(new Float32Array(vertices.length), 3)
               );
 
-            let material = new THREE.MeshBasicMaterial({ wireframe: true, vertexColors: true });
+            let material = new THREE.MeshBasicMaterial({ wireframe: true, vertexColors: true, side:THREE.DoubleSide });
             let mesh = new THREE.Mesh(geometry, material);
+
+            // ✅ Store a reference to the ConcShape in `userData`
+            mesh.userData.concShape = this; // This stores the reference to the parent ConcShape
+
             mesh.area = Math.abs(
                 (tri[0][0] * tri[1][1] + tri[1][0] * tri[2][1] + tri[2][0] * tri[0][1]) - 
                 (tri[0][1] * tri[1][0] + tri[1][1] * tri[2][0] + tri[2][1] * tri[0][0])
@@ -281,7 +288,7 @@ export class ConcShape {
                 this.centroidX += mesh.area * mesh.centroid.x;
                 this.centroidY += mesh.area * mesh.centroid.y;
             }
-            // Remove all objects from the scene that are not FEMmesh objects
+            // Remove all objects from the scene that are not FEMmesh objects and keep all rebar objects
             scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj) || obj.isRebar);
 
         }
@@ -805,10 +812,10 @@ export class ConcShape {
             }
 
             // Call the new custom arrow function
-            createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3);
+            createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
 
          });
-         function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3) {
+         function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3, stress) {
             const arrowGroup = new THREE.Group();
         
             // Convert start and end to Vector3
@@ -834,9 +841,17 @@ export class ConcShape {
             const coneMaterial = new THREE.MeshBasicMaterial({ color: color });
             const cone = new THREE.Mesh(coneGeometry, coneMaterial);
         
-            // Position and rotate the cone
+            // Position the cone
             cone.position.set(0, 0, length - coneSize / 2);
-            cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction); // Align to direction
+        
+            // Reverse cone direction if in compression (stress < 0)
+            let coneDirection = direction.clone(); // Copy direction so shaft is not affected
+            if (stress < 0) {
+                coneDirection.negate(); // Flip only the cone direction
+            }
+        
+            // Rotate the cone to align with direction
+            cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), coneDirection);
         
             // Add shaft and cone to arrow group
             arrowGroup.add(shaft);
@@ -844,11 +859,13 @@ export class ConcShape {
         
             // Position the entire arrow
             arrowGroup.position.copy(startVec);
+            arrowGroup.position.z += 0.5;  // ✅ Move up by 0.5 units in the Z direction
             arrowGroup.lookAt(endVec);
         
             scene.add(arrowGroup);
             return arrowGroup;
         }
+        
         
     }
 

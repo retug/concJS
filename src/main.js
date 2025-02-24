@@ -9,6 +9,11 @@ import * as SceneFunctions from './threeJSscenefunctions.js';
 const loader = new THREE.TextureLoader();
 let sprite = null; // Store the loaded texture globally
 
+// ✅ Define global variables
+window.selectedAngle = 45;
+window.selectedStrainProfileIndex = 4;
+window.allConcShapes = window.allConcShapes || [];  // ✅ Ensure global list exists
+
 function loadTexture(url) {
   return new Promise((resolve, reject) => {
       const loader = new THREE.TextureLoader();
@@ -178,14 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // // Generate FEM mesh for the selected concrete shape
           selectedConcShape.generateFEMMesh(interiorSpacing, edgeSpacing);
 
-          //FIRST TEST FOR Points
-          console.log('FIRST TEST FOR POINTS')
-          console.log(scene)
-          scene.traverse((object) => {
-              if (object instanceof THREE.Points) {
-                  console.log(object);
-              }
-            });
+
           
 
           // Plot the generated FEM mesh elements in the scene
@@ -199,14 +197,16 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("FEM mesh generation failed or returned empty.");
           }
           let angle = 45;
+          let strainProfileIndex = 4; //For all of the strain profiles of a given angle. store it in a variable 
           // ✅ Transform coordinates for 45-degree angle
           selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
           // ✅ Generate Strain profiles for the given angle
           selectedConcShape.generateStrains(angle);
           selectedConcShape.generatePMM(angle)
           selectedConcShape.plotPMMResults();
-          selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][4]);
+          selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][strainProfileIndex]);
           selectedConcShape.setupResultsControls();
+          SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
       });
   }
 });

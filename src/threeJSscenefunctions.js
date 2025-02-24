@@ -4,6 +4,8 @@ import { SelectionBox } from 'three/examples/jsm/interactive/SelectionBox.js';
 import { SelectionHelper } from 'three/examples/jsm/interactive/SelectionHelper.js';
 import { defaultMaterials } from "./materials.js";
 import { ConcShape } from './concShape.js';
+import { updateStressStrainChart, plotSelectedPoint } from "./materialsPlotting.js";
+
 
 
 
@@ -603,3 +605,96 @@ export function deleteSelectedElements() {
     allSelectedConc = []; // ✅ Clear selection array
     document.getElementById("concData").innerHTML = "";
 }
+
+export function setupRaycastingForResults(scene, camera, renderer) {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hoveredObject = null;
+
+    let hoveredRebar = null;
+    let originalRebarColor = new THREE.Color();
+
+    // ✅ Mouse Move Event - Highlight Object on Hover
+    renderer.domElement.addEventListener('mousemove', (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(scene.children, true);
+
+        let meshFound = false;
+        let rebarFound = false;
+
+        for (const intersect of intersects) {
+            const object = intersect.object;
+
+            if (object instanceof THREE.Mesh && !meshFound) {
+                // 📌 Concrete Mesh Hover Effect
+                if (hoveredObject !== object) {
+                    if (hoveredObject) hoveredObject.material.wireframe = true;
+                    hoveredObject = object;
+                    hoveredObject.material.wireframe = false; // 🔆 Disable wireframe
+                }
+                meshFound = true;
+            } 
+            
+            if (object instanceof THREE.Points && !rebarFound) {
+                // 📌 Rebar Hover Effect - Change color to GREEN
+                if (hoveredRebar !== object) {
+                    if (hoveredRebar) hoveredRebar.material.color.set(originalRebarColor); // Restore previous color
+                    originalRebarColor.copy(object.material.color); // Store original color
+                    object.material.color.set(0x00FF00); // Set to green
+                    hoveredRebar = object;
+                }
+                rebarFound = true;
+            }
+        }
+
+        // ✅ Restore previous properties when mouse leaves
+        if (!meshFound && hoveredObject) {
+            hoveredObject.material.wireframe = true;
+            hoveredObject = null;
+        }
+
+        if (!rebarFound && hoveredRebar) {
+            hoveredRebar.material.color.set(originalRebarColor);
+            hoveredRebar = null;
+        }
+    });
+
+
+    renderer.domElement.addEventListener('click', (event) => {
+        // Convert mouse coordinates to normalized device coordinates (-1 to +1)
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        // Set raycaster from camera through mouse
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(scene.children, true);
+
+        if (intersects.length > 0) {
+            console.log("YOU CLICKED")
+            console.log(intersects)
+            const clickedObject = intersects[0].object;
+            if (clickedObject instanceof THREE.Mesh) {
+                console.log("Concrete Mesh Clicked:", clickedObject);
+                console.log("YOUR INDEX IS", window.selectedStrainProfileIndex)
+                if (clickedObject.concMaterial) {
+                    updateStressStrainChart(clickedObject.userData.concShape.material);
+                    
+                    plotSelectedPoint(clickedObject, window.selectedStrainProfileIndex, window.selectedAngle); //make this work with accessing this.strainProfiles
+                }
+            } else if (clickedObject instanceof THREE.Points) {
+                console.log("Rebar Point Clicked:", clickedObject);
+                console.log("YOUR INDEX IS", window.selectedStrainProfileIndex)
+                if (clickedObject.materialData) {
+                    updateStressStrainChart(clickedObject.materialData);
+                    plotSelectedPoint(clickedObject, window.selectedStrainProfileIndex, window.selectedAngle); //make this work with accessing this.strainProfiles
+                }
+            }
+        }
+    });
+}
+
