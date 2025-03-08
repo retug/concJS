@@ -837,6 +837,8 @@ export class ConcShape {
             p[2] = zOffsetRebar;
             // Mark the attribute as needing an update
             positionAttribute.needsUpdate = true;
+            object.geometry.computeBoundingBox()
+            object.geometry.computeBoundingSphere()
 
             // Normalize rebar stress for coloring
             let normalizedStress = Math.abs(stress) / 60000; // Normalize for color mapping
@@ -860,6 +862,10 @@ export class ConcShape {
                 rebarColor.setRGB(red, green, blue);
             }
             object.material.color = rebarColor;
+            // ✅ Set transparency to 50%
+            object.material.transparent = true;
+            object.material.opacity = 0.5;
+            object.material.needsUpdate = true;
 
             // Create and add arrow
             let startX = p[0];
@@ -880,7 +886,7 @@ export class ConcShape {
                 end = [startX, startY, extrusionDepth + arrowLength];
             }
             // Call the new custom arrow function
-            // createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
+            createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
 
 
 

@@ -606,114 +606,14 @@ export function deleteSelectedElements() {
     document.getElementById("concData").innerHTML = "";
 }
 
-// export function setupRaycastingForResults(scene, camera, renderer) {
-//     const raycaster = new THREE.Raycaster();
-//     const mouse = new THREE.Vector2();
-//     let hoveredObject = null;
-
-//     let hoveredRebar = null;
-//     let originalRebarColor = new THREE.Color();
-
-//     // ✅ Mouse Move Event - Highlight Object on Hover
-//     renderer.domElement.addEventListener('mousemove', (event) => {
-//         const rect = renderer.domElement.getBoundingClientRect();
-//         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-//         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-//         raycaster.setFromCamera(mouse, camera);
-//         const intersects = raycaster.intersectObjects(scene.children, true);
-
-//         let meshFound = false;
-//         let rebarFound = false;
-
-//         for (const intersect of intersects) {
-//             const object = intersect.object;
-
-//             if (object instanceof THREE.Mesh && !meshFound) {
-//                 // 📌 Concrete Mesh Hover Effect
-//                 if (hoveredObject !== object) {
-//                     if (hoveredObject) hoveredObject.material.wireframe = true;
-//                     hoveredObject = object;
-//                     hoveredObject.material.wireframe = false; // 🔆 Disable wireframe
-//                 }
-//                 meshFound = true;
-//             } 
-            
-//             if (object instanceof THREE.Points && !rebarFound) {
-//                 // 📌 Rebar Hover Effect - Change color to GREEN
-//                 if (hoveredRebar !== object) {
-//                     if (hoveredRebar) hoveredRebar.material.color.set(originalRebarColor); // Restore previous color
-//                     originalRebarColor.copy(object.material.color); // Store original color
-//                     object.material.color.set(0x00FF00); // Set to green
-//                     hoveredRebar = object;
-//                 }
-//                 rebarFound = true;
-//             }
-//         }
-
-//         // ✅ Restore previous properties when mouse leaves
-//         if (!meshFound && hoveredObject) {
-//             hoveredObject.material.wireframe = true;
-//             hoveredObject = null;
-//         }
-
-//         if (!rebarFound && hoveredRebar) {
-//             hoveredRebar.material.color.set(originalRebarColor);
-//             hoveredRebar = null;
-//         }
-//     });
-
-
-//     renderer.domElement.addEventListener('click', (event) => {
-//         // Convert mouse coordinates to normalized device coordinates (-1 to +1)
-//         const rect = renderer.domElement.getBoundingClientRect();
-//         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-//         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-    
-//         // Set raycaster from camera through mouse
-//         raycaster.setFromCamera(mouse, camera);
-//         let intersects = raycaster.intersectObjects(scene.children, true);
-    
-//         if (intersects.length > 0) {
-//             console.log("YOU CLICKED");
-//             console.log(intersects);
-    
-//             // ✅ Separate Points (Rebar) and Mesh (Concrete) objects
-//             let pointsObjects = intersects.filter(i => i.object instanceof THREE.Points);
-//             let meshObjects = intersects.filter(i => i.object instanceof THREE.Mesh);
-    
-//             let selectedObject = null;
-    
-//             if (pointsObjects.length > 0) {
-//                 // ✅ Prioritize Points objects (Rebar)
-//                 selectedObject = pointsObjects[0].object;
-//             } else if (meshObjects.length > 0) {
-//                 // ✅ If no Points objects are found, select the first Mesh (Concrete)
-//                 selectedObject = meshObjects[0].object;
-//             }
-    
-//             if (!selectedObject) return; // ❌ No valid object found, exit.
-    
-//             console.log("SELECTED OBJECT:", selectedObject);
-//             console.log("YOUR INDEX IS", window.selectedStrainProfileIndex);
-    
-//             if (selectedObject instanceof THREE.Mesh && selectedObject.userData) {
-//                 console.log("Concrete Mesh Clicked:", selectedObject);
-//                 updateStressStrainChart(selectedObject.userData.concShape.material);
-//                 plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
-//             } else if (selectedObject instanceof THREE.Points && selectedObject.materialData) {
-//                 console.log("Rebar Point Clicked:", selectedObject);
-//                 updateStressStrainChart(selectedObject.materialData);
-//                 plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
-//             }
-//         }
-//     });
 export function setupRaycastingForResults(scene, camera, renderer) {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let hoveredObject = null;
     let hoveredRebar = null;
     let originalRebarColor = new THREE.Color();
+    let originalRebarOpacity = 0.5;
+    let originalArrowOpacity = 0.5;
 
     function updateRaycaster(event) {
         const rect = renderer.domElement.getBoundingClientRect();
@@ -729,6 +629,8 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         let intersects = updateRaycaster(event);
         let meshFound = false;
         let rebarFound = false;
+        let arrowFound = false;
+
 
         for (const intersect of intersects) {
             const object = intersect.object;
@@ -742,11 +644,13 @@ export function setupRaycastingForResults(scene, camera, renderer) {
                 meshFound = true;
             }
 
+            // Check for rebar points
             if (object instanceof THREE.Points && !rebarFound) {
                 if (hoveredRebar !== object) {
-                    if (hoveredRebar) hoveredRebar.material.color.set(originalRebarColor);
-                    originalRebarColor.copy(object.material.color);
-                    object.material.color.set(0x00FF00); // Highlight rebar as green
+                    if (hoveredRebar) hoveredRebar.material.opacity = originalRebarOpacity; // Restore opacity
+                    originalRebarOpacity = object.material.opacity;
+                    object.material.transparent = true;
+                    object.material.opacity = 1; // Make invisible on hover
                     hoveredRebar = object;
                 }
                 rebarFound = true;
@@ -760,7 +664,7 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         }
 
         if (!rebarFound && hoveredRebar) {
-            hoveredRebar.material.color.set(originalRebarColor);
+            hoveredRebar.material.opacity = originalRebarOpacity;
             hoveredRebar = null;
         }
     });
