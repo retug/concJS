@@ -343,6 +343,38 @@ body {
   box-sizing: border-box; /* Ensures padding/borders don’t increase width */
 }
 
+.stress-scale {
+  margin-top: 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.color-bar {
+  width: 200px;
+  height: 20px;
+  border-radius: 5px;
+  margin: 5px auto;
+  border: 1px solid #333;
+}
+
+/* Dynamic Concrete Stress Gradient */
+.concrete-bar {
+  background: linear-gradient(to right, red, purple, blue);
+}
+
+/* Dynamic Rebar Stress Gradient */
+.rebar-bar {
+  background: linear-gradient(to right, red, yellow, green);
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 200px;
+  margin: 0 auto;
+  font-size: 12px;
+}
+
 
 
 

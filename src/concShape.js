@@ -27,7 +27,6 @@ export class ConcShape {
         this.PMMXYresults = { }; // To store analysis results {angle: [P, Mx, My]}
         this.PMMUVresults = { }; // To store analysis results {angle: [P, Mu, Mv]}
         this.transformedFEMcentroids = {}; // ✅ Initialize as an empty object
-        
 
         this.basePolyXY = []; // ✅ Stores exterior polygon points
         this.holesPolyXY = []; // ✅ Stores hole points
@@ -732,6 +731,8 @@ export class ConcShape {
         const concreteScaleFactor = 4; // Adjust as needed
         const rebarScaleFactor = 5; // Adjust as needed
         const arrowScaleFactor = 4;
+        let minConcreteStress = Infinity, maxConcreteStress = -Infinity;
+        let minRebarStress = Infinity, maxRebarStress = -Infinity;
 
         function calculateStress(element, strainProfile, angle, concreteMat) {
             let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
@@ -769,6 +770,8 @@ export class ConcShape {
 
             let positions = object.geometry.attributes.position.array;
             let stress = calculateStress(object, strainProfile, angle, concreteMat);
+            minConcreteStress = Math.min(minConcreteStress, stress);
+            maxConcreteStress = Math.max(maxConcreteStress, stress);
             let zOffset = (stress / 4000) * concreteScaleFactor;
 
             for (let i = 2; i < positions.length; i += 9) {
@@ -810,6 +813,8 @@ export class ConcShape {
             // let positions = object.geometry.attributes.position.array;
 
             let stress = calculateStress(object, strainProfile, angle, object.materialData);
+            minRebarStress = Math.min(minRebarStress, stress);
+            maxRebarStress = Math.max(maxRebarStress, stress);
             
             
             let zOffset = (stress / 60000) * rebarScaleFactor;
@@ -817,6 +822,10 @@ export class ConcShape {
             minZrebar = Math.min(minZ, newZ);
             maxZrebar = Math.max(maxZ, newZ);
         });
+
+        // ✅ Remove existing arrows before adding new ones
+        scene.children.filter(obj => obj.userData.isCustomArrow === true).forEach(arrow => scene.remove(arrow));
+
 
         // Second pass to update position and apply colors
         this.rebarObjects.forEach((object) => {
@@ -887,10 +896,9 @@ export class ConcShape {
             }
             // Call the new custom arrow function
             createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
-
-
-
+            
         });
+
         function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3, stress) {
             const arrowGroup = new THREE.Group();
         
@@ -932,6 +940,8 @@ export class ConcShape {
             // Add shaft and cone to arrow group
             arrowGroup.add(shaft);
             arrowGroup.add(cone);
+            //This is to filter and remove from the scene.
+            arrowGroup.userData.isCustomArrow = true
         
             // Position the entire arrow
             arrowGroup.position.copy(startVec);
@@ -942,7 +952,90 @@ export class ConcShape {
             return arrowGroup;
         }
 
+        // ✅ Update the concShape class with new stress values
+        minConcreteStress = minConcreteStress / 1000; // Convert to ksi
+        maxConcreteStress = maxConcreteStress / 1000;
+        minRebarStress = minRebarStress / 1000;
+        maxRebarStress = maxRebarStress / 1000;
+
+        console.log("Min/Max Concrete Stress:", minConcreteStress, maxConcreteStress);
+        console.log("Min/Max Rebar Stress:", minRebarStress, maxRebarStress);
+
+        // ✅ Inject the updated color scale
+        this.colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress);
     }
+
+    colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress) {
+        let windowProps = document.getElementById("windowProps");
+        if (!windowProps) return;
+    
+        // ✅ Generate color stops for concrete and rebar
+        let concreteColors = this.generateColorScale(minConcreteStress, maxConcreteStress, this.getConcreteColor);
+        let rebarColors = this.generateColorScale(minRebarStress, maxRebarStress, this.getRebarColor);
+    
+        windowProps.innerHTML = `
+            <div class="stress-scale">
+                <p><strong>Concrete Stress (ksi)</strong></p>
+                <div class="color-bar" style="background: ${concreteColors};"></div>
+                <div class="scale-labels">
+                    <span>${minConcreteStress.toFixed(1)}</span> 
+                    <span>${((minConcreteStress + maxConcreteStress) / 2).toFixed(1)}</span> 
+                    <span>${maxConcreteStress.toFixed(1)}</span>
+                </div>
+            </div>
+    
+            <div class="stress-scale">
+                <p><strong>Rebar Stress (ksi)</strong></p>
+                <div class="color-bar" style="background: ${rebarColors};"></div>
+                <div class="scale-labels">
+                    <span>${minRebarStress.toFixed(1)}</span> 
+                    <span>${((minRebarStress + maxRebarStress) / 2).toFixed(1)}</span> 
+                    <span>${maxRebarStress.toFixed(1)}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+
+    generateColorScale(min, max, colorFunction) {
+        if (min === max) {
+            return colorFunction(max, min, max); // Solid color when min == max
+        }
+        return `linear-gradient(to right, ${colorFunction(min, min, max)}, ${colorFunction((min + max) / 2, min, max)}, ${colorFunction(max, min, max)})`;
+    }
+    
+    
+
+    getConcreteColor(stress, minConcreteStress, maxConcreteStress) {
+        let normalized = (stress - minConcreteStress) / (maxConcreteStress - minConcreteStress);
+        return `rgb(${(1 - normalized) * 255}, 0, ${normalized * 255})`; // Red to Blue
+    }
+    
+    
+    getRebarColor(stress, minRebarStress, maxRebarStress) {
+        let normalized = Math.abs(stress) / (maxRebarStress || 1);
+    
+        if (minRebarStress === maxRebarStress) {
+            return stress < 0 ? "rgb(255, 0, 0)" : "rgb(0, 255, 0)"; // Solid red or green
+        }
+    
+        if (stress < 0) {
+            // 🔴 **Compression: Fully Red if Normalized = 1, otherwise Red-to-Purple**
+            let red = 255;
+            let green = 0;
+            let blue = normalized === 1 ? 0 : normalized * 200; // Fully red if 1, else red to purple
+            return `rgb(${red}, ${green}, ${blue})`;
+        } else {
+            // 🔵 **Tension: Fully Blue if Normalized = 0, otherwise Blue-to-Green**
+            let red = 0;
+            let green = normalized * 255; // Green increases with stress
+            let blue = normalized === 0 ? 255 : 255 - (normalized * 125); // Fully blue at 0 stress
+            return `rgb(${red}, ${green}, ${blue})`;
+        }
+    }
+    
+    
+
 
     //Shift plus middle mouse button to rotate
     setupResultsControls(){

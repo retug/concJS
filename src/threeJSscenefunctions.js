@@ -629,7 +629,6 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         let intersects = updateRaycaster(event);
         let meshFound = false;
         let rebarFound = false;
-        let arrowFound = false;
 
 
         for (const intersect of intersects) {
