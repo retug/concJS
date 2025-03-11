@@ -31,6 +31,7 @@ export class ConcShape {
         this.basePolyXY = []; // ✅ Stores exterior polygon points
         this.holesPolyXY = []; // ✅ Stores hole points
         this.FEMarea = 0;  // ✅ Total FEM area
+        this.totalRebarArea = 0;
         this.centroidX = 0; // ✅ X coordinate of centroid
         this.centroidY = 0; // ✅ Y coordinate of centroid
         this.strainProfiles = {} //This will store all of the strain profiles for a given NA angle
@@ -57,6 +58,11 @@ export class ConcShape {
     // ✅ Stores Three.js Points objects directly
     initializeRebarObjects(allSelectedRebar) {
         this.rebarObjects = allSelectedRebar; // Store Three.js Points directly
+        // ✅ Compute total rebar area
+        this.totalRebarArea = this.rebarObjects.reduce((sum, rebar) => {
+            let radius = rebarDia[rebar.rebarSize] / 2;  // Diameter to radius
+            return sum + Math.PI * radius * radius; // Area of circle: πr²
+        }, 0);
     }
 
 
@@ -393,6 +399,8 @@ export class ConcShape {
         const allUV = [...transformedConcrete, ...this.rebarObjects.map(rebar => rebar.transformedCentroid[angle])];
         const uVals = allUV.map(p => p.u);
         const vVals = allUV.map(p => p.v);
+
+        this.populateAnalysisResults();
 
     }
 
@@ -966,14 +974,31 @@ export class ConcShape {
     }
 
     colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress) {
-        let windowProps = document.getElementById("windowProps");
-        if (!windowProps) return;
+        let selectedPointProps = document.getElementById("selectedPointResultProps");
+        if (!selectedPointProps) return;
+
+        // ✅ Retrieve the selected PMM results
+        let selectedAngle = window.selectedAngle || 0;  // Ensure angle is defined
+        let selectedIndex = window.selectedStrainProfileIndex || 0; // Ensure index is defined
+
+        let P = this.PMMXYresults[selectedAngle]?.P[0]?.[selectedIndex] || 0;
+        let Mx = this.PMMXYresults[selectedAngle]?.Mx[0]?.[selectedIndex] || 0;
+        let My = this.PMMXYresults[selectedAngle]?.My[0]?.[selectedIndex] || 0;
     
         // ✅ Generate color stops for concrete and rebar
         let concreteColors = this.generateColorScale(minConcreteStress, maxConcreteStress, this.getConcreteColor);
         let rebarColors = this.generateColorScale(minRebarStress, maxRebarStress, this.getRebarColor);
     
-        windowProps.innerHTML = `
+        selectedPointProps.innerHTML = `
+            <div class="pmm-values">
+                <h3>Selected PMM Values</h3>
+                <table class="pmm-table">
+                    <tr><th>Property</th><th>Value</th></tr>
+                    <tr><td><strong>P</strong> (k)</td><td>${P.toFixed(2)}</td></tr>
+                    <tr><td><strong>Mx</strong> (kip-ft)</td><td>${Mx.toFixed(2)}</td></tr>
+                    <tr><td><strong>My</strong> (kip-ft)</td><td>${My.toFixed(2)}</td></tr>
+                </table>
+            </div>
             <div class="stress-scale">
                 <p><strong>Concrete Stress (ksi)</strong></p>
                 <div class="color-bar" style="background: ${concreteColors};"></div>
@@ -1032,6 +1057,38 @@ export class ConcShape {
             let blue = normalized === 0 ? 255 : 255 - (normalized * 125); // Fully blue at 0 stress
             return `rgb(${red}, ${green}, ${blue})`;
         }
+    }
+
+    populateAnalysisResults() {
+        let analysisResults = document.getElementById("analysisResults");
+        let userInputProps = document.getElementById("userInputProps");
+
+        if (!analysisResults) return;
+
+        if (userInputProps) {
+            userInputProps.innerHTML = "";
+        }
+
+    
+        // ✅ Ensure `this.FEMarea` and `this.centroidX` exist
+        let FEMarea = this.FEMarea || 0;
+        let centroidX = this.centroidX || 0;
+        let centroidY = this.centroidY || 0;
+        let rebarArea = this.totalRebarArea||0;
+        let reinforcementRatio = (rebarArea / FEMarea) * 100; // Convert to percentage
+        
+    
+        // ✅ Inject content dynamically
+        analysisResults.innerHTML = `
+            <div class="analysis-results-section">
+                <p><strong>Concrete Area:</strong> ${FEMarea.toFixed(2)} in²</p>
+                <p><strong>Rebar Area:</strong> ${rebarArea.toFixed(2)} in²</p>
+                <p><strong>Reinf. Ratio:</strong> ${reinforcementRatio.toFixed(3)}%</p>
+                <p><strong>Centroid X:</strong> ${centroidX.toFixed(2)} in</p>
+                <p><strong>Centroid Y:</strong> ${centroidY.toFixed(2)} in</p>
+                
+            </div>
+        `;
     }
     
     
