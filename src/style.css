@@ -375,6 +375,10 @@ body {
   font-size: 12px;
 }
 
+#results {
+  color: black; /* Ensures text is visible on a light background */
+}
+
 
 
 

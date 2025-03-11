@@ -663,8 +663,6 @@ export class ConcShape {
     
         return phi;
     }
-    
-
 
     plotPMMResults() {
         if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
@@ -672,16 +670,29 @@ export class ConcShape {
             return;
         }
     
-        let P_values = [];
-        let Mx_values = [];
-        let My_values = [];
-        let phiP_values = [];
-        let phiMx_values = [];
-        let phiMy_values = [];
-        let angles = [];
-        let strainProfileIndices = [];
+        let uniqueAngles = Object.keys(this.PMMXYresults).map(Number);
+        
+        let angleDropdown = document.getElementById("angleSelection");
+        
+        // ✅ If dropdown doesn't exist yet, create it and populate
+        if (!angleDropdown) {
+            let resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = `
+                <h3>3D PMM Interaction Diagram</h3>
+                <label for="angleSelection">Select Bending Axis Angle:</label>
+                <select id="angleSelection"></select>
+                <div id='pmPlot' style='width: 100%; height: 500px;'></div>
+            `;
+            this.populateAngleDropdown(uniqueAngles);
+            angleDropdown = document.getElementById("angleSelection");
+        }
     
-        // ✅ Collect PMM Data
+        let selectedAngle = parseFloat(angleDropdown.value) || uniqueAngles[0];
+    
+        let P_values = [], Mx_values = [], My_values = [];
+        let phiP_values = [], phiMx_values = [], phiMy_values = [];
+        let angles = [], strainProfileIndices = [];
+    
         for (let angle in this.PMMXYresults) {
             let numPoints = this.PMMXYresults[angle].P.flat().length;
             P_values.push(...this.PMMXYresults[angle].P.flat());
@@ -696,38 +707,25 @@ export class ConcShape {
             strainProfileIndices.push(...Array.from({ length: numPoints }, (_, i) => i));
         }
     
-        // ✅ Scatter plot for original PMM values
+        let colors = angles.map(angle => angle === selectedAngle ? "rgb(255, 100, 0)" : "rgb(200, 200, 200)");
+        let symbolTypes = angles.map(angle => angle === selectedAngle ? "circle" : "cross");
+    
         let originalTrace = {
-            x: Mx_values,
-            y: My_values,
-            z: P_values,
-            mode: "markers",
-            type: "scatter3d",
-            marker: { size: 5, color: angles, colorscale: "Viridis", opacity: 0.8 },
+            x: Mx_values, y: My_values, z: P_values,
+            mode: "markers", type: "scatter3d",
+            marker: { size: 6, color: colors, opacity: 0.8, symbol: symbolTypes },
             name: "Original PMM",
-            hovertemplate: 
-                "P - %{z:.1f} (k)<br>" +
-                "Mx - %{x:.1f} (kip*ft)<br>" +
-                "My - %{y:.1f} (kip*ft)<br>" +
-                "Index - %{customdata}",
-            customdata: strainProfileIndices // Attach strain profile indices
+            hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br> Index - %{customdata}",
+            customdata: strainProfileIndices
         };
     
-        // ✅ Scatter plot for reduced (φP, φMx, φMy) values
         let reducedTrace = {
-            x: phiMx_values,
-            y: phiMy_values,
-            z: phiP_values,
-            mode: "markers",
-            type: "scatter3d",
-            marker: { size: 5, color: angles, colorscale: "Bluered", opacity: 0.8, symbol: "diamond" },
+            x: phiMx_values, y: phiMy_values, z: phiP_values,
+            mode: "markers", type: "scatter3d",
+            marker: { size: 6, color: colors, opacity: 0.8, symbol: symbolTypes },
             name: "Reduced (φPMM)",
-            hovertemplate: 
-                "φP - %{z:.1f} (k)<br>" +
-                "φMx - %{x:.1f} (kip*ft)<br>" +
-                "φMy - %{y:.1f} (kip*ft)<br>" +
-                "Index - %{customdata}",
-            customdata: strainProfileIndices // Attach strain profile indices
+            hovertemplate: "φP - %{z:.1f} (k)<br> φMx - %{x:.1f} (kip*ft)<br> φMy - %{y:.1f} (kip*ft)<br> Index - %{customdata}",
+            customdata: strainProfileIndices
         };
     
         let layout = {
@@ -741,22 +739,122 @@ export class ConcShape {
             margin: { l: 0, r: 0, b: 0, t: 50 }
         };
     
-        let resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
+        let plotDiv = document.getElementById("pmPlot");
     
-        let plot = Plotly.newPlot("pmPlot", [originalTrace, reducedTrace], layout);
+        // ✅ If the plot already exists, just update it instead of redrawing
+        if (plotDiv.data) {
+            Plotly.react("pmPlot", [originalTrace, reducedTrace], layout);
+        } else {
+            Plotly.newPlot("pmPlot", [originalTrace, reducedTrace], layout);
+        }
     
-        // ✅ Add Click Event Listener
-        document.getElementById("pmPlot").on('plotly_click', (data) => {
+        // ✅ Attach event listener only once
+        if (!angleDropdown.dataset.listenerAdded) {
+            angleDropdown.addEventListener("change", () => {
+                this.updatePMMHighlight();
+            });
+            angleDropdown.dataset.listenerAdded = true;
+        }
+    
+        // ✅ Ensure highlight updates initially
+        this.updatePMMHighlight();
+        // ✅ Add Click Event Listener to Fire for Selected Angle Only
+        plotDiv.on('plotly_click', (data) => {
             let clickedIndex = data.points[0].customdata; // Extract strain profile index
-            window.selectedStrainProfileIndex = clickedIndex;
-            window.selectedConcShape.generate3dStressPlot(window.selectedAngle, selectedConcShape.strainProfiles[window.selectedAngle][window.selectedStrainProfileIndex]);
+            console.log(clickedIndex)
+
+            window.selectedIndex = clickedIndex
+            
+            let clickedAngle = parseFloat(document.getElementById("angleSelection").value);
+            console.log(clickedAngle)
+
+            window.selectedAngle = clickedAngle
+
+            window.selectedConcShape.generate3dStressPlot(clickedAngle, selectedConcShape.strainProfiles[clickedAngle][clickedIndex]);
+
             // ✅ Reinitialize raycasting since scene was modified
             setTimeout(() => {
                 console.log("🔄 Reinitializing raycasting after PMM selection...");
                 setupRaycastingForResults(scene, camera, renderer);
             }, 100);
         });
+    }
+
+    updatePMMHighlight() {
+        let selectedAngle = parseFloat(document.getElementById("angleSelection").value);
+        console.log("YOUR SELECTED ANGLE IS", selectedAngle);
+    
+        let plotDiv = document.getElementById("pmPlot");
+        if (!plotDiv || !plotDiv.data) return;
+    
+        // ✅ Extract all angles corresponding to each PMM data point
+        let allAngles = [];
+        for (let angle in this.PMMXYresults) {
+            let numPoints = this.PMMXYresults[angle].P.flat().length;
+            allAngles.push(...Array(numPoints).fill(Number(angle))); // Repeat angle for each data point
+        }
+    
+        let originalColors = plotDiv.data[0].marker.color; // Get existing colors
+        let originalSymbols = plotDiv.data[0].marker.symbol; // Get existing symbols
+    
+        // ✅ Highlight all points belonging to the selected angle
+        let updatedColors = originalColors.map((_, i) =>
+            allAngles[i] === selectedAngle ? "rgb(255, 100, 0)" : "rgb(200, 200, 200)"
+        );
+    
+        let updatedSymbols = originalSymbols.map((_, i) =>
+            allAngles[i] === selectedAngle ? "circle" : "cross"
+        );
+    
+        Plotly.restyle("pmPlot", {
+            "marker.color": [updatedColors],
+            "marker.symbol": [updatedSymbols]
+        });
+    }
+    
+    
+
+    populateAngleDropdown(angles) {
+        let angleDropdown = document.getElementById("angleSelection");
+        angleDropdown.innerHTML = ""; // Clear previous options
+    
+        angles.forEach(angle => {
+            let option = document.createElement("option");
+            option.value = angle;
+            option.text = `${angle}°`;
+            angleDropdown.appendChild(option);
+        });
+    
+        angleDropdown.value = angles[0]; // Default to first angle
+    }
+
+    highlightSelectedPoint(index, selectedAngle) {
+        let plotDiv = document.getElementById("pmPlot");
+        let selectedData = this.PMMXYresults[selectedAngle];
+    
+        let Mx_selected = selectedData.Mx.flat()[index];
+        let My_selected = selectedData.My.flat()[index];
+        let P_selected = selectedData.P.flat()[index];
+    
+        let newTrace = {
+            x: [Mx_selected],
+            y: [My_selected],
+            z: [P_selected],
+            mode: "markers",
+            type: "scatter3d",
+            marker: { size: 10, color: "rgb(255, 0, 0)", opacity: 1.0, symbol: "diamond" },
+            name: "Selected Point",
+            hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br>"
+        };
+    
+        Plotly.addTraces(plotDiv, newTrace);
+    }
+
+    setupBendingAngles() {
+        // for (let angle = 0; angle <= 180; angle += 15) {
+        //     this.generatePMM(angle);
+        // }
+        this.plotPMMResults();
     }
     
 

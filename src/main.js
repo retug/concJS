@@ -184,9 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
           // // Generate FEM mesh for the selected concrete shape
           selectedConcShape.generateFEMMesh(interiorSpacing, edgeSpacing);
 
-
-          
-
           // Plot the generated FEM mesh elements in the scene
           if (selectedConcShape.FEMmesh && selectedConcShape.FEMmesh.length > 0) {
               selectedConcShape.FEMmesh.forEach(mesh => {
@@ -198,15 +195,34 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("FEM mesh generation failed or returned empty.");
           }
           selectedConcShape.CalcPnmax("other");
-          let angle = 45;
-          let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
-          // ✅ Transform coordinates for 45-degree angle
-          selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
-          // ✅ Generate Strain profiles for the given angle
-          selectedConcShape.generateStrains(angle);
-          selectedConcShape.generatePMM(angle)
-          selectedConcShape.plotPMMResults();
-          selectedConcShape.generate3dStressPlot(angle, selectedConcShape.strainProfiles[angle][strainProfileIndex]);
+          // let angle = 45;
+          // let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
+          // // ✅ Transform coordinates for 45-degree angle
+          // selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
+          // // ✅ Generate Strain profiles for the given angle
+          // selectedConcShape.generateStrains(angle);
+          // selectedConcShape.generatePMM(angle)
+          // selectedConcShape.plotPMMResults();
+
+          // ✅ Ensure transformation is done before PMM analysis
+          console.log("🔹 Transforming coordinates for all angles...");
+          for (let angle = 0; angle <= 180; angle += 15) {
+              selectedConcShape.transformCoordinatesAtAngle(angle);
+          }
+
+          console.log("🔹 Generating PMM for all angles...");
+          for (let angle = 0; angle <= 180; angle += 15) {
+              selectedConcShape.generateStrains(angle);
+              selectedConcShape.generatePMM(angle);
+          }
+
+
+          // ✅ Setup bending angles from 0° to 180° at 15° intervals
+          selectedConcShape.setupBendingAngles();
+
+          selectedConcShape.generate3dStressPlot(0, selectedConcShape.strainProfiles[0][0]);
+          console.log("YOUR SHAPE")
+          console.log(selectedConcShape)
           selectedConcShape.setupResultsControls();
           SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
       });
