@@ -671,7 +671,6 @@ export class ConcShape {
         }
     
         let uniqueAngles = Object.keys(this.PMMXYresults).map(Number);
-        
         let angleDropdown = document.getElementById("angleSelection");
         
         // ✅ If dropdown doesn't exist yet, create it and populate
@@ -681,13 +680,19 @@ export class ConcShape {
                 <h3>3D PMM Interaction Diagram</h3>
                 <label for="angleSelection">Select Bending Axis Angle:</label>
                 <select id="angleSelection"></select>
+
+                <label for="indexSelection">Select Strain Profile Index:</label>
+                <select id="indexSelection"></select>
+
                 <div id='pmPlot' style='width: 100%; height: 500px;'></div>
             `;
             this.populateAngleDropdown(uniqueAngles);
+            
             angleDropdown = document.getElementById("angleSelection");
         }
     
         let selectedAngle = parseFloat(angleDropdown.value) || uniqueAngles[0];
+        this.populateIndexDropdown(selectedAngle)
     
         let P_values = [], Mx_values = [], My_values = [];
         let phiP_values = [], phiMx_values = [], phiMy_values = [];
@@ -752,32 +757,70 @@ export class ConcShape {
         if (!angleDropdown.dataset.listenerAdded) {
             angleDropdown.addEventListener("change", () => {
                 this.updatePMMHighlight();
+                this.resetHighlightedPoint(); // Reset previously highlighted point
+                this.highlightSelectedPoint(window.selectedIndex || 0, newAngle); // ✅ Highlight selected point
             });
             angleDropdown.dataset.listenerAdded = true;
         }
+
+        let indexDropdown = document.getElementById("indexSelection");
     
         // ✅ Ensure highlight updates initially
         this.updatePMMHighlight();
         // ✅ Add Click Event Listener to Fire for Selected Angle Only
-        plotDiv.on('plotly_click', (data) => {
-            let clickedIndex = data.points[0].customdata; // Extract strain profile index
-            console.log(clickedIndex)
-
-            window.selectedIndex = clickedIndex
-            
-            let clickedAngle = parseFloat(document.getElementById("angleSelection").value);
-            console.log(clickedAngle)
-
-            window.selectedAngle = clickedAngle
-
+        document.getElementById("pmPlot").on('plotly_click', (data) => {
+            let clickedIndex = data.points[0].customdata;
+            let clickedAngle = parseFloat(angleDropdown.value);
+    
+            window.selectedIndex = clickedIndex;
+            window.selectedAngle = clickedAngle;
+            indexDropdown.value = clickedIndex; // Sync dropdown
+    
             window.selectedConcShape.generate3dStressPlot(clickedAngle, selectedConcShape.strainProfiles[clickedAngle][clickedIndex]);
-
-            // ✅ Reinitialize raycasting since scene was modified
+    
             setTimeout(() => {
                 console.log("🔄 Reinitializing raycasting after PMM selection...");
                 setupRaycastingForResults(scene, camera, renderer);
             }, 100);
         });
+
+        // ✅ Add Event Listener for `indexSelection` dropdown
+        if (!indexDropdown.dataset.listenerAdded) {
+            indexDropdown.addEventListener("change", () => {
+                let selectedIndex = parseInt(indexDropdown.value, 10);
+                let selectedAngle = parseFloat(angleDropdown.value);
+
+                window.selectedIndex = selectedIndex;
+                window.selectedAngle = selectedAngle;
+
+                console.log(`📌 Strain Profile Index Changed: Angle ${selectedAngle}, Index ${selectedIndex}`);
+
+                // ✅ Generate 3D stress plot based on new index
+                window.selectedConcShape.generate3dStressPlot(selectedAngle, selectedConcShape.strainProfiles[selectedAngle][selectedIndex]);
+                this.resetHighlightedPoint(); // Reset previously highlighted point
+                this.highlightSelectedPoint(selectedIndex, selectedAngle); // ✅ Highlight selected point
+
+            });
+            indexDropdown.dataset.listenerAdded = true;
+        }
+    }
+
+    populateIndexDropdown(angle) {
+        let indexDropdown = document.getElementById("indexSelection");
+        indexDropdown.innerHTML = ""; // Clear previous options
+    
+        if (!this.PMMXYresults[angle]) return;
+    
+        let numProfiles = this.PMMXYresults[angle].P[0].length;
+    
+        for (let i = 0; i < numProfiles; i++) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = `Profile ${i}`;
+            indexDropdown.appendChild(option);
+        }
+    
+        indexDropdown.value = 0; // Default to first profile
     }
 
     updatePMMHighlight() {
@@ -828,14 +871,29 @@ export class ConcShape {
         angleDropdown.value = angles[0]; // Default to first angle
     }
 
+    // ✅ Resets previously highlighted point to its default state
+    resetHighlightedPoint() {
+        let plotDiv = document.getElementById("pmPlot");
+        if (!plotDiv || plotDiv.data.length < 3) return; // Ensure a highlighted point exists
+
+        // Remove the last trace, which is the highlighted point
+        Plotly.deleteTraces(plotDiv, plotDiv.data.length - 1);
+    }
+
+    // ✅ Highlights the selected point in the 3D PMM plot
     highlightSelectedPoint(index, selectedAngle) {
         let plotDiv = document.getElementById("pmPlot");
         let selectedData = this.PMMXYresults[selectedAngle];
-    
+
+        if (!selectedData) {
+            console.error(`❌ No PMM data found for angle ${selectedAngle}`);
+            return;
+        }
+
         let Mx_selected = selectedData.Mx.flat()[index];
         let My_selected = selectedData.My.flat()[index];
         let P_selected = selectedData.P.flat()[index];
-    
+
         let newTrace = {
             x: [Mx_selected],
             y: [My_selected],
@@ -846,7 +904,7 @@ export class ConcShape {
             name: "Selected Point",
             hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br>"
         };
-    
+
         Plotly.addTraces(plotDiv, newTrace);
     }
 
@@ -1146,7 +1204,8 @@ export class ConcShape {
 
         // ✅ Retrieve the selected PMM results
         let selectedAngle = window.selectedAngle || 0;  // Ensure angle is defined
-        let selectedIndex = window.selectedStrainProfileIndex || 0; // Ensure index is defined
+        let selectedIndex = window.selectedIndex || 0; // Ensure index is defined
+        console.log("YOUR SELECTED INDEX IS", selectedIndex)
 
         let P = this.PMMXYresults[selectedAngle]?.P[0]?.[selectedIndex] || 0;
         let Mx = this.PMMXYresults[selectedAngle]?.Mx[0]?.[selectedIndex] || 0;
