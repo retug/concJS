@@ -197,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
               console.error("FEM mesh generation failed or returned empty.");
           }
+          selectedConcShape.CalcPnmax("other");
           let angle = 45;
           let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
           // ✅ Transform coordinates for 45-degree angle

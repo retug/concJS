@@ -24,8 +24,8 @@ export class ConcShape {
         this.holes = holes;
         this.mesh = null; // base polygon with any holes
         this.FEMmesh = []; // ✅ Stores the FEM triangular elements
-        this.PMMXYresults = { }; // To store analysis results {angle: [P, Mx, My]}
-        this.PMMUVresults = { }; // To store analysis results {angle: [P, Mu, Mv]}
+        this.PMMXYresults = { }; // To store analysis results {angle: [P, Mx, My, MaxStrain]}
+        this.PMMUVresults = { }; // To store analysis results {angle: [P, Mu, Mv, MaxStrain]}
         this.transformedFEMcentroids = {}; // ✅ Initialize as an empty object
 
         this.basePolyXY = []; // ✅ Stores exterior polygon points
@@ -35,6 +35,8 @@ export class ConcShape {
         this.centroidX = 0; // ✅ X coordinate of centroid
         this.centroidY = 0; // ✅ Y coordinate of centroid
         this.strainProfiles = {} //This will store all of the strain profiles for a given NA angle
+
+        this.Pnmax = 0; //ACI 318-19 Table 22.4.2.1 Maxium Axial Strength
 
         this.rebarObjects = [] // ✅ Initialize rebarObjects on creation
 
@@ -437,7 +439,7 @@ export class ConcShape {
 
         // ✅ Define strain limits
         let epsilon_c = -0.003;  // Concrete crushing strain
-        let epsilon_t = 0.025;   // Maximum tension strain
+        let epsilon_t = 0.025;   // Maximum tension strain of profile
         let steps = 25;          // Number of steps for profile generation
 
         // ✅ Initialize strain profiles
@@ -528,6 +530,12 @@ export class ConcShape {
         let totalMomentXArray = []
         let totalMomentYArray = []
 
+        let totalPhiAxialForceArray = []
+        let totalPhiMomentXArray = []
+        let totalPhiMomentYArray = []
+
+        
+
 
         // Retrieve centroid coordinates in U-V space
         let centroidU = this.transformedFEMcentroids[angle].centroidCoordinates.u;
@@ -546,7 +554,7 @@ export class ConcShape {
             this.PMMUVresults[angle] = { P: [], Mu: [], Mv: [] };
         }
         if (!this.PMMXYresults[angle]) {
-            this.PMMXYresults[angle] = { P: [], Mx: [], My: [] };
+            this.PMMXYresults[angle] = { P: [], Mx: [], My: [], MaxRebarStrain: [], phiP: [], phiMx: [], phiMy: [] };
         }
     
         //looping through each stress strain profile
@@ -557,6 +565,7 @@ export class ConcShape {
             let steelForce = 0
             let steelMomentV = 0
             let steelMomentU = 0
+            let maxRebarStrain = -Infinity; // Track the maximum rebar strain
     
     
             for (let i = 0; i < this.FEMmesh.length; i++) {
@@ -587,6 +596,7 @@ export class ConcShape {
                 }
     
                 let rebarStrain = this.strainFunction(strainProfile[0], transformedRebar.v, strainProfile[1]);
+                maxRebarStrain = Math.max(maxRebarStrain, rebarStrain); // Track the max strain
                 let nodalSteelForce = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2 * steelMaterial.stress(rebarStrain);
 
                 steelForce += nodalSteelForce
@@ -594,16 +604,34 @@ export class ConcShape {
                 steelMomentU += nodalSteelForce*(centroidU-transformedRebar.u)
             }
             let resultForce = (steelForce + concForce)/1000;
-            let Mu = (-steelMomentU - concMomentU) / 12;
-            let Mv = (-steelMomentV - concMomentV) / 12;
+            let Mu = (-steelMomentU - concMomentU) / 12 / 1000;
+            let Mv = (-steelMomentV - concMomentV) / 12 / 1000;
             let { Mx, My } = this.convertUVtoXY(angle, Mu, Mv);
+
+            
+
+            let phi = this.calculatePhi("other", maxRebarStrain);
+
+
+            let cappedP = Math.max(resultForce, this.Pnmax)
+            let phiP = phi * cappedP
+            let phiMx = phi * Mx
+            let phiMy = phi * My
 
             totalAxialForceArray.push(resultForce);
             totalMomentUArray.push(Mu);
             totalMomentVArray.push(Mv);
+
             totalMomentXArray.push(Mx);
             totalMomentYArray.push(My);
+
+            totalPhiAxialForceArray.push(phiP);
+            totalPhiMomentXArray.push(phiMx);
+            totalPhiMomentYArray.push(phiMy);
+
         }
+
+
 
         this.PMMUVresults[angle].P.push(totalAxialForceArray);
         this.PMMUVresults[angle].Mu.push(totalMomentUArray);
@@ -611,55 +639,32 @@ export class ConcShape {
         this.PMMXYresults[angle].P.push(totalAxialForceArray);
         this.PMMXYresults[angle].Mx.push(totalMomentXArray);
         this.PMMXYresults[angle].My.push(totalMomentYArray);
+
+
+        // ✅ Store phi values
+        this.PMMXYresults[angle].phiP.push(totalPhiAxialForceArray);
+        this.PMMXYresults[angle].phiMx.push(totalPhiMomentXArray);
+        this.PMMXYresults[angle].phiMy.push(totalPhiMomentYArray);
+        console.log(this.PMMXYresults[angle])
+    }
+    
+    //ACI 318-19 Table 21.2.2
+    calculatePhi(type, maxRebarStrain) {
+        if (type === "spiral") return; // ✅ Do nothing if "spiral"
+    
+        let phi;
+        if (maxRebarStrain < 0.00207) {
+            phi = 0.65;
+        } else if (maxRebarStrain >= 0.00507) {
+            phi = 0.9;
+        } else {
+            phi = 0.65 + 0.25 * (maxRebarStrain - 0.00207) / 0.003;
+        }
+    
+        return phi;
     }
     
 
-    // // Modify the plot function to format hover tooltips
-    // plotPMMResults() {
-    //     if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
-    //         console.error("❌ No PMM XY results available to plot.");
-    //         return;
-    //     }
-
-    //     let P_values = [];
-    //     let Mx_values = [];
-    //     let My_values = [];
-    //     let angles = [];
-
-    //     for (let angle in this.PMMXYresults) {
-    //         P_values.push(...this.PMMXYresults[angle].P.flat());
-    //         Mx_values.push(...this.PMMXYresults[angle].Mx.flat());
-    //         My_values.push(...this.PMMXYresults[angle].My.flat());
-    //         angles.push(...Array(this.PMMXYresults[angle].P.flat().length).fill(Number(angle)));
-    //     }
-
-    //     let scatterTrace = {
-    //         x: Mx_values,
-    //         y: My_values,
-    //         z: P_values,
-    //         mode: "markers",
-    //         type: "scatter3d",
-    //         marker: { size: 5, color: angles, colorscale: "Viridis", opacity: 0.8 },
-    //         name: "PMM Data",
-    //         hovertemplate: "P - %{z:.1f} (k)<br>" +
-    //                     "Mx - %{x:.1f} (kip*ft)<br>" +
-    //                     "My - %{y:.1f} (kip*ft)"
-    //     };
-
-    //     let layout = {
-    //         title: "3D P-M Interaction Diagram",
-    //         scene: {
-    //             xaxis: { title: "Mx (kip-ft)" },
-    //             yaxis: { title: "My (kip-ft)" },
-    //             zaxis: { title: "P (k)" },
-    //             aspectmode: "cube"
-    //         },
-    //         margin: { l: 0, r: 0, b: 0, t: 50 }
-    //     };
-    //     let resultsDiv = document.getElementById("results");
-    //     resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
-    //     Plotly.newPlot("pmPlot", [scatterTrace], layout);
-    // }
 
     plotPMMResults() {
         if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
@@ -670,6 +675,9 @@ export class ConcShape {
         let P_values = [];
         let Mx_values = [];
         let My_values = [];
+        let phiP_values = [];
+        let phiMx_values = [];
+        let phiMy_values = [];
         let angles = [];
         let strainProfileIndices = [];
     
@@ -679,23 +687,47 @@ export class ConcShape {
             P_values.push(...this.PMMXYresults[angle].P.flat());
             Mx_values.push(...this.PMMXYresults[angle].Mx.flat());
             My_values.push(...this.PMMXYresults[angle].My.flat());
+    
+            phiP_values.push(...this.PMMXYresults[angle].phiP.flat());
+            phiMx_values.push(...this.PMMXYresults[angle].phiMx.flat());
+            phiMy_values.push(...this.PMMXYresults[angle].phiMy.flat());
+    
             angles.push(...Array(numPoints).fill(Number(angle)));
             strainProfileIndices.push(...Array.from({ length: numPoints }, (_, i) => i));
         }
     
-        let scatterTrace = {
+        // ✅ Scatter plot for original PMM values
+        let originalTrace = {
             x: Mx_values,
             y: My_values,
             z: P_values,
             mode: "markers",
             type: "scatter3d",
             marker: { size: 5, color: angles, colorscale: "Viridis", opacity: 0.8 },
-            name: "PMM Data",
-            hovertemplate: "P - %{z:.1f} (k)<br>" +
-                        "Mx - %{x:.1f} (kip*ft)<br>" +
-                        "My - %{y:.1f} (kip*ft)<br>" +
-                        "Index - %{customdata}",
-            customdata: strainProfileIndices // Attach strain profile indices to each point
+            name: "Original PMM",
+            hovertemplate: 
+                "P - %{z:.1f} (k)<br>" +
+                "Mx - %{x:.1f} (kip*ft)<br>" +
+                "My - %{y:.1f} (kip*ft)<br>" +
+                "Index - %{customdata}",
+            customdata: strainProfileIndices // Attach strain profile indices
+        };
+    
+        // ✅ Scatter plot for reduced (φP, φMx, φMy) values
+        let reducedTrace = {
+            x: phiMx_values,
+            y: phiMy_values,
+            z: phiP_values,
+            mode: "markers",
+            type: "scatter3d",
+            marker: { size: 5, color: angles, colorscale: "Bluered", opacity: 0.8, symbol: "diamond" },
+            name: "Reduced (φPMM)",
+            hovertemplate: 
+                "φP - %{z:.1f} (k)<br>" +
+                "φMx - %{x:.1f} (kip*ft)<br>" +
+                "φMy - %{y:.1f} (kip*ft)<br>" +
+                "Index - %{customdata}",
+            customdata: strainProfileIndices // Attach strain profile indices
         };
     
         let layout = {
@@ -712,7 +744,7 @@ export class ConcShape {
         let resultsDiv = document.getElementById("results");
         resultsDiv.innerHTML = "<h3>3D PMM Interaction Diagram</h3><div id='pmPlot' style='width: 100%; height: 500px;'></div>";
     
-        let plot = Plotly.newPlot("pmPlot", [scatterTrace], layout);
+        let plot = Plotly.newPlot("pmPlot", [originalTrace, reducedTrace], layout);
     
         // ✅ Add Click Event Listener
         document.getElementById("pmPlot").on('plotly_click', (data) => {
@@ -726,6 +758,7 @@ export class ConcShape {
             }, 100);
         });
     }
+    
 
     generate3dStressPlot(angle, strainProfile) {
         //this function will update the 3d scene, plotting the stress of each element in the scene.
@@ -971,6 +1004,42 @@ export class ConcShape {
 
         // ✅ Inject the updated color scale
         this.colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress);
+    }
+
+    CalcPnmax(type) {
+        if (type !== "other") {
+            console.warn(`⚠️ Unsupported type "${type}" passed to CalcPnmax. No calculation performed.`);
+            return;
+        }
+    
+        console.log("🔹 Calculating Pnmax...");
+    
+        let concMat = this.material;  // Concrete compressive strength (psi)
+        let fpc = concMat.stress(-0.003)
+        console.log("your fpc is", fpc)
+        let totalConcreteArea = this.FEMarea;  // Total section area (in²)
+        let totalSteelArea = 0;  // Initialize steel area sum
+        let totalSteelForce = 0; // Initialize steel force sum
+    
+        // ✅ Loop through each rebar object and sum up the steel area
+        for (let rebar of this.rebarObjects) {
+            //area times stress(strain)
+            let steelMaterial = rebar.materialData; // ✅ Retrieve steel material
+
+            let rebarStrain = 0.005
+            let nodalSteelForce = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2 * steelMaterial.stress(rebarStrain);
+            totalSteelForce -= nodalSteelForce
+        }
+
+        console.log("your rebar force is", totalSteelForce)
+    
+        // ✅ Compute Po (Nominal Axial Capacity)
+        let Po = 0.85 * fpc * (totalConcreteArea - totalSteelArea) + totalSteelForce;
+    
+        // ✅ Store Pnmax in the class
+        this.Pnmax = (0.8*Po) / 1000;  // Convert to kips (if fpc is in psi)
+    
+        console.log(`✅ Pnmax Calculated: ${this.Pnmax.toFixed(2)} kips`);
     }
 
     colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress) {
