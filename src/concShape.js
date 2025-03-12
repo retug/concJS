@@ -15,6 +15,7 @@ import Delaunator from 'delaunator';
 import { scene, controls, camera, renderer } from "./main.js"; 
 import { rebarDia, setupRaycastingForResults  } from './threeJSscenefunctions.js';
 import Plotly from 'plotly.js-dist-min';
+//import Plotly from 'plotly.js';
 // import * as SceneFunctions from './threeJSscenefunctions.js';
 
 

@@ -4,6 +4,11 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
 import * as SceneFunctions from './threeJSscenefunctions.js';
+//required for webpack bundling
+import "./materials.js";
+import "./materialsandShapes.js";
+import "./materialsPlotting.js";
+import "./threeJSscenefunctions.js";
 
 
 const loader = new THREE.TextureLoader();
