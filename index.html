@@ -3,8 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="stylesheet" href="/static/css/tailwind.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QHHKT2DQKV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-QHHKT2DQKV');
+    </script>
+    <title>Concrete Design Tool</title>
   </head>
   <body>
     <div id="userResults" class="column resizable">
@@ -372,5 +382,7 @@
       </div>
     </div>      
     <script type="module" src="/src/main.js"></script>
+    <!-- <script src="/static/concgui/concgui.bundle.js"></script> -->
+    <script type="text/javascript" src="https://cookieconsent.popupsmart.com/src/js/popper.js"></script><script> window.start.init({Palette:"palette2",Mode:"floating right",Theme:"edgeless",Message:"This website uses cookies. In addition, if you use this website for engineering calculations, you must read the disclaimer.",ButtonText:"Accept",LinkText:"Disclaimer",Location:"https://www.re-tug.com/disclaimer",Time:"1",})</script>
   </body>
 </html>

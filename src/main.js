@@ -9,6 +9,9 @@ import "./materials.js";
 import "./materialsandShapes.js";
 import "./materialsPlotting.js";
 import "./threeJSscenefunctions.js";
+import "../src/style.css";
+import "./tailwind.css";
+
 
 
 const loader = new THREE.TextureLoader();
