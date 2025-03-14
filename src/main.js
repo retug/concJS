@@ -43,7 +43,7 @@ function loadTexture(url) {
 async function initScene() {
   try {
     //   sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
-    sprite = await loadTexture('disc.png');
+    sprite = await loadTexture('/static/concgui/disc.png');
 
       console.log("Sprite texture loaded, adding rebar...");
       // addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available

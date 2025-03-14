@@ -204,6 +204,9 @@
   .visible {
     visibility: visible;
   }
+  .visible\! {
+    visibility: visible !important;
+  }
   .absolute {
     position: absolute;
   }
@@ -309,6 +312,9 @@
   .block {
     display: block;
   }
+  .contents {
+    display: contents;
+  }
   .flex {
     display: flex;
   }
@@ -324,9 +330,6 @@
   .table {
     display: table;
   }
-  .h-1 {
-    height: calc(var(--spacing) * 1);
-  }
   .h-4 {
     height: calc(var(--spacing) * 4);
   }
@@ -341,6 +344,9 @@
   }
   .w-full {
     width: 100%;
+  }
+  .shrink {
+    flex-shrink: 1;
   }
   .border-collapse {
     border-collapse: collapse;
