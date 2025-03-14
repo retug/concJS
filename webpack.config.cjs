@@ -38,7 +38,7 @@ const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
-    mode: "production",
+    mode: "development",
     entry: "./src/main.js", // Main entry point
     output: {
         filename: "concgui.bundle.js",
