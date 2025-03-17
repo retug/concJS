@@ -17,8 +17,9 @@ import "./tailwind.css";
 const loader = new THREE.TextureLoader();
 let sprite = null; // Store the loaded texture globally
 
+
 // ✅ Define global variables
-window.selectedAngle = 45;
+window.selectedAngle = 0;
 window.selectedStrainProfileIndex = 4;
 window.allConcShapes = window.allConcShapes || [];  // ✅ Ensure global list exists
 
@@ -42,8 +43,9 @@ function loadTexture(url) {
 
 async function initScene() {
   try {
-    //   sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
-    sprite = await loadTexture('/static/concgui/disc.png');
+    sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
+    //FOR DEPLOYMENT UPDATE THIS LINE
+    // sprite = await loadTexture('/static/concgui/disc.png');
 
       console.log("Sprite texture loaded, adding rebar...");
       // addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
@@ -232,6 +234,8 @@ document.addEventListener("DOMContentLoaded", () => {
           selectedConcShape.generate3dStressPlot(0, selectedConcShape.strainProfiles[0][0]);
           console.log("YOUR SHAPE")
           console.log(selectedConcShape)
+          selectedConcShape.generateTableResults(window.selectedAngle);
+
           selectedConcShape.setupResultsControls();
           SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
       });
@@ -287,6 +291,29 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("Y_Vals").addEventListener("input", updateDotPosition);
 });
 
+// ✅ Attach event listener to `angleDropdown`
+document.addEventListener("DOMContentLoaded", () => {
+    const angleDropdown = document.getElementById("angleDropdown");
+
+    if (angleDropdown && !angleDropdown.dataset.listenerAdded) {
+        angleDropdown.addEventListener("change", (event) => {
+            let newAngle = parseInt(event.target.value, 10); // Convert dropdown value to integer
+
+            if (!isNaN(newAngle)) {
+                console.log(`🔄 Dropdown selected angle: ${newAngle}`);
+                
+                // ✅ Update selectedAngle, which triggers generateTableResults automatically
+                window.selectedAngle = newAngle;
+            } else {
+                console.warn("⚠️ Invalid angle selected!");
+            }
+        });
+
+        angleDropdown.dataset.listenerAdded = true; // ✅ Prevents duplicate listeners
+    }
+});
+
+
 
 
 const light = new THREE.DirectionalLight(0xffffff, 1)
@@ -331,6 +358,8 @@ intersectionPoint.visible = false;
 scene.add(intersectionPoint);
 
 // Call the function to enable mouse tracking
+
+  
 
 
 // Call the function to enable mouse tracking and store the handler

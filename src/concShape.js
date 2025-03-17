@@ -41,6 +41,7 @@ export class ConcShape {
 
         this.rebarObjects = [] // ✅ Initialize rebarObjects on creation
 
+
         // ✅ Register this ConcShape in the global list
         window.allConcShapes.push(this);
         
@@ -404,6 +405,7 @@ export class ConcShape {
         const vVals = allUV.map(p => p.v);
 
         this.populateAnalysisResults();
+        
 
     }
 
@@ -499,8 +501,8 @@ export class ConcShape {
     // Function to convert Mu and Mv to Mx and My
     convertUVtoXY(angle, Mu, Mv) {
         let radians = (Math.PI / 180) * angle;
-        let Mx = Mu * Math.cos(radians) - Mv * Math.sin(radians);
-        let My = Mu * Math.sin(radians) + Mv * Math.cos(radians);
+        let Mx = Mu * Math.sin(radians) - Mv * Math.cos(radians);
+        let My = Mu * Math.cos(radians) + Mv * Math.sin(radians);
         return { Mx, My };
     }   
 
@@ -827,6 +829,7 @@ export class ConcShape {
     updatePMMHighlight() {
         let selectedAngle = parseFloat(document.getElementById("angleSelection").value);
         console.log("YOUR SELECTED ANGLE IS", selectedAngle);
+        this.generateTableResults(selectedAngle)
     
         let plotDiv = document.getElementById("pmPlot");
         if (!plotDiv || !plotDiv.data) return;
@@ -1207,23 +1210,46 @@ export class ConcShape {
         let selectedAngle = window.selectedAngle || 0;  // Ensure angle is defined
         let selectedIndex = window.selectedIndex || 0; // Ensure index is defined
         console.log("YOUR SELECTED INDEX IS", selectedIndex)
+        window.selectedStrainProfileIndex = selectedIndex
 
         let P = this.PMMXYresults[selectedAngle]?.P[0]?.[selectedIndex] || 0;
         let Mx = this.PMMXYresults[selectedAngle]?.Mx[0]?.[selectedIndex] || 0;
         let My = this.PMMXYresults[selectedAngle]?.My[0]?.[selectedIndex] || 0;
+
+        let phiP = this.PMMXYresults[selectedAngle]?.phiP[0]?.[selectedIndex] || 0;
+        let phiMx = this.PMMXYresults[selectedAngle]?.phiMx[0]?.[selectedIndex] || 0;
+        let phiMy = this.PMMXYresults[selectedAngle]?.phiMy[0]?.[selectedIndex] || 0;
     
         // ✅ Generate color stops for concrete and rebar
         let concreteColors = this.generateColorScale(minConcreteStress, maxConcreteStress, this.getConcreteColor);
         let rebarColors = this.generateColorScale(minRebarStress, maxRebarStress, this.getRebarColor);
     
         selectedPointProps.innerHTML = `
-            <div class="pmm-values">
-                <h3>Selected PMM Values</h3>
-                <table class="pmm-table">
-                    <tr><th>Property</th><th>Value</th></tr>
-                    <tr><td><strong>P</strong> (k)</td><td>${P.toFixed(2)}</td></tr>
-                    <tr><td><strong>Mx</strong> (kip-ft)</td><td>${Mx.toFixed(2)}</td></tr>
-                    <tr><td><strong>My</strong> (kip-ft)</td><td>${My.toFixed(2)}</td></tr>
+            <div class="pmm-values p-3 bg-white shadow-md rounded-md">
+                <h3 class="text-sm font-semibold text-center mb-2">Selected PMM Values</h3>
+                <table class="w-auto mx-auto border border-gray-300 text-center text-xs rounded-md overflow-hidden">
+                    <thead class="bg-gray-100 text-gray-600">
+                        <tr>
+                            <th class="py-1 px-2 border border-gray-300"></th>
+                            <th class="py-1 px-2 border border-gray-300">Axial (k)</th>
+                            <th class="py-1 px-2 border border-gray-300">Mx (k*ft)</th>
+                            <th class="py-1 px-2 border border-gray-300">My (k*ft)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-white hover:bg-gray-50">
+                            <td class="py-1 px-2 font-medium border border-gray-300">Nominal</td>
+                            <td class="py-1 px-2 border border-gray-300">${P.toFixed(2)}</td>
+                            <td class="py-1 px-2 border border-gray-300">${Mx.toFixed(2)}</td>
+                            <td class="py-1 px-2 border border-gray-300">${My.toFixed(2)}</td>
+                        </tr>
+                        <tr class="bg-gray-50 hover:bg-gray-100">
+                            <td class="py-1 px-2 font-medium border border-gray-300">Capacity</td>
+                            <td class="py-1 px-2 border border-gray-300">${phiP.toFixed(2)}</td>
+                            <td class="py-1 px-2 border border-gray-300">${phiMx.toFixed(2)}</td>
+                            <td class="py-1 px-2 border border-gray-300">${phiMy.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
             <div class="stress-scale">
@@ -1307,20 +1333,33 @@ export class ConcShape {
     
         // ✅ Inject content dynamically
         analysisResults.innerHTML = `
-            <div class="analysis-results-section">
-                <p><strong>Concrete Area:</strong> ${FEMarea.toFixed(2)} in²</p>
-                <p><strong>Rebar Area:</strong> ${rebarArea.toFixed(2)} in²</p>
-                <p><strong>Reinf. Ratio:</strong> ${reinforcementRatio.toFixed(3)}%</p>
-                <p><strong>Centroid X:</strong> ${centroidX.toFixed(2)} in</p>
-                <p><strong>Centroid Y:</strong> ${centroidY.toFixed(2)} in</p>
-                
-            </div>
+        <div class="pmm-values p-3 bg-white shadow-md rounded-md">
+            <h3 class="text-sm font-semibold text-center mb-2">Concrete Shape Properties</h3>
+            <table class="w-auto mx-auto border border-gray-300 text-center text-xs rounded-md overflow-hidden">
+                <thead class="bg-gray-100 text-gray-600">
+                    <tr>
+                        <th class="py-1 px-2 border border-gray-300" title="Concrete Area (in²)">Conc Area</th>
+                        <th class="py-1 px-2 border border-gray-300" title="Rebar Area (in²)">Stl Area</th>
+                        <th class="py-1 px-2 border border-gray-300" title="Reinforcing Ratio (%)">ρ (%)</th>
+                        <th class="py-1 px-2 border border-gray-300" title="X Centriod of Shape (in)">X (in)</th>
+                        <th class="py-1 px-2 border border-gray-300" title="Y Centriod of Shape (in)">Y (in)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="bg-white hover:bg-gray-50">
+                        <td class="py-1 px-2 border border-gray-300">${FEMarea.toFixed(1)}</td>
+                        <td class="py-1 px-2 border border-gray-300">${rebarArea.toFixed(2)}</td>
+                        <td class="py-1 px-2 border border-gray-300">${reinforcementRatio.toFixed(2)}</td>
+                        <td class="py-1 px-2 border border-gray-300">${centroidX.toFixed(1)}</td>
+                        <td class="py-1 px-2 border border-gray-300">${centroidY.toFixed(1)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         `;
     }
     
     
-
-
     //Shift plus middle mouse button to rotate
     setupResultsControls(){
         console.log("Setting up results controls...");
@@ -1356,5 +1395,83 @@ export class ConcShape {
         `;
         document.head.appendChild(style);
     }
+
+    generateTableResults(selectedAngle) {
+        // Retrieve the PMM results arrays (extracting the first element)
+        let P = this.PMMXYresults[selectedAngle]?.P?.[0] || [];
+        let Mx = this.PMMXYresults[selectedAngle]?.Mx?.[0] || [];
+        let My = this.PMMXYresults[selectedAngle]?.My?.[0] || [];
+        let phiP = this.PMMXYresults[selectedAngle]?.phiP?.[0] || [];
+        let phiMx = this.PMMXYresults[selectedAngle]?.phiMx?.[0] || [];
+        let phiMy = this.PMMXYresults[selectedAngle]?.phiMy?.[0] || [];
+    
+        // Determine the number of rows (assumes all arrays have the same length)
+        let rowCount = Math.max(P.length, Mx.length, My.length, phiP.length, phiMx.length, phiMy.length);
+    
+        // Construct table rows dynamically
+        let rowsHTML = "";
+        for (let i = 0; i < rowCount; i++) {
+            rowsHTML += `
+                <tr class="bg-white hover:bg-gray-50">
+                    <td class="py-1 px-2 border border-gray-300">${(P[i] ?? 0).toFixed(2)}</td>
+                    <td class="py-1 px-2 border border-gray-300">${(Mx[i] ?? 0).toFixed(2)}</td>
+                    <td class="py-1 px-2 border border-gray-300">${(My[i] ?? 0).toFixed(2)}</td>
+                    <td class="py-1 px-2 border border-gray-300">${(phiP[i] ?? 0).toFixed(2)}</td>
+                    <td class="py-1 px-2 border border-gray-300">${(phiMx[i] ?? 0).toFixed(2)}</td>
+                    <td class="py-1 px-2 border border-gray-300">${(phiMy[i] ?? 0).toFixed(2)}</td>
+                </tr>
+            `;
+        }
+    
+        // Construct the full results table
+        let tableHTML = `
+            <div id="analysisResultsTable" class="pmm-values p-3 bg-white shadow-md rounded-md mt-4">
+                <h3 class="text-sm font-semibold text-center mb-2">
+                    Analysis Results - Bending Angle = ${selectedAngle}
+                </h3>
+                <div class="max-h-64 overflow-y-auto overflow-x-auto border border-gray-500 w-full">
+                    <table class="w-auto mx-auto border border-gray-300 text-center text-xs rounded-md overflow-hidden">
+                        <thead class="bg-gray-100 text-gray-600">
+                            <tr>
+                                <th class="py-1 px-2 border border-gray-300">Axial (k)</th>
+                                <th class="py-1 px-2 border border-gray-300">Mx (k*ft)</th>
+                                <th class="py-1 px-2 border border-gray-300">My (k*ft)</th>
+                                <th class="py-1 px-2 border border-gray-300">ϕP (k)</th>
+                                <th class="py-1 px-2 border border-gray-300">ϕMx (k*ft)</th>
+                                <th class="py-1 px-2 border border-gray-300">ϕMy (k*ft)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHTML}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    
+        // Inject or replace the results table inside "materialsandShapes"
+        let materialsAndShapesDiv = document.getElementById("materialsandShapes");
+        let existingTable = document.getElementById("analysisResultsTable");
+
+
+    
+        if (existingTable) {
+            // Replace the existing table if it exists
+            existingTable.outerHTML = tableHTML;
+        } else {
+            let stressStrainChart = document.getElementById("stressStrainChart");
+            if (stressStrainChart) {
+                stressStrainChart.insertAdjacentHTML("afterend", tableHTML);
+            } else {
+                materialsAndShapesDiv.insertAdjacentHTML("beforeend", tableHTML);
+            }
+        }
+    
+        // Hide the ShapeButtons and square_rect_oval_shapes sections
+        document.getElementById("ShapeButtons").style.display = "none";
+        document.getElementById("square_rect_oval_shapes").style.display = "none";
+    }
+
+    
 }
 

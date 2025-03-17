@@ -9,6 +9,7 @@ import { updateStressStrainChart, plotSelectedPoint } from "./materialsPlotting.
 
 
 
+
 let allSelectedPnts = []; // ✅ Declare globally so it is accessible everywhere
 let allSelectedRebar = [];
 let allSelectedConc = [];
@@ -458,6 +459,64 @@ export function setupMouseInteractions(threeJSDiv) {
         allSelectedRebar[oldIndex] = newRebar;    
         updateTables(); // ✅ Keep rebar in the table after update
     }
+
+    // Functions to toggle table views
+    function pointSelection() {
+
+        document.getElementById("pointInfo").style.display = "inline";
+        document.getElementById("pointInfo").style.display = "";
+        document.getElementById("rebarInfo").style.display = "none";
+        document.getElementById("concInfo").style.display = "none";
+        
+    
+        document.getElementById("Points").style.backgroundColor = '#1a202c';
+        document.getElementById("Points").style.color = 'white';
+        document.getElementById("Rebar").style.backgroundColor = 'white';
+        document.getElementById("Rebar").style.color = '#4a5568';
+        document.getElementById("Conc").style.backgroundColor = 'white';
+        document.getElementById("Conc").style.color = '#4a5568';
+
+    }
+    
+    function rebarSelection() {
+
+        document.getElementById("pointInfo").style.display = "none";
+        document.getElementById("rebarInfo").style.display = "inline";
+        document.getElementById("rebarInfo").style.display = "";
+        //For some reason, style.display inline messes up with the styling of the table. Add it then remove makes this work
+        document.getElementById("concInfo").style.display = "none";
+    
+        document.getElementById("Points").style.backgroundColor = 'white';
+        document.getElementById("Points").style.color = '#4a5568';
+        document.getElementById("Rebar").style.backgroundColor = '#1a202c';
+        document.getElementById("Rebar").style.color = 'white';
+        document.getElementById("Conc").style.backgroundColor = 'white';
+        document.getElementById("Conc").style.color = '#4a5568';
+    
+        
+    }
+    
+    function concSelection() {
+
+        document.getElementById("pointInfo").style.display = "none";
+        document.getElementById("rebarInfo").style.display = "none";
+        document.getElementById("concInfo").style.display = "inline";
+        document.getElementById("concInfo").style.display = "";
+    
+        document.getElementById("Points").style.backgroundColor = 'white';
+        document.getElementById("Points").style.color = '#4a5568';
+        document.getElementById("Rebar").style.backgroundColor = 'white';
+        document.getElementById("Rebar").style.color = '#4a5568';
+        document.getElementById("Conc").style.backgroundColor = '#1a202c';
+        document.getElementById("Conc").style.color = 'white';
+    }
+    
+    // Event listeners for buttons
+    document.getElementById("Points").onclick = pointSelection;
+    document.getElementById("Rebar").onclick = rebarSelection;
+    document.getElementById("Conc").onclick = concSelection;
+  
+
     return { onPointerDown, onPointerMove, onPointerUp };
 }
 
@@ -682,6 +741,7 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         if (!selectedObject) return;
 
         console.log("SELECTED OBJECT:", selectedObject);
+        console.log("YOUR ANGLE IS", window.selectedAngle);
         console.log("YOUR INDEX IS", window.selectedStrainProfileIndex);
 
         if (selectedObject instanceof THREE.Mesh && selectedObject.userData) {
@@ -694,6 +754,8 @@ export function setupRaycastingForResults(scene, camera, renderer) {
             plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
         }
     });
+
+
 
 }
 

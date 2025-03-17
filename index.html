@@ -75,33 +75,52 @@
             <button id="Conc" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
                                      rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="2u4m6e">Concrete</button>
           </div>
-            <table id="pointInfo" class="border-separate border border-slate-500 twoColTable" style="width:100%">
-            <thead>
-              <tr><th class="bg-gray-900 text-white border border-slate-500">X</th>
-              <th class="bg-gray-900 text-white border border-slate-500">Y</th>
-            </tr></thead>
-            <tbody id="pointData">            
-            </tbody>
-          </table>
-          <table id="rebarInfo" class="border-separate border border-slate-500 threeColTable" style="width:100%">
-            <thead>
-              <tr>
-                <th class="bg-gray-900 text-white border border-slate-500">X</th>
-                <th class="bg-gray-900 text-white border border-slate-500">Y</th>
-                <th class="bg-gray-900 text-white border border-slate-500">Rebar</th>
-                <th class="bg-gray-900 text-white border border-slate-500">Mat</th>
-              </tr>
-            </thead>
-            <tbody id="rebarData">            
-            </tbody>
-          </table>
-          <table id="concInfo" class="border-separate border border-slate-500" style="width:100%">
-            <thead>
-              <tr><th class="bg-gray-900 text-white">Concrete Shapes</th>
-            </tr></thead>
-            <tbody id="concData"> 
-            </tbody>
-          </table>
+            <!-- Point Info Table -->
+          <div class="max-h-48 overflow-y-auto border border-gray-500 w-full">
+            <table id="pointInfo" class="border-separate border border-slate-500 w-full">
+              <thead>
+                <tr>
+                  <th class="bg-gray-900 text-white border border-slate-500">X</th>
+                  <th class="bg-gray-900 text-white border border-slate-500">Y</th>
+                </tr>
+              </thead>
+              <tbody id="pointData">
+                <!-- Data goes here -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Rebar Info Table -->
+          <div class="max-h-64 overflow-y-auto border border-gray-500 w-full">
+            <table id="rebarInfo" class="border-separate border border-slate-500 w-full">
+              <thead class="sticky top-0 bg-gray-900 text-white">
+                <tr>
+                  <th class="border border-slate-500 px-2 py-1">X</th>
+                  <th class="border border-slate-500 px-2 py-1">Y</th>
+                  <th class="border border-slate-500 px-2 py-1">Rebar</th>
+                  <th class="border border-slate-500 px-2 py-1">Mat</th>
+                </tr>
+              </thead>
+              <tbody id="rebarData">
+                <!-- Data goes here -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Concrete Info Table -->
+          <div class="max-h-48 overflow-y-auto border border-gray-500 w-full">
+            <table id="concInfo" class="border-separate border border-slate-500 w-full">
+              <thead>
+                <tr>
+                  <th class="bg-gray-900 text-white border border-slate-500">Concrete Shapes</th>
+                </tr>
+              </thead>
+              <tbody id="concData">
+                <!-- Data goes here -->
+              </tbody>
+            </table>
+          </div>
+
         </div>
         <div id="analysisInput" class="p-3 bg-gray-400 py-1">
           <div class="border-b-2 text-lg">Analysis Input </div>
@@ -381,8 +400,8 @@
         <canvas id="stressStrainChart"></canvas>
       </div>
     </div>      
-    <!-- <script type="module" src="/src/main.js"></script> -->
-    <script src="/static/concgui/concgui.bundle.js"></script>
+    <script type="module" src="/src/main.js"></script>
+    <!-- <script src="/static/concgui/concgui.bundle.js"></script> -->
     <script type="text/javascript" src="https://cookieconsent.popupsmart.com/src/js/popper.js"></script><script> window.start.init({Palette:"palette2",Mode:"floating right",Theme:"edgeless",Message:"This website uses cookies. In addition, if you use this website for engineering calculations, you must read the disclaimer.",ButtonText:"Accept",LinkText:"Disclaimer",Location:"https://www.re-tug.com/disclaimer",Time:"1",})</script>
   </body>
 </html>
