@@ -134,7 +134,7 @@ function createCurvedRectangleShape(length, width) {
     curvedRectangleShape.lineTo(centerX, halfWidth);
     // Automatically close the path
     curvedRectangleShape.closePath();
-  
+    console.log(curvedRectangleShape)
     return curvedRectangleShape;
   }
 

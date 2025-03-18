@@ -291,27 +291,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("Y_Vals").addEventListener("input", updateDotPosition);
 });
 
-// ✅ Attach event listener to `angleDropdown`
-document.addEventListener("DOMContentLoaded", () => {
-    const angleDropdown = document.getElementById("angleDropdown");
-
-    if (angleDropdown && !angleDropdown.dataset.listenerAdded) {
-        angleDropdown.addEventListener("change", (event) => {
-            let newAngle = parseInt(event.target.value, 10); // Convert dropdown value to integer
-
-            if (!isNaN(newAngle)) {
-                console.log(`🔄 Dropdown selected angle: ${newAngle}`);
-                
-                // ✅ Update selectedAngle, which triggers generateTableResults automatically
-                window.selectedAngle = newAngle;
-            } else {
-                console.warn("⚠️ Invalid angle selected!");
-            }
-        });
-
-        angleDropdown.dataset.listenerAdded = true; // ✅ Prevents duplicate listeners
-    }
-});
 
 
 

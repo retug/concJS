@@ -24,6 +24,10 @@ export class ConcShape {
         this.material = material;
         this.holes = holes;
         this.mesh = null; // base polygon with any holes
+        this.baseShape = null;
+        this.containsEllipse = false; //checking for circles and barbells 
+
+
         this.FEMmesh = []; // ✅ Stores the FEM triangular elements
         this.PMMXYresults = { }; // To store analysis results {angle: [P, Mx, My, MaxStrain]}
         this.PMMUVresults = { }; // To store analysis results {angle: [P, Mu, Mv, MaxStrain]}
@@ -122,7 +126,18 @@ export class ConcShape {
 
         // ✅ Store exterior polygon and holes in class properties
         let baseShape = this.mesh.geometry.parameters.shapes;
-        this.basePolyXY = baseShape.curves.map(curve => [curve.v1.x, curve.v1.y]); 
+        this.baseShape = this.mesh.geometry.parameters.shapes
+        
+
+        // ✅ Check if the base shape contains any EllipseCurves and store in class property
+        this.containsEllipse = baseShape.curves.some(curve => curve.type === "EllipseCurve");
+
+
+        if (!this.containsEllipse) {
+            this.basePolyXY = baseShape.curves.map(curve => [curve.v1.x, curve.v1.y]); 
+        }
+        
+        // this.basePolyXY = baseShape.curves.map(curve => curve);
         this.holesPolyXY = baseShape.holes.map(hole => 
             hole.curves.map(curve => [curve.v1.x, curve.v1.y])
         );
@@ -133,38 +148,85 @@ export class ConcShape {
 
         // Generate interior and boundary points
         let createdPnts = this.generateCirclePnts(center, radius, minSize);
-        let [boundaryPnts, holePnts] = this.generateBoundaryPnts(this.basePolyXY, this.holesPolyXY, edgeSize);
-        let generatedPnts = [];
-        for (let circlePnt of createdPnts) {
-            let TF = this.rayCasting(circlePnt);
-            if (TF[0] === true) {
-                generatedPnts.push(circlePnt);
+
+        //Need to update for circles/barbells
+        if (this.containsEllipse){
+            //add
+            let [boundaryPnts, holePnts] = this.addEvenlySpacedPointsAlongCurve(edgeSize);
+            let generatedPnts = [];
+            for (let circlePnt of createdPnts) {
+                let TF = this.rayCastingEllipse(circlePnt);
+                if (TF[0] === true) {
+                    generatedPnts.push(circlePnt);
+                }
             }
+            console.log("YOUR GENERATED POINTS")
+            console.log(generatedPnts)
+            console.log("YOUR Boundary POINTS")
+            console.log(boundaryPnts)
+            console.log("your hole points")
+            console.log(holePnts)
+            // Generate Delaunay triangulation points
+            let XYlist = this.generateDelaunayPoints(boundaryPnts, holePnts, generatedPnts);
+            console.log(XYlist)
+            let delaunay = Delaunator.from(XYlist);
+
+            // Generate triangles and mesh elements
+            let triangleXY = this.drawTriangles(delaunay.triangles, XYlist);
+            let concElements = this.drawTrianglesThree(triangleXY);
+
+            this.FEMmesh = concElements; // ✅ Store generated FEM mesh
+            console.log(this)
+
+        }
+        //polygons
+        else {
+            let [boundaryPnts, holePnts] = this.generateBoundaryPnts(this.basePolyXY, this.holesPolyXY, edgeSize);
+            let generatedPnts = [];
+            for (let circlePnt of createdPnts) {
+                let TF = this.rayCasting(circlePnt);
+                if (TF[0] === true) {
+                    generatedPnts.push(circlePnt);
+                }
+            }
+            // Generate Delaunay triangulation points
+            let XYlist = this.generateDelaunayPoints(boundaryPnts, holePnts, generatedPnts);
+            let delaunay = Delaunator.from(XYlist);
+
+            // Generate triangles and mesh elements
+            let triangleXY = this.drawTriangles(delaunay.triangles, XYlist);
+            let concElements = this.drawTrianglesThree(triangleXY);
+
+            this.FEMmesh = concElements; // ✅ Store generated FEM mesh
+            console.log(this)
         }
 
-        // Generate Delaunay triangulation points
-        let XYlist = this.generateDelaunayPoints(boundaryPnts, holePnts, generatedPnts);
-        let delaunay = Delaunator.from(XYlist);
+        
 
-        // Generate triangles and mesh elements
-        let triangleXY = this.drawTriangles(delaunay.triangles, XYlist);
-        let concElements = this.drawTrianglesThree(triangleXY);
+        // // Generate Delaunay triangulation points
+        // let XYlist = this.generateDelaunayPoints(boundaryPnts, holePnts, generatedPnts);
+        // let delaunay = Delaunator.from(XYlist);
 
-        this.FEMmesh = concElements; // ✅ Store generated FEM mesh
-        console.log(this)
+        // // Generate triangles and mesh elements
+        // let triangleXY = this.drawTriangles(delaunay.triangles, XYlist);
+        // let concElements = this.drawTrianglesThree(triangleXY);
+
+        // this.FEMmesh = concElements; // ✅ Store generated FEM mesh
+        // console.log(this)
     }
-     /** ✅ Updated rayCasting to use stored class properties */
-     rayCasting(point) {
+
+     /** ✅ Standard Raycasting for Polygons */
+    rayCasting(point) {
         if (!this.basePolyXY.length) {
             console.error("rayCasting Error: basePolyXY is empty", this.basePolyXY);
             return [false, 0, 0];
         }
 
-        let n = this.basePolyXY.length;
         let count = 0;
         let holeCount = 0;
         let [x, y] = point;
 
+        let n = this.basePolyXY.length;
         for (let i = 0; i < n; ++i) {
             let x1 = this.basePolyXY[i][0], y1 = this.basePolyXY[i][1];
             let x2 = this.basePolyXY[(i + 1) % n][0], y2 = this.basePolyXY[(i + 1) % n][1];
@@ -174,8 +236,9 @@ export class ConcShape {
             }
         }
 
+        // ✅ Handle Holes (if any)
         for (let holePoly of this.holesPolyXY) {
-            if (!holePoly.length) continue; // ✅ Skip empty holes
+            if (!holePoly.length) continue;
 
             let nHole = holePoly.length;
             for (let i = 0; i < nHole; ++i) {
@@ -188,8 +251,85 @@ export class ConcShape {
             }
         }
 
-        return [(count + holeCount) % 2 !== 0, count, holeCount];
+        let isInside = (count + holeCount) % 2 !== 0; // Odd count means inside
+        return [isInside, count, holeCount];
     }
+
+    /** ✅ Raycasting for Ellipse-Based Shapes (Rotated Semicircle Barbell) */
+    rayCastingEllipse(point) {
+
+        if (!this.baseShape.curves.length) {
+            console.error("rayCastingEllipse Error: baseShape is empty", this.baseShape);
+            return [false, 0, 0];
+        }
+
+        let [x, y] = point;
+        // console.log("YOUR BASE SHAPE IS", this.baseShape);
+
+        // ✅ FIX: Access `curves` property from `baseShape`
+        let ellipseCurves = this.baseShape.curves.filter(curve => curve.type === "EllipseCurve");
+
+        if (ellipseCurves.length !== 2) {
+            console.error("Expected 2 EllipseCurves, found:", ellipseCurves.length);
+            return [false, 0, 0];
+        }
+
+        let leftSemi = ellipseCurves[0];
+        let rightSemi = ellipseCurves[1];
+
+        let radius = leftSemi.xRadius;
+        let centerXLeft = leftSemi.aX;
+        let centerXRight = rightSemi.aX;
+        let centerYLeft = leftSemi.aY;
+        let centerYRight = rightSemi.aY;
+        let rotationLeft = leftSemi.aRotation;
+        let rotationRight = rightSemi.aRotation;
+        let startAngleLeft = leftSemi.aStartAngle;
+        let endAngleLeft = leftSemi.aEndAngle;
+        let startAngleRight = rightSemi.aStartAngle;
+        let endAngleRight = rightSemi.aEndAngle;
+
+        // ✅ Rotate a point to local coordinate system
+        function rotatePoint(px, py, cx, cy, angle) {
+            let cosA = Math.cos(-angle);
+            let sinA = Math.sin(-angle);
+            let dx = px - cx;
+            let dy = py - cy;
+            return [
+                dx * cosA - dy * sinA + cx, 
+                dx * sinA + dy * cosA + cy
+            ];
+        }
+
+        // Rotate test point into semicircle local frames
+        let [xLeftLocal, yLeftLocal] = rotatePoint(x, y, centerXLeft, centerYLeft, rotationLeft);
+        let [xRightLocal, yRightLocal] = rotatePoint(x, y, centerXRight, centerYRight, rotationRight);
+
+        // ✅ Check if a point is inside a rotated semicircle
+        function isInsideRotatedSemiCircle(px, py, cx, cy, r, startAngle, endAngle) {
+            let dx = px - cx;
+            let dy = py - cy;
+            let distanceSq = dx ** 2 + dy ** 2;
+
+            let angle = Math.atan2(dy, dx);
+            if (angle < 0) angle += 2 * Math.PI;
+
+            return distanceSq <= r ** 2 && angle >= startAngle && angle <= endAngle;
+        }
+
+        let insideLeftSemicircle = isInsideRotatedSemiCircle(xLeftLocal, yLeftLocal, centerXLeft, centerYLeft, radius, startAngleLeft, endAngleLeft);
+        let insideRightSemicircle = isInsideRotatedSemiCircle(xRightLocal, yRightLocal, centerXRight, centerYRight, radius, startAngleRight, endAngleRight);
+
+        // ✅ Check if inside rectangular middle section
+        let insideRectangle = (x >= centerXLeft && x <= centerXRight && y >= -radius && y <= radius);
+
+        let isInside = insideLeftSemicircle || insideRightSemicircle || insideRectangle;
+        console.log(isInside)
+        return [isInside, 0, 0]; // No ray count needed
+    }
+
+
+
     generateCirclePnts(center, radius, minSize) {
         let nCircles = Math.round(radius / minSize);
         let stepSize = radius / nCircles;
@@ -235,6 +375,31 @@ export class ConcShape {
         return edgePnts;
     }
 
+    addEvenlySpacedPointsAlongCurve(edgeSpacing) {
+        if (!this.baseShape) {
+            console.error("Invalid shape provided.");
+            return [];
+        }
+    
+        const path = new THREE.Path(this.baseShape.getPoints()); // Convert shape to path
+        const totalLength = path.getLength();
+        const segmentCount = Math.floor(totalLength / edgeSpacing);
+
+        const points = [];
+    
+        for (let i = 0; i < segmentCount; i++) {
+            const u = i / segmentCount;
+            const point = path.getPointAt(u);
+    
+            if (!point) continue; // Ensure point exists
+    
+            points.push([point.x, point.y]); // Store only x, y coordinates
+        }
+    
+        console.log("Generated points along curve:", points);
+        return [points, []];
+    }
+
     generateDelaunayPoints(boundaryPnts, holePnts, generatedPnts) {
         return [...boundaryPnts, ...holePnts, ...generatedPnts];
     }
@@ -264,6 +429,7 @@ export class ConcShape {
         this.centroidY = 0; // ✅ Reset centroidY
 
         for (let tri of positionTri) {
+
             let geometry = new THREE.BufferGeometry();
             let vertices = new Float32Array(tri.flatMap(([x, y]) => [x, y, 0]));
             geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
@@ -289,14 +455,26 @@ export class ConcShape {
             };
 
             // ✅ Use stored basePolyXY and holesPolyXY for ray casting
-            if (this.rayCasting([mesh.centroid.x, mesh.centroid.y])[0]) {
-                scene.add(mesh);
-                concElements.push(mesh);
+            if (this.containsEllipse == false) {  // Wrap in curly braces
+                if (this.rayCasting([mesh.centroid.x, mesh.centroid.y])[0]) {
+                    scene.add(mesh);
+                    concElements.push(mesh);
 
-                // ✅ Update FEMarea and centroid
-                this.FEMarea += mesh.area;
-                this.centroidX += mesh.area * mesh.centroid.x;
-                this.centroidY += mesh.area * mesh.centroid.y;
+                    // ✅ Update FEMarea and centroid
+                    this.FEMarea += mesh.area;
+                    this.centroidX += mesh.area * mesh.centroid.x;
+                    this.centroidY += mesh.area * mesh.centroid.y;
+                }
+            } else { // ✅ Now correctly enters the else statement when this.containsEllipse is true
+                if (this.rayCastingEllipse([mesh.centroid.x, mesh.centroid.y])[0]) {
+                    scene.add(mesh);
+                    concElements.push(mesh);
+
+                    // ✅ Update FEMarea and centroid
+                    this.FEMarea += mesh.area;
+                    this.centroidX += mesh.area * mesh.centroid.x;
+                    this.centroidY += mesh.area * mesh.centroid.y;
+                }
             }
             // Remove all objects from the scene that are not FEMmesh objects and keep all rebar objects
             scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj) || obj.isRebar);
