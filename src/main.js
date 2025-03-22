@@ -4,6 +4,8 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
 import * as SceneFunctions from './threeJSscenefunctions.js';
+import { setupReplicateShortcut } from './CADfunctions.js';
+import { CompositeConcShape } from './compositeShapeAnalysis.js';
 //required for webpack bundling
 import "./materials.js";
 import "./materialsandShapes.js";
@@ -11,6 +13,7 @@ import "./materialsPlotting.js";
 import "./threeJSscenefunctions.js";
 import "../src/style.css";
 import "./tailwind.css";
+
 
 
 
@@ -48,6 +51,8 @@ async function initScene() {
     // sprite = await loadTexture('/static/concgui/disc.png');
 
       console.log("Sprite texture loaded, adding rebar...");
+      // ✅ NOW we can safely call this
+      setupReplicateShortcut(sprite);
       // addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
   } catch (error) {
       console.error("Failed to load texture:", error);
@@ -82,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (addHoleBtn) {
         addHoleBtn.addEventListener("click", () => {
             console.log("Hole button clicked! Adding hole...");
-            SceneFunctions.addHoleToShape(SceneFunctions.getSelectedConcShape(), SceneFunctions.getAllSelectedPnts());
+            SceneFunctions.addHoleToShape(SceneFunctions.getAllSelectedConcShape(), SceneFunctions.getAllSelectedPnts());
         });
     }
 
@@ -151,93 +156,159 @@ document.addEventListener("DOMContentLoaded", () => {
           }
             
           // Get the selected concrete shape
-          const selectedConcShape = SceneFunctions.getSelectedConcShape();
-          if (!selectedConcShape) {
-              console.warn("No concrete shape selected!");
-              return;
+          const selectedConcShapes = SceneFunctions.getAllSelectedConcShape();
+
+          if (!selectedConcShapes) {
+            console.warn("No concrete shape selected!");
+            return;
           }
-
-           // ✅ Get selected rebar
-          const selectedRebar = SceneFunctions.getAllSelectedRebar();
-          if (!selectedRebar || selectedRebar.length === 0) {
-              console.warn("❌ No rebar selected!");
-          } else {
-              console.log(`✅ Found rebar,`, selectedRebar);
-          }
-        // ✅ Get the selected concrete shape and set it as a global variable
-        window.selectedConcShape = SceneFunctions.getSelectedConcShape();
-        // ✅ Fire initializeRebarObjects() independently
-        selectedConcShape.initializeRebarObjects(selectedRebar);
-
-        // Plot the generated FEM mesh elements in the scene
-        if (selectedConcShape.rebarObjects.length > 0) {
-          selectedConcShape.rebarObjects.forEach(rebar => {
-              scene.add(rebar);
-          });
-            console.log("Rebar successfully plotted in the scene.");
-        } else {
-            console.error("Rebar generation failed or returned empty.");
-        }
-
-
-
-          
 
           // Read input values for edge and interior spacing
           const edgeSpacing = parseFloat(document.getElementById("edgeSpa").value);
           const interiorSpacing = parseFloat(document.getElementById("intSpa").value);
 
           if (isNaN(edgeSpacing) || isNaN(interiorSpacing)) {
-              console.error("Invalid edge or interior spacing input!");
-              return;
+            console.error("Invalid edge or interior spacing input!");
+            return;
           }
 
-          // // Generate FEM mesh for the selected concrete shape
-          selectedConcShape.generateFEMMesh(interiorSpacing, edgeSpacing);
+          /////////////   BEGINNING ANALYSIS ///////////////////////
+          if (selectedConcShapes.length === 1) {
+            debugger;
 
-          // Plot the generated FEM mesh elements in the scene
-          if (selectedConcShape.FEMmesh && selectedConcShape.FEMmesh.length > 0) {
-              selectedConcShape.FEMmesh.forEach(mesh => {
-                  scene.add(mesh);
+            const selectedRebar = SceneFunctions.getAllSelectedRebar();
+            if (!selectedRebar || selectedRebar.length === 0) {
+                console.warn("❌ No rebar selected!");
+            } else {
+                console.log(`✅ Found rebar,`, selectedRebar);
+            }
+            // ✅ Get the selected concrete shape and set it as a global variable
+            window.selectedConcShape = SceneFunctions.getAllSelectedConcShape()[0];
+            // ✅ Fire initializeRebarObjects() independently
+            selectedConcShape.initializeRebarObjects(selectedRebar);
+
+            // Plot the generated FEM mesh elements in the scene
+            if (selectedConcShape.rebarObjects.length > 0) {
+              selectedConcShape.rebarObjects.forEach(rebar => {
+                  scene.add(rebar);
               });
+                console.log("Rebar successfully plotted in the scene.");
+            } else {
+                console.error("Rebar generation failed or returned empty.");
+            }
+            
 
-              console.log("FEM mesh successfully plotted in the scene.");
-          } else {
-              console.error("FEM mesh generation failed or returned empty.");
+            // // Generate FEM mesh for the selected concrete shape
+            selectedConcShape.generateFEMMesh(interiorSpacing, edgeSpacing);
+
+            // Plot the generated FEM mesh elements in the scene
+            if (selectedConcShape.FEMmesh && selectedConcShape.FEMmesh.length > 0) {
+                selectedConcShape.FEMmesh.forEach(mesh => {
+                    scene.add(mesh);
+                });
+
+                console.log("FEM mesh successfully plotted in the scene.");
+            } else {
+                console.error("FEM mesh generation failed or returned empty.");
+            }
+
+            // let angle = 45;
+            // let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
+            // // ✅ Transform coordinates for 45-degree angle
+            // selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
+            // // ✅ Generate Strain profiles for the given angle
+            // selectedConcShape.generateStrains(angle);
+            // selectedConcShape.generatePMM(angle)
+            // selectedConcShape.plotPMMResults();
+            selectedConcShape.CalcPnmax("other");
+            
+
+            // ✅ Ensure transformation is done before PMM analysis
+            console.log("🔹 Transforming coordinates for all angles...");
+            for (let angle = 0; angle <= 180; angle += 15) {
+                selectedConcShape.transformCoordinatesAtAngle(angle);
+            }
+
+            console.log("🔹 Generating PMM for all angles...");
+            for (let angle = 0; angle <= 180; angle += 15) {
+                selectedConcShape.generateStrains(angle);
+                selectedConcShape.generatePMM(angle);
+            }
+
+
+            // ✅ Setup bending angles from 0° to 180° at 15° intervals
+            selectedConcShape.setupBendingAngles();
+
+            selectedConcShape.generate3dStressPlot(0, selectedConcShape.strainProfiles[0][0]);
+            console.log("YOUR SHAPE")
+            console.log(selectedConcShape)
+            selectedConcShape.generateTableResults(window.selectedAngle);
+
+            selectedConcShape.setupResultsControls();
+            SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
           }
-          selectedConcShape.CalcPnmax("other");
-          // let angle = 45;
-          // let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
-          // // ✅ Transform coordinates for 45-degree angle
-          // selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
-          // // ✅ Generate Strain profiles for the given angle
-          // selectedConcShape.generateStrains(angle);
-          // selectedConcShape.generatePMM(angle)
-          // selectedConcShape.plotPMMResults();
+          //testing for composite shape
+          else {
+            const selectedRebar = SceneFunctions.getAllSelectedRebar();
+            let compConcShape = new CompositeConcShape(selectedConcShapes);
+            compConcShape.initializeRebarObjects(selectedRebar);
+            // ✅ Get the selected concrete shape and set it as a global variable
+            window.selectedCompConcShape = compConcShape;
 
-          // ✅ Ensure transformation is done before PMM analysis
-          console.log("🔹 Transforming coordinates for all angles...");
-          for (let angle = 0; angle <= 180; angle += 15) {
-              selectedConcShape.transformCoordinatesAtAngle(angle);
-          }
+        
+            // ✅ Check for material consistency
+            const isMaterialConsistent = compConcShape.checkMaterialConsistency();
+            compConcShape.material = selectedConcShapes[0].material
+        
+            if (!isMaterialConsistent) {
+                alert("⚠️ Warning: Selected shapes have different concrete materials. Results will be inaccurate.");
+            }
+        
+            // Plot the generated FEM mesh elements in the scene
+            if (compConcShape.rebarObjects.length > 0) {
+                compConcShape.rebarObjects.forEach(rebar => {
+                    scene.add(rebar);
+                });
+                console.log("Rebar successfully plotted in the scene.");
+            } else {
+                console.error("Rebar generation failed or returned empty.");
+            }
+        
+            // Generate FEM mesh for the selected concrete shape
+            compConcShape.generateCombinedMesh(interiorSpacing, edgeSpacing);
+        
+            // Plot the generated FEM mesh elements in the scene
+            if (compConcShape.FEMmesh && compConcShape.FEMmesh.length > 0) {
+                compConcShape.FEMmesh.forEach(mesh => {
+                    scene.add(mesh);
+                });
+        
+                console.log("FEM mesh successfully plotted in the scene.");
+            } else {
+                console.error("FEM mesh generation failed or returned empty.");
+            }
+            compConcShape.CalcPnmax("other");
+            // ✅ Ensure transformation is done before PMM analysis
+            console.log("🔹 Transforming coordinates for all angles...");
+            for (let angle = 0; angle <= 180; angle += 15) {
+              compConcShape.transformCoordinatesAtAngle(angle);
+            }
+            console.log("🔹 Generating PMM for all angles...");
+            for (let angle = 0; angle <= 180; angle += 15) {
+              compConcShape.generateStrains(angle);
+              compConcShape.generatePMM(angle);
+            }
 
-          console.log("🔹 Generating PMM for all angles...");
-          for (let angle = 0; angle <= 180; angle += 15) {
-              selectedConcShape.generateStrains(angle);
-              selectedConcShape.generatePMM(angle);
-          }
+            // ✅ Setup bending angles from 0° to 180° at 15° intervals
+            compConcShape.setupBendingAngles();
 
+            compConcShape.generate3dStressPlot(0, compConcShape.strainProfiles[0][0]);
 
-          // ✅ Setup bending angles from 0° to 180° at 15° intervals
-          selectedConcShape.setupBendingAngles();
+            compConcShape.generateTableResults(window.selectedAngle);
 
-          selectedConcShape.generate3dStressPlot(0, selectedConcShape.strainProfiles[0][0]);
-          console.log("YOUR SHAPE")
-          console.log(selectedConcShape)
-          selectedConcShape.generateTableResults(window.selectedAngle);
-
-          selectedConcShape.setupResultsControls();
-          SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
+            compConcShape.setupResultsControls();
+            SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
+        }
       });
   }
 });

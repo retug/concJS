@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { defaultMaterials } from "./materials.js";
 import { resizeThreeJsScene, setupDragAndAnalyze } from "./threeJSscenefunctions.js";
 import { addRebar, rebarDia } from './threeJSscenefunctions.js';
-import { materialAO } from 'three/tsl';
+
 
 
 export function toggleMaterialsAndShapesDiv() {

@@ -625,8 +625,9 @@ export function getAllSelectedPnts() {
     return allSelectedPnts; // ✅ Returns the current selected points
 }
 
-export function getSelectedConcShape() {
-    return allSelectedConc[0]; // ✅ Returns the first current selected concrete
+export function getAllSelectedConcShape() {
+    // return allSelectedConc[0]; // ✅ Returns the first current selected concrete
+    return allSelectedConc; // ✅ Returns the first current selected concrete
 }
 
 export function getAllSelectedRebar() {
@@ -743,6 +744,7 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         console.log("SELECTED OBJECT:", selectedObject);
         console.log("YOUR ANGLE IS", window.selectedAngle);
         console.log("YOUR INDEX IS", window.selectedStrainProfileIndex);
+        debugger;
 
         if (selectedObject instanceof THREE.Mesh && selectedObject.userData) {
             console.log("Concrete Mesh Clicked:", selectedObject);
