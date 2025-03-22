@@ -95,3 +95,56 @@ export function setupReplicateShortcut(sprite) {
         }
     });
 }
+
+export function setupMoveShortcut() {
+    let mPressed = false;
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key.toLowerCase() === 'm') {
+            mPressed = true;
+        }
+
+        if (e.key.toLowerCase() === 'v' && mPressed) {
+            const Xmove = parseFloat(prompt("Enter X movement"));
+            const Ymove = parseFloat(prompt("Enter Y movement"));
+            alert(`Moving selected objects by X = ${Xmove}, Y = ${Ymove}`);
+
+            // Move points
+            const selectedPnts = getAllSelectedPnts();
+            for (const pnt of selectedPnts) {
+                const positionAttr = pnt.geometry.attributes.position;
+                positionAttr.array[0] += Xmove;
+                positionAttr.array[1] += Ymove;
+                positionAttr.needsUpdate = true;
+                pnt.geometry.computeBoundingBox();
+                pnt.geometry.computeBoundingSphere();
+            }
+
+            // Move rebar
+            const selectedRebar = getAllSelectedRebar();
+            for (const rebar of selectedRebar) {
+                const posAttr = rebar.geometry.attributes.position;
+                posAttr.array[0] += Xmove;
+                posAttr.array[1] += Ymove;
+                posAttr.needsUpdate = true;
+                rebar.geometry.computeBoundingBox();
+                rebar.geometry.computeBoundingSphere();
+            }
+
+            // Move concrete shapes
+            // Move concrete shapes
+            const allSelectedConc = getAllSelectedConcShape(); // this returns an array now
+            for (const conc of allSelectedConc) {
+                conc.generateMovedMesh(Xmove, Ymove, allSelectedConc);
+            }
+        }
+    });
+
+    document.addEventListener('keyup', function (e) {
+        if (e.key.toLowerCase() === 'm') {
+            mPressed = false;
+        }
+    });
+}
+
+

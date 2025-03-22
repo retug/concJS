@@ -1622,6 +1622,7 @@ export class ConcShape {
         console.log("Setting up results controls...");
         // Remove mouse interactions setup
         console.log(controls)
+
         if (typeof SceneFunctions !== 'undefined' && SceneFunctions.setupMouseInteractions) {
             delete SceneFunctions.setupMouseInteractions;
         }
@@ -1728,7 +1729,55 @@ export class ConcShape {
         document.getElementById("ShapeButtons").style.display = "none";
         document.getElementById("square_rect_oval_shapes").style.display = "none";
     }
+    generateMovedMesh(xOffset, yOffset, allSelectedConc) {
+        
+        for (const conc of allSelectedConc) {
+            scene.remove(conc.mesh);
+    
+            const movedConc = this.createMovedConcShape(conc, xOffset, yOffset);
+    
+            if (movedConc) {
+                scene.add(movedConc.mesh);
+            }
+        }
+    }
+    
 
+    createMovedConcShape(originalConc, xOffset, yOffset) {
+        if (!originalConc.basePoints || originalConc.basePoints.length === 0) {
+            console.warn("⚠️ No basePoints found in originalConc.");
+            return null;
+        }
+    
+        // Offset base points
+        const movedBasePoints = originalConc.basePoints.map(pt => 
+            new THREE.Vector2(pt.x + xOffset, pt.y + yOffset)
+        );
+    
+        // Offset holes
+        const movedHoles = originalConc.holes.map(hole => {
+            const movedPath = new THREE.Path();
+            const pts = hole.getPoints();
+            pts.forEach((pt, idx) => {
+                const movedPt = new THREE.Vector2(pt.x + xOffset, pt.y + yOffset);
+                if (idx === 0) {
+                    movedPath.moveTo(movedPt.x, movedPt.y);
+                } else {
+                    movedPath.lineTo(movedPt.x, movedPt.y);
+                }
+            });
+            return movedPath;
+        });
+    
+        // Create and generate new ConcShape
+        const newConc = new ConcShape(movedBasePoints, originalConc.material, movedHoles);
+        newConc.generateMesh(); // Assumes this method builds the mesh
+    
+        // Add to scene
+        scene.add(newConc.mesh);
+    
+        return newConc;
+    }
     
 }
 
