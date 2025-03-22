@@ -257,6 +257,7 @@ export class ConcShape {
 
     /** ✅ Raycasting for Ellipse-Based Shapes (Rotated Semicircle Barbell) */
     rayCastingEllipse(point) {
+        debugger;
 
         if (!this.baseShape.curves.length) {
             console.error("rayCastingEllipse Error: baseShape is empty", this.baseShape);
@@ -305,16 +306,25 @@ export class ConcShape {
         let [xLeftLocal, yLeftLocal] = rotatePoint(x, y, centerXLeft, centerYLeft, rotationLeft);
         let [xRightLocal, yRightLocal] = rotatePoint(x, y, centerXRight, centerYRight, rotationRight);
 
-        // ✅ Check if a point is inside a rotated semicircle
+        // ✅ Improved function to correctly handle negative angles and wrapping
         function isInsideRotatedSemiCircle(px, py, cx, cy, r, startAngle, endAngle) {
             let dx = px - cx;
             let dy = py - cy;
             let distanceSq = dx ** 2 + dy ** 2;
 
+            // ✅ Normalize angle to [0, 2π]
             let angle = Math.atan2(dy, dx);
             if (angle < 0) angle += 2 * Math.PI;
 
-            return distanceSq <= r ** 2 && angle >= startAngle && angle <= endAngle;
+            startAngle = (startAngle + 2 * Math.PI) % (2 * Math.PI);
+            endAngle = (endAngle + 2 * Math.PI) % (2 * Math.PI);
+
+            // ✅ Check for cases where the semicircle wraps around 0 (e.g., 270° to 90°)
+            let isAngleInside = startAngle < endAngle
+                ? (angle >= startAngle && angle <= endAngle)
+                : (angle >= startAngle || angle <= endAngle);
+
+            return distanceSq <= r ** 2 && isAngleInside;
         }
 
         let insideLeftSemicircle = isInsideRotatedSemiCircle(xLeftLocal, yLeftLocal, centerXLeft, centerYLeft, radius, startAngleLeft, endAngleLeft);

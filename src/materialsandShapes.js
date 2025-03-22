@@ -265,27 +265,52 @@ export function addEvenlySpacedPointsAlongCurve(baseShape, segmentCount, offset,
         console.error("Failed to generate offset shape.");
         return;
     }
-    console.log("Offset Specd:", offsetShape);
 
+    const curves = offsetShape.curves;
+    const curveLengths = curves.map(c => c.getLength());
+    const totalLength = curveLengths.reduce((a, b) => a + b, 0);
+    const totalSpaces = segmentCount;
 
-    // Create a path from the offset shape
-    const path = new THREE.Path(offsetShape.getPoints());
-    const totalLength = path.getLength();
-    const segmentLength = totalLength / segmentCount;
+    // Step 1: Allocate spaces (gaps between rebars) based on curve length
+    let rawSpaceAlloc = curveLengths.map(len => (len / totalLength) * totalSpaces);
+    let spacesPerCurve = rawSpaceAlloc.map(x => Math.floor(x));
+    let allocated = spacesPerCurve.reduce((a, b) => a + b, 0);
+
+    // Step 2: Distribute remaining spaces by highest decimal remainder
+    let remaining = totalSpaces - allocated;
+    let remainders = rawSpaceAlloc.map((x, i) => ({ i, frac: x - spacesPerCurve[i] }));
+    remainders.sort((a, b) => b.frac - a.frac);
+    for (let i = 0; i < remaining; i++) {
+        spacesPerCurve[remainders[i].i]++;
+    }
+
+    // Step 3: Place rebar points along each curve
     const points = [];
 
-    for (let i = 0; i <= segmentCount - 1; i++) {
-        const u = i / segmentCount;
-        const point = path.getPointAt(u);
-        if (!point) continue;
-        points.push(point);
+    for (let i = 0; i < curves.length; i++) {
+        const curve = curves[i];
+        const numSpaces = spacesPerCurve[i];
+        const numPoints = numSpaces; // one point per space (no endpoint duplication)
 
-        // Add rebar at the computed point
-        addRebar(point.x, point.y, rebarSize, scene, sprite);
+        for (let j = 0; j < numPoints; j++) {
+            const t = j / numSpaces;
+            const point = curve.getPoint(t);
+            if (!point) continue;
+
+            // Optional: avoid duplicates
+            if (points.length > 0) {
+                const last = points[points.length - 1];
+                if (last.distanceTo(point) < 0.001) continue;
+            }
+
+            points.push(point);
+            addRebar(point.x, point.y, rebarSize, scene, sprite);
+        }
     }
 
     console.log("Rebar points added to offset curve:", points);
 }
+
 
 //Given a shape, create the offset shape. Useful for Squares and Rectangles and Generating evenly
 //spaced rebar across the cross section

@@ -267,6 +267,7 @@ var dotGeometry = new THREE.BufferGeometry();
 dotGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( [0,0,0], 3 ) );
 var dotMaterial = new THREE.PointsMaterial( { size: 0.5, color: 0x000000 } );
 
+
 var dot = new THREE.Points( dotGeometry, dotMaterial );
 
 dot.isReference = true
