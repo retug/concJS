@@ -214,6 +214,9 @@ export function setupMouseInteractions(threeJSDiv) {
     const helper = new SelectionHelper(renderer, "selectBox");
 
     function onPointerDown(event) {
+        //Prevents resetting the scene selections if you select the buttons
+        if (event.target.closest("button, input, select, textarea, .modal, .ui")) return; 
+
         if (event.button === 1) {
             middlemouse = 1;
         } else if (event.button === 0) {

@@ -4,7 +4,7 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
 import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
 import * as SceneFunctions from './threeJSscenefunctions.js';
-import { setupReplicateShortcut, setupMoveShortcut  } from './CADfunctions.js';
+import { setupReplicateShortcut, setupMoveShortcut } from './CADfunctions.js';
 import { CompositeConcShape } from './compositeShapeAnalysis.js';
 //required for webpack bundling
 import "./materials.js";
@@ -54,6 +54,9 @@ async function initScene() {
       // ✅ NOW we can safely call this
       setupReplicateShortcut(sprite);
       setupMoveShortcut(); // ⬅️ Add this line to bind the "m" + "v" shortcut
+
+
+
       // addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
   } catch (error) {
       console.error("Failed to load texture:", error);
@@ -74,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
+
 
   // Attach addConcGeo to the "Conc" button
   const addPolyBtn = document.getElementById("addPolyBtn");

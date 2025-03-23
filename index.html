@@ -156,12 +156,21 @@
 
     <div id="middleColumn">
       <div id="concGui" class="relative">
-          <div id="windowProps" class="absolute bottom-0 text-black">
+          <div id="windowProps" class="absolute bottom-0 text-black p-2">
             <div id="userInputProps">
               <p> <var id="pointsSelected">0</var> Pnts,<var id="rebarSelected">0</var> Rebar,<var id="concSelected">0</var> Conc   </p>
               <p> X = <var id="xVal">-13.</var> Y = <var id="yVal">-2.7</var> </p> 
-              <h2>RETUG Concrete Design Tool</h2>  
+              <div id="commandandAbout">
+                <div id="commands" class = "flex gap-2">
+                  <button id="moveBtn" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded hover:bg-gray-900 py-2 px-4 hover:text-white">Move</button>
+                  <button id="replicateBtn" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded hover:bg-gray-900 py-2 px-4 hover:text-white">Copy</button>
+                </div>
+                <div id="modalAbout" class="pt-1">
+                  <button  onclick="document.getElementById('aboutModal').classList.remove('hidden')" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">About</button>
+                </div>
+              </div>
             </div>
+            
             <div id="analysisResults">
             </div>
             <div id="selectedPointResultProps">
@@ -177,6 +186,80 @@
           <h3>Results</h3>
       </div>
     </div>
+
+    <!-- Modal -->
+    <div id="aboutModal" class="fixed inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-50 hidden">
+      <div class="bg-gray-400 rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
+        <!-- Close Button -->
+        <button onclick="document.getElementById('aboutModal').classList.add('hidden')" class="absolute top-3 right-4 text-gray-700 hover:text-red-600 text-xl font-bold">&times;</button>
+
+        <!-- Modal Header -->
+        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-4 text-center text-2xl">RETUG Concrete Design Tool </label>
+        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-4 text-center text-2xl">V0.0.0 </label>
+
+        <!-- Sections -->
+        <div class="space-y-6">
+          <!-- How to Use -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">How to Use</label>
+            <p class="text-sm text-gray-800">Add prebuilt shapes to screen or create custom geometry using points and selection tools.</p>
+            <a href="https://www.youtube.com/watch?v=your_future_video_link" target="_blank" class="text-blue-700 underline text-sm mt-1 inline-block">Watch tutorial on YouTube</a>
+          </div>
+
+          <!-- Selection -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Selection</label>
+            <p class="text-sm text-gray-800 flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 bg-gray-300 px-2 py-0.5 rounded">
+                Ctrl
+              </span>
+              Hold <strong>Ctrl</strong> to add to current selection.
+            </p>
+          </div>
+
+          <!-- CAD Functions -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">CAD Functions</label>
+            <ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+              <li>
+                <span class="font-medium">Move</span> ➡️ — Shortcut: 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">M</kbd> + 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">V</kbd>
+              </li>
+              <li>
+                <span class="font-medium">Replicate</span> 🔁 — Shortcut: 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">C</kbd> + 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">C</kbd>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Results -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Results</label>
+            <p class="text-sm text-gray-800">
+              Review results by changing the bending axis angle drop-down and strain profile. The 3D scene is updated to plot the stress profile of the selected results. Select either concrete mesh or rebar to review the stress-strain curve. A table is populated on the right that can be copied and pasted into Excel.
+            </p>
+            <li>
+              <span class="font-medium text-gray-800">Rotate</span> 🌀
+              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">Shift</kbd> +
+              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">🖱️ Middle</kbd>
+            </li>
+            <li>
+              <span class="font-medium text-gray-800">Pan</span> 
+              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">🖱️ Middle</kbd>
+            </li>
+          </div>
+
+          <!-- Issues / Requests -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Issues / Requests</label>
+            <a href="https://github.com/retug/concJS" target="_blank" class="text-blue-700 underline text-sm">Visit GitHub to report issues or request features</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     
     <div id="materialsandShapes" class="bg-gray-400">
       <div id="shapeContent" class="block uppercase text-gray-700 text-xs font-bold mb-2">
@@ -399,7 +482,8 @@
         </table>
         <canvas id="stressStrainChart"></canvas>
       </div>
-    </div>      
+    </div>  
+
     <script type="module" src="/src/main.js"></script>
     <!-- <script src="/static/concgui/concgui.bundle.js"></script> -->
     <script type="text/javascript" src="https://cookieconsent.popupsmart.com/src/js/popper.js"></script><script> window.start.init({Palette:"palette2",Mode:"floating right",Theme:"edgeless",Message:"This website uses cookies. In addition, if you use this website for engineering calculations, you must read the disclaimer.",ButtonText:"Accept",LinkText:"Disclaimer",Location:"https://www.re-tug.com/disclaimer",Time:"1",})</script>

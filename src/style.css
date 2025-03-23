@@ -307,8 +307,8 @@ body {
 
 /* Drag Bar for Resizing */
 #drag-bar {
-  height: 5px;
-  background: red;
+  height: 3px;
+  background: rgb(110, 104, 104);
   cursor: row-resize;
   width: 100%;
   position: relative;

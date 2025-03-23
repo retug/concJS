@@ -66,6 +66,20 @@ export class StructuralMaterial {
       [-2, -1, -0.002, 0.]
     ),
     new StructuralMaterial(
+      "fc5ksi",
+      "concrete",
+      "normal",
+      [0, -5000, -5000, 0],
+      [-2, -1, -0.002, 0.]
+    ),
+    new StructuralMaterial(
+      "fc6ksi",
+      "concrete",
+      "normal",
+      [0, -6000, -6000, 0],
+      [-2, -1, -0.002, 0.]
+    ),
+    new StructuralMaterial(
       "fce4ksi",
       "concrete",
       "expected",

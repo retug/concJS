@@ -185,14 +185,24 @@ export function addShapeToScene(scene, sprite) {
         return;
     }
 
+    // ✅ Get X and Y offsets from the input fields
+    const xOffset = parseFloat(document.getElementById('X_Vals').value) || 0;
+    const yOffset = parseFloat(document.getElementById('Y_Vals').value) || 0;
+
     let concShape;
     
     if (activeShape === 'rectangle') {
         const points = createRectangleShape(length, width);
-        concShape = new ConcShape(points, selectedMaterialConc);
+        // ✅ Apply X and Y offsets to the base points
+        const translatedPoints = points.map(p => new THREE.Vector2(p.x + xOffset, p.y + yOffset));
+        concShape = new ConcShape(translatedPoints, selectedMaterialConc);
     } else if (activeShape === 'barbell') {
         const barbellShape = createCurvedRectangleShape(length, width);
-        concShape = new ConcShape(barbellShape, selectedMaterialConc);
+        console.log(barbellShape)
+        const originalPoints = barbellShape.getPoints();
+        const translatedPoints = originalPoints.map(p => new THREE.Vector2(p.x + xOffset, p.y + yOffset));
+        const translatedShape = new THREE.Shape(translatedPoints);
+        concShape = new ConcShape(translatedShape, selectedMaterialConc);
     } else {
         console.warn('Only rectangle and barbell shapes are currently implemented');
         return;
