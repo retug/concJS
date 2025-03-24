@@ -16,6 +16,7 @@ export class CompositeConcShape {
         this.centroidX = 0;
         this.centroidY = 0;
         this.transformedFEMcentroids = {}; // ✅ Initialize as an empty object
+        
     }
 
     generateCombinedMesh() {
@@ -107,7 +108,10 @@ export class CompositeConcShape {
                 this.FEMarea += mesh.area;
                 this.centroidX += mesh.area * mesh.centroid.x;
                 this.centroidY += mesh.area * mesh.centroid.y;
-            }
+                mesh.userData.concShape = this.concShapes[0]; // This stores the reference to the parent ConcShape 
+                // Future Work if you want to store multiple concrete Properties
+                mesh.userData.compShape = this; // Used for plotting            
+                }
             // Remove all objects from the scene that are not FEMmesh objects and keep all rebar objects
             scene.children = scene.children.filter(obj => this.FEMmesh.includes(obj) || obj.isRebar);
         }

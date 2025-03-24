@@ -75,6 +75,7 @@ export class ConcShape {
 
 
     addHole(holePoints) {
+        console.log("YOU HAVE CLICKED ADD HOLE. your shape is", this)
         const hole = this.createShapeFromPoints(holePoints);
         this.holes.push(hole);
         this.baseshape.holes.push(hole); // ✅ Add hole to the main shape
@@ -102,7 +103,7 @@ export class ConcShape {
         
         return shape;
     }
-
+    //Stores base information about base polygons
     generateMesh() {
         if (!this.baseshape) return;
         const geometry = new THREE.ShapeGeometry(this.baseshape);

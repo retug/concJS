@@ -138,7 +138,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const generatePMMBtn = document.getElementById("generatePMM-button");
   if (generatePMMBtn) {
       generatePMMBtn.addEventListener("click", () => {
-          console.log("Generate PM button clicked! Creating FEM mesh...");
+
+          // Get the selected concrete shape
+          const selectedConcShapes = SceneFunctions.getAllSelectedConcShape();
+          const selectedRebar = SceneFunctions.getAllSelectedRebar();
+
+          // ✅ Check if either is missing or empty
+          if (!selectedConcShapes || selectedConcShapes.length === 0 || !selectedRebar || selectedRebar.length === 0) {
+            alert("⚠️ You must select at least one concrete shape and one rebar to proceed.");
+            return;
+          }
+          
           const threeJSDiv = document.getElementById("concGui");
 
           if (mouseTrackingHandler) {
@@ -160,8 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
               console.warn("⚠️ Mouse interactions were already disabled or not assigned properly.");
           }
             
-          // Get the selected concrete shape
-          const selectedConcShapes = SceneFunctions.getAllSelectedConcShape();
+          
 
           if (!selectedConcShapes) {
             console.warn("No concrete shape selected!");
@@ -176,10 +185,13 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Invalid edge or interior spacing input!");
             return;
           }
+          
+
+
+          
 
           /////////////   BEGINNING ANALYSIS ///////////////////////
           if (selectedConcShapes.length === 1) {
-            debugger;
 
             const selectedRebar = SceneFunctions.getAllSelectedRebar();
             if (!selectedRebar || selectedRebar.length === 0) {
@@ -217,14 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error("FEM mesh generation failed or returned empty.");
             }
 
-            // let angle = 45;
-            // let strainProfileIndex = 6; //For all of the strain profiles of a given angle. store it in a variable 
-            // // ✅ Transform coordinates for 45-degree angle
-            // selectedConcShape.transformCoordinatesAtAngle(angle, selectedRebar);
-            // // ✅ Generate Strain profiles for the given angle
-            // selectedConcShape.generateStrains(angle);
-            // selectedConcShape.generatePMM(angle)
-            // selectedConcShape.plotPMMResults();
             selectedConcShape.CalcPnmax("other");
             
 
@@ -251,6 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             selectedConcShape.setupResultsControls();
             SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
+            window.allConcShapes = selectedConcShape
           }
           //testing for composite shape
           else {
@@ -313,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             compConcShape.setupResultsControls();
             SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
+            window.allConcShapes = compConcShape
         }
       });
   }

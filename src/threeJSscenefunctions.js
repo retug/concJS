@@ -609,16 +609,16 @@ export function addHoleToShape(selectedConcShape, allSelectedPnts) {
     );
 
     // ✅ Remove existing shape from scene
-    if (selectedConcShape.mesh) {
-        scene.remove(selectedConcShape.mesh);
+    if (selectedConcShape[0].mesh) {
+        scene.remove(selectedConcShape[0].mesh);
     }
     console.log(selectedConcShape)
     // ✅ Add the hole to the shape
-    selectedConcShape.addHole(holePoints);
+    selectedConcShape[0].addHole(holePoints);
 
     // ✅ Generate and add the updated shape to the scene
-    if (selectedConcShape.mesh) {
-        scene.add(selectedConcShape.mesh);
+    if (selectedConcShape[0].mesh) {
+        scene.add(selectedConcShape[0].mesh);
     } else {
         console.error("Failed to generate updated concrete mesh.");
     }
@@ -743,11 +743,10 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         let selectedObject = pointsObjects.length > 0 ? pointsObjects[0].object : meshObjects[0]?.object;
 
         if (!selectedObject) return;
-
         console.log("SELECTED OBJECT:", selectedObject);
         console.log("YOUR ANGLE IS", window.selectedAngle);
         console.log("YOUR INDEX IS", window.selectedStrainProfileIndex);
-        debugger;
+
 
         if (selectedObject instanceof THREE.Mesh && selectedObject.userData) {
             console.log("Concrete Mesh Clicked:", selectedObject);

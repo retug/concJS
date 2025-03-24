@@ -202,10 +202,17 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
       let transformed = clickedObject.transformedCentroid[angle];
 
 
+
+      let strainProfile;
+
       // ✅ Extract strain profile using the given index
-      let strainProfile = clickedObject.userData.concShape.strainProfiles[angle][strainProfileIndex];
-
-
+      //this is for composite shapes
+      if (clickedObject.userData.compShape) {
+        strainProfile = clickedObject.userData.compShape.strainProfiles[angle][strainProfileIndex];
+      }
+      else {
+        strainProfile = clickedObject.userData.concShape.strainProfiles[angle][strainProfileIndex];
+      }
       strain = strainProfile[0] * transformed.v + strainProfile[1];
       stress = concreteMat.stress(strain);
       // Extract color from mesh material
@@ -228,6 +235,7 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
       // ✅ Update the material dropdown based on selected object
       updateMaterialDropdown(clickedObject);
   } else if (clickedObject.materialData) {
+      debugger;
       // ✅ Get rebar material
       let rebarMat = clickedObject.materialData;
 
@@ -238,16 +246,11 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
           console.warn(`⚠️ No transformed coordinates for rebar element at angle ${angle}`);
           return;
       }
+      let strainProfile;
 
       // ✅ Find the ConcShape that owns this rebar object
       let parentConcShape = findConcShapeForRebar(clickedObject);
-      if (!parentConcShape) {
-          console.error("❌ Could not find the parent ConcShape for the selected rebar.");
-          return;
-      }
-
-      // ✅ Extract strain profile using the given index
-      let strainProfile = parentConcShape.strainProfiles[angle][strainProfileIndex];
+      strainProfile = parentConcShape.strainProfiles[angle][strainProfileIndex];
 
       if (!strainProfile) {
           console.error(`❌ No strain profile found for angle ${angle} and index ${strainProfileIndex}`);
@@ -270,11 +273,9 @@ export function plotSelectedPoint(clickedObject,strainProfileIndex, angle) {
   }
 
     function findConcShapeForRebar(rebarObject) {
-      for (let concShape of allConcShapes) {  // 🔹 `allConcShapes` should contain all instances of ConcShape
-          if (concShape.rebarObjects.includes(rebarObject)) {
-              return concShape;
-          }
-      }
+        if (allConcShapes.rebarObjects.includes(rebarObject)) {
+            return allConcShapes;
+        }
       return null;  // ❌ No matching ConcShape found
   }
 
