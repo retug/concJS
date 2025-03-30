@@ -46,9 +46,9 @@ function loadTexture(url) {
 
 async function initScene() {
   try {
-    sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
+    // sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
     //FOR DEPLOYMENT UPDATE THIS LINE
-    // sprite = await loadTexture('/static/concgui/disc.png');
+    sprite = await loadTexture('/static/concgui/disc.png');
 
       console.log("Sprite texture loaded, adding rebar...");
       // ✅ NOW we can safely call this
