@@ -1,0 +1,8 @@
+import * as THREE from 'three';
+import { scene } from './main.js'; 
+import { rebarDia, addPoint, addRebarToScene, getAllSelectedRebar, getAllSelectedPnts, getAllSelectedConcShape } from '././threeJSscenefunctions.js'; 
+import { ConcShape } from './concShape.js'; 
+
+
+export function return_PMM_capacities(inputJSONfile) {
+}
