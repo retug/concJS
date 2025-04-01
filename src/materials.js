@@ -54,9 +54,18 @@ export class StructuralMaterial {
       }
 
       return 0; // Should never reach here
-  }
+    }
+
   }
   
+  export function getMaterialByName(name) {
+    const match = defaultMaterials.find(mat => mat.name === name);
+    if (!match) {
+      throw new Error(`Material "${name}" not found in default materials.`);
+    }
+    return match;
+  }
+
   export const defaultMaterials = [
     new StructuralMaterial(
       "fc4ksi",

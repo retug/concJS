@@ -15,6 +15,7 @@ import Delaunator from 'delaunator';
 import { scene, controls, camera, renderer } from "./main.js"; 
 import { rebarDia, setupRaycastingForResults  } from './threeJSscenefunctions.js';
 import Plotly from 'plotly.js-dist-min';
+import { pass } from 'three/tsl';
 //import Plotly from 'plotly.js';
 // import * as SceneFunctions from './threeJSscenefunctions.js';
 
@@ -604,7 +605,7 @@ export class ConcShape {
     // }
 
     // ✅ Transforms coordinates at a given angle
-    transformCoordinatesAtAngle(angle) {
+    transformCoordinatesAtAngle(angle, APIcall) {
         if (!this.FEMmesh || this.FEMmesh.length === 0) {
             console.error("❌ FEM mesh is empty, cannot transform coordinates.");
             return;
@@ -661,8 +662,14 @@ export class ConcShape {
         const allUV = [...transformedConcrete, ...this.rebarObjects.map(rebar => rebar.transformedCentroid[angle])];
         const uVals = allUV.map(p => p.u);
         const vVals = allUV.map(p => p.v);
+        if (APIcall) {
+            ; //pass
+        }
+        else{
+            this.populateAnalysisResults();
+        }
 
-        this.populateAnalysisResults();
+        //this.populateAnalysisResults();
         
 
     }

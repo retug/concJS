@@ -6,6 +6,8 @@ import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveU
 import * as SceneFunctions from './threeJSscenefunctions.js';
 import { setupReplicateShortcut, setupMoveShortcut } from './CADfunctions.js';
 import { CompositeConcShape } from './compositeShapeAnalysis.js';
+import jsonData from '/static/example_concrete_column_input.json' assert { type: 'json' };
+import { analyzeFromJSON } from './apiFunctions.js'
 //required for webpack bundling
 import "./materials.js";
 import "./materialsandShapes.js";
@@ -46,9 +48,9 @@ function loadTexture(url) {
 
 async function initScene() {
   try {
-    // sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
+    sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
     //FOR DEPLOYMENT UPDATE THIS LINE
-    sprite = await loadTexture('/static/concgui/disc.png');
+    // sprite = await loadTexture('/static/concgui/disc.png');
 
       console.log("Sprite texture loaded, adding rebar...");
       // ✅ NOW we can safely call this
@@ -77,6 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
+
+  // debugger;
+  // console.log(jsonData)
+  //analyzeFromJSON(jsonData)
+
 
 
   // Attach addConcGeo to the "Conc" button
@@ -185,9 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Invalid edge or interior spacing input!");
             return;
           }
+
           
-
-
           
 
           /////////////   BEGINNING ANALYSIS ///////////////////////
@@ -235,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // ✅ Ensure transformation is done before PMM analysis
             console.log("🔹 Transforming coordinates for all angles...");
             for (let angle = 0; angle <= 180; angle += 15) {
-                selectedConcShape.transformCoordinatesAtAngle(angle);
+                selectedConcShape.transformCoordinatesAtAngle(angle, false);
             }
 
             console.log("🔹 Generating PMM for all angles...");
@@ -301,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // ✅ Ensure transformation is done before PMM analysis
             console.log("🔹 Transforming coordinates for all angles...");
             for (let angle = 0; angle <= 180; angle += 15) {
-              compConcShape.transformCoordinatesAtAngle(angle);
+              compConcShape.transformCoordinatesAtAngle(angle, false);
             }
             console.log("🔹 Generating PMM for all angles...");
             for (let angle = 0; angle <= 180; angle += 15) {

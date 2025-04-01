@@ -207,7 +207,7 @@ export class CompositeConcShape {
         console.log(`✅ Composite Pnmax = ${this.Pnmax.toFixed(2)} kips`);
     }
 
-    transformCoordinatesAtAngle(angle) {
+    transformCoordinatesAtAngle(angle, APIcall) {
         if (!this.FEMmesh || this.FEMmesh.length === 0) {
             console.error("❌ FEM mesh is empty, cannot transform coordinates.");
             return;
@@ -241,7 +241,12 @@ export class CompositeConcShape {
             conc: transformedConcrete,
             centroidCoordinates: { u: 0, v: 0 }
         };
-        this.populateAnalysisResults();
+        if (APIcall) {
+            ; //pass
+        }
+        else{
+            this.populateAnalysisResults();
+        }
     }
 
     populateAnalysisResults() {

@@ -1,0 +1,25 @@
+{
+  "Concrete": {
+    "ConcreteMaterial": "fc4ksi",
+    "ConcreteShape": [
+      {
+        "concShapePnts": [[0, 0], [24, 0], [24, 24], [0, 24]],
+        "type": "polygon"
+      }
+    ],
+    "ConcreteShapeHoles": [
+      {
+        "concShapePnts": [[5, 5], [10, 5], [7.5, 2.5]],
+        "type": "polygon"
+      }
+    ]
+  },
+  "Rebar": [
+    { "x": 3, "y": 3, "size": "#9", "material": "fy60ksi" },
+    { "x": 21, "y": 3, "size": "#9", "material": "fy60ksi" },
+    { "x": 21, "y": 21, "size": "#9", "material": "fy60ksi" },
+    { "x": 3, "y": 21, "size": "#9", "material": "fy60ksi" }
+  ],
+  "interiorSpacing": 1.0,
+  "edgeSpacing": 1.0
+}
