@@ -13,6 +13,7 @@ import "./materialsPlotting.js";
 import "./threeJSscenefunctions.js";
 import "../src/style.css";
 import "./tailwind.css";
+import discTextureUrl from '../static/disc.png';
 
 
 
@@ -48,7 +49,7 @@ async function initScene() {
   try {
     // sprite = await loadTexture('/static/disc.png'); // Wait for texture to load
     //FOR DEPLOYMENT UPDATE THIS LINE
-    sprite = await loadTexture('/static/concgui/disc.png');
+    sprite = await loadTexture(discTextureUrl);
 
       console.log("Sprite texture loaded, adding rebar...");
       // ✅ NOW we can safely call this
@@ -148,6 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("⚠️ You must select at least one concrete shape and one rebar to proceed.");
             return;
           }
+
+          if (selectedConcShapes.length > 1) {
+            const selectedMaterials = new Set(selectedConcShapes.map(shape => shape.material));
+            if (selectedMaterials.size !== 1) {
+              alert("Composite analysis requires all selected shapes to use the same concrete material.");
+              return;
+            }
+          }
           
           const threeJSDiv = document.getElementById("concGui");
 
@@ -199,8 +208,8 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 console.log(`✅ Found rebar,`, selectedRebar);
             }
-            // ✅ Get the selected concrete shape and set it as a global variable
-            window.selectedConcShape = SceneFunctions.getAllSelectedConcShape()[0];
+            const selectedConcShape = selectedConcShapes[0];
+            window.activeAnalysisSection = selectedConcShape;
             // ✅ Fire initializeRebarObjects() independently
             selectedConcShape.initializeRebarObjects(selectedRebar);
 
@@ -260,19 +269,9 @@ document.addEventListener("DOMContentLoaded", () => {
           //testing for composite shape
           else {
             const selectedRebar = SceneFunctions.getAllSelectedRebar();
-            let compConcShape = new CompositeConcShape(selectedConcShapes);
+            const compConcShape = new CompositeConcShape(selectedConcShapes);
             compConcShape.initializeRebarObjects(selectedRebar);
-            // ✅ Get the selected concrete shape and set it as a global variable
-            window.selectedCompConcShape = compConcShape;
-
-        
-            // ✅ Check for material consistency
-            const isMaterialConsistent = compConcShape.checkMaterialConsistency();
-            compConcShape.material = selectedConcShapes[0].material
-        
-            if (!isMaterialConsistent) {
-                alert("⚠️ Warning: Selected shapes have different concrete materials. Results will be inaccurate.");
-            }
+            window.activeAnalysisSection = compConcShape;
         
             // Plot the generated FEM mesh elements in the scene
             if (compConcShape.rebarObjects.length > 0) {
