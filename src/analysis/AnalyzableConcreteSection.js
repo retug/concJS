@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import Plotly from 'plotly.js-dist-min';
 import { scene, controls, camera, renderer } from '../main.js';
 import { rebarDia, setupRaycastingForResults } from '../threeJSscenefunctions.js';
+import { MomentMomentAnalysis } from './MomentMomentAnalysis.js';
 
 export class AnalyzableConcreteSection {
     constructor(material) {
@@ -15,6 +16,7 @@ export class AnalyzableConcreteSection {
         this.centroidX = 0;
         this.centroidY = 0;
         this.strainProfiles = {};
+        this.strainProfileResponses = {};
         this.Pnmax = 0;
         this.rebarObjects = [];
     }
@@ -33,6 +35,7 @@ export class AnalyzableConcreteSection {
         this.PMMUVresults = {};
         this.transformedFEMcentroids = {};
         this.strainProfiles = {};
+        this.strainProfileResponses = {};
         this.Pnmax = 0;
     }
 
@@ -62,7 +65,7 @@ export class AnalyzableConcreteSection {
         return this.Pnmax;
     }
 
-    transformCoordinatesAtAngle(angle) {
+    transformCoordinatesAtAngle(angle, updateAnalysisSummary = true) {
         if (!this.FEMmesh || this.FEMmesh.length === 0) {
             console.error("❌ FEM mesh is empty, cannot transform coordinates.");
             return;
@@ -115,102 +118,309 @@ export class AnalyzableConcreteSection {
             centroidCoordinates: transformedCentroid  // ✅ Store transformed centroid
         };
 
-        // ✅ Log the min/max U and V values
-        const allUV = [...transformedConcrete, ...this.rebarObjects.map(rebar => rebar.transformedCentroid[angle])];
-        const uVals = allUV.map(p => p.u);
-        const vVals = allUV.map(p => p.v);
-
-        this.populateAnalysisResults();
+        if (updateAnalysisSummary) this.populateAnalysisResults();
         
 
     }
 
     generateStrains(angle) {
-        // ✅ Ensure the transformed FEM centroids exist for the given angle
         if (!this.transformedFEMcentroids[angle]) {
             console.error(`❌ No transformed FEM centroids found for angle ${angle}`);
             return;
         }
 
-        // ✅ Extract transformed rebar and concrete locations
-        let concLocations = this.transformedFEMcentroids[angle].conc.map(p => p.v);  // Get only V coordinates
-
-        // ✅ Extract transformed rebar V coordinates
-        let rebarLocations = this.rebarObjects
-        .map(rebar => rebar.transformedCentroid[angle]?.v) // ✅ Access transformed V values
-        .filter(v => v !== undefined); // ✅ Filter out undefined values
+        const concLocations = this.transformedFEMcentroids[angle].conc.map(point => point.v);
+        const rebarLocations = this.rebarObjects
+            .map(rebar => rebar.transformedCentroid[angle]?.v)
+            .filter(value => value !== undefined);
 
         if (!rebarLocations.length || !concLocations.length) {
             console.error("❌ Rebar or Concrete locations are empty. Cannot generate strain profiles.");
             return;
         }
 
-        // ✅ Find min/max V positions for rebar and concrete
-        let rebarMax = Math.max(...rebarLocations);
-        let rebarMin = Math.min(...rebarLocations);
-        let concMax = Math.max(...concLocations);
-        let concMin = Math.min(...concLocations);
+        const { min: concreteMin, max: concreteMax } = this._getConcreteVBounds(angle);
+        const rebarMin = Math.min(...rebarLocations);
+        const rebarMax = Math.max(...rebarLocations);
 
-        console.log(`🔹 Angle ${angle}°:`);
-        console.log(`   ✅ Rebar Max: ${rebarMax}, Min: ${rebarMin}`);
-        console.log(`   ✅ Concrete Max: ${concMax}, Min: ${concMin}`);
+        const positiveBranch = this._generateAdaptiveStrainBranch(angle, {
+            compressionV: concreteMax,
+            tensionV: rebarMin,
+            concreteCentroids: concLocations,
+            rebarLocations,
+            targetCount: 51
+        });
 
-        // ✅ Define strain limits
-        let epsilon_c = -0.003;  // Concrete crushing strain
-        let epsilon_t = 0.025;   // Maximum tension strain of profile
-        let steps = 25;          // Number of steps for profile generation
+        const negativeBranch = this._generateAdaptiveStrainBranch(angle, {
+            compressionV: concreteMin,
+            tensionV: rebarMax,
+            concreteCentroids: concLocations,
+            rebarLocations,
+            targetCount: 51
+        });
 
-        // ✅ Initialize strain profiles
-        let strainProfileCtoT = [];
-        let strainProfileTtoT = [];
-        let strainProfileTtoC = [];
-        let strainProfileCtoC = [];
+        // Follow one branch from compression to tension and return on the other.
+        // Pure tension and pure compression are shared endpoints, so the duplicate
+        // endpoints from the return branch are removed. The final count is 100.
+        const selectedNodes = [
+            ...positiveBranch,
+            ...negativeBranch.slice().reverse().slice(1, -1)
+        ];
+        const profiles = selectedNodes.map(node => node.profile);
 
-        // ✅ Compute slope steps
-        let slopeStepCtoT = ((epsilon_t - epsilon_c) / (concMax - rebarMin)) / (steps - 1);
-        let slopeStepTtoT = ((epsilon_c - epsilon_t) / (concMax - rebarMin)) / (steps - 1);
-        let slopeStepTtoC = -((epsilon_c - epsilon_t) / (rebarMax - concMin)) / (steps - 1);
-        let slopeStepCtoC = -((epsilon_c - epsilon_t) / (rebarMax - concMin)) / (steps - 1);
-
-        // ✅ Generate strain profiles
-        for (let i = 0; i < steps; i++) {
-            // ✅ Compression to Tension (C to T)
-            strainProfileCtoT.push([
-                -i * slopeStepCtoT, 
-                epsilon_c - (-i * slopeStepCtoT) * concMax
-            ]);
-
-            // ✅ Tension Failure to Tension (T to T)
-            strainProfileTtoT.push([
-                -(epsilon_t - epsilon_c) / (concMax - rebarMin) - slopeStepTtoT * i,
-                epsilon_t - (-(epsilon_t - epsilon_c) / (concMax - rebarMin) - slopeStepTtoT * i) * rebarMin
-            ]);
-
-            // ✅ Tension to Compression (T to C)
-            strainProfileTtoC.push([
-                slopeStepTtoC * i,
-                epsilon_t - (i * slopeStepTtoC) * rebarMax
-            ]);
-
-            // ✅ Compression to Compression (C to C)
-            strainProfileCtoC.push([
-                -((epsilon_c - epsilon_t) / (rebarMax - concMin)) - slopeStepCtoC * i,
-                epsilon_c - slopeStepCtoC * -(steps - 1 - i) * -concMin
-            ]);
+        if (profiles.length !== 100) {
+            throw new Error(`Expected 100 strain profiles at angle ${angle}, received ${profiles.length}.`);
         }
 
-        // ✅ Combine all strain profiles
-        let strainProfile = strainProfileCtoT.concat(strainProfileTtoT, strainProfileTtoC, strainProfileCtoC);
+        this.strainProfiles[angle] = profiles;
+        this.strainProfileResponses[angle] = selectedNodes.map(node => node.response);
+        return profiles;
+    }
 
-        console.log(`✅ Generated strain profile for angle ${angle}:`, strainProfile);
+    _getConcreteVBounds(angle) {
+        const radians = (Math.PI / 180) * angle;
+        const cosTheta = Math.cos(radians);
+        const sinTheta = Math.sin(radians);
+        let min = Infinity;
+        let max = -Infinity;
 
-        // ✅ Store strain profile in the class dictionary
-        if (!this.strainProfiles) {
-            this.strainProfiles = {}; 
+        for (const mesh of this.FEMmesh) {
+            const positions = mesh.geometry.attributes.position.array;
+            for (let index = 0; index < positions.length; index += 3) {
+                const x = positions[index] - this.centroidX;
+                const y = positions[index + 1] - this.centroidY;
+                const v = -sinTheta * x + cosTheta * y;
+                min = Math.min(min, v);
+                max = Math.max(max, v);
+            }
         }
-        this.strainProfiles[angle] = strainProfile;
 
-        return strainProfile;
+        if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
+            throw new Error(`Unable to determine concrete depth at angle ${angle}.`);
+        }
+
+        return { min, max };
+    }
+
+    _generateAdaptiveStrainBranch(angle, options) {
+        const {
+            compressionV,
+            tensionV,
+            concreteCentroids,
+            rebarLocations,
+            targetCount
+        } = options;
+        const compressionStrain = -0.003;
+        const pureTensionStrain = 0.00507;
+        const tensionDistance = Math.abs(tensionV - compressionV);
+
+        if (tensionDistance <= Number.EPSILON) {
+            throw new Error("Compression and tension control points must be separated.");
+        }
+
+        const concreteDistances = concreteCentroids
+            .map(value => Math.abs(value - compressionV))
+            .filter(value => value > 1e-9);
+        const rebarDistances = rebarLocations
+            .map(value => Math.abs(value - compressionV))
+            .filter(value => value > 1e-9);
+
+        const nearestConcrete = Math.min(...concreteDistances);
+        const nearestRebar = Math.min(...rebarDistances);
+        const curvatureForZeroConcrete = 1.01 * Math.abs(compressionStrain) / nearestConcrete;
+        const curvatureForYieldedSteel = 1.01 * (pureTensionStrain - compressionStrain) / nearestRebar;
+        const terminalCurvature = Math.max(curvatureForZeroConcrete, curvatureForYieldedSteel);
+        const terminalTensionStrain = Math.min(
+            0.5,
+            Math.max(0.025, compressionStrain + terminalCurvature * tensionDistance)
+        );
+
+        const controlTensionStrains = [
+            -0.003,
+            -0.0025,
+            -0.002,
+            -0.0015,
+            -0.001,
+            -0.0005,
+            0,
+            0.001,
+            0.00207,
+            0.003,
+            0.004,
+            0.00507,
+            0.0075,
+            0.01,
+            0.015,
+            0.025
+        ].filter(value => value < terminalTensionStrain);
+
+        controlTensionStrains.push(terminalTensionStrain);
+        const pureTensionParameter = terminalTensionStrain
+            + Math.max(0.001, 0.05 * (terminalTensionStrain - compressionStrain));
+        controlTensionStrains.push(pureTensionParameter);
+
+        const nodeCache = new Map();
+        const createNode = parameter => {
+            const key = parameter.toPrecision(15);
+            if (nodeCache.has(key)) return nodeCache.get(key);
+
+            const isPureTension = Math.abs(parameter - pureTensionParameter) < 1e-12;
+            const profile = isPureTension
+                ? [0, pureTensionStrain]
+                : this._createControlledStrainProfile(
+                    compressionV,
+                    tensionV,
+                    compressionStrain,
+                    parameter
+                );
+            const node = {
+                parameter,
+                profile,
+                response: this._calculateProfileResponse(angle, profile)
+            };
+            nodeCache.set(key, node);
+            return node;
+        };
+
+        let nodes = controlTensionStrains.map(createNode);
+        const scales = this._getResponseScales(nodes.map(node => node.response));
+        const uniqueNodes = [];
+        for (let index = 0; index < nodes.length; index += 1) {
+            const node = nodes[index];
+            const previous = uniqueNodes[uniqueNodes.length - 1];
+            const equivalent = previous
+                && this._responseDistance(node.response, previous.response, scales) < 1e-8;
+
+            if (!equivalent) {
+                uniqueNodes.push(node);
+            } else if (index === nodes.length - 1) {
+                // Prefer the exact uniform-tension state over an equivalent
+                // high-curvature approximation at the branch endpoint.
+                uniqueNodes[uniqueNodes.length - 1] = node;
+            }
+        }
+        nodes = uniqueNodes;
+
+        while (nodes.length < targetCount) {
+            let bestSegment = null;
+
+            for (let index = 0; index < nodes.length - 1; index += 1) {
+                const left = nodes[index];
+                const right = nodes[index + 1];
+                let lowerParameter = left.parameter;
+                let upperParameter = right.parameter;
+                let midpoint = null;
+
+                // If a midpoint lands on a material-response plateau, move toward
+                // the changing end of the segment instead of spending a PMM point
+                // on a duplicate response.
+                for (let attempt = 0; attempt < 12; attempt += 1) {
+                    const midpointParameter = (lowerParameter + upperParameter) / 2;
+                    if (midpointParameter === lowerParameter || midpointParameter === upperParameter) break;
+
+                    const candidate = createNode(midpointParameter);
+                    const distanceFromLeft = this._responseDistance(
+                        candidate.response,
+                        left.response,
+                        scales
+                    );
+                    const distanceFromRight = this._responseDistance(
+                        candidate.response,
+                        right.response,
+                        scales
+                    );
+
+                    if (distanceFromLeft < 1e-8 && distanceFromRight < 1e-8) break;
+                    if (distanceFromLeft < 1e-8) {
+                        lowerParameter = midpointParameter;
+                        continue;
+                    }
+                    if (distanceFromRight < 1e-8) {
+                        upperParameter = midpointParameter;
+                        continue;
+                    }
+
+                    midpoint = candidate;
+                    break;
+                }
+
+                if (!midpoint) continue;
+
+                const chordLength = this._responseDistance(left.response, right.response, scales);
+                const interpolationRatio = (midpoint.parameter - left.parameter)
+                    / (right.parameter - left.parameter);
+                const interpolatedResponse = this._interpolateResponses(
+                    left.response,
+                    right.response,
+                    interpolationRatio
+                );
+                const curvatureError = this._responseDistance(
+                    midpoint.response,
+                    interpolatedResponse,
+                    scales
+                );
+                const score = chordLength + 4 * curvatureError;
+
+                if (!bestSegment || score > bestSegment.score) {
+                    bestSegment = { index, midpoint, score };
+                }
+            }
+
+            if (!bestSegment) {
+                throw new Error(`Unable to refine strain profiles at angle ${angle}.`);
+            }
+
+            nodes.splice(bestSegment.index + 1, 0, bestSegment.midpoint);
+        }
+
+        return nodes;
+    }
+
+    _createControlledStrainProfile(compressionV, tensionV, compressionStrain, tensionStrain) {
+        const slope = (tensionStrain - compressionStrain) / (tensionV - compressionV);
+        const intercept = compressionStrain - slope * compressionV;
+        return [slope, intercept];
+    }
+
+    _getResponseScales(responses) {
+        return {
+            axial: Math.max(
+                Math.abs(this.Pnmax),
+                ...responses.map(response => Math.max(Math.abs(response.P), Math.abs(response.phiP))),
+                1
+            ),
+            moment: Math.max(
+                ...responses.map(response => Math.max(
+                    Math.hypot(response.Mx, response.My),
+                    Math.hypot(response.phiMx, response.phiMy)
+                )),
+                1
+            )
+        };
+    }
+
+    _responseDistance(left, right, scales) {
+        const components = [
+            (left.P - right.P) / scales.axial,
+            (left.Mx - right.Mx) / scales.moment,
+            (left.My - right.My) / scales.moment,
+            (left.phiP - right.phiP) / scales.axial,
+            (left.phiMx - right.phiMx) / scales.moment,
+            (left.phiMy - right.phiMy) / scales.moment
+        ];
+        return Math.hypot(...components);
+    }
+
+    _interpolateResponses(left, right, ratio) {
+        const interpolate = (start, end) => start + (end - start) * ratio;
+        return {
+            P: interpolate(left.P, right.P),
+            Mx: interpolate(left.Mx, right.Mx),
+            My: interpolate(left.My, right.My),
+            phiP: interpolate(left.phiP, right.phiP),
+            phiMx: interpolate(left.phiMx, right.phiMx),
+            phiMy: interpolate(left.phiMy, right.phiMy)
+        };
     }
 
     convertUVtoXY(angle, Mu, Mv) {
@@ -229,137 +439,101 @@ export class AnalyzableConcreteSection {
             console.error(`❌ No transformed centroids found for angle ${angle}`);
             return;
         }
-        
+
         if (!this.strainProfiles[angle]) {
             console.error(`❌ No strain profiles found for angle ${angle}`);
             return;
         }
-    
-    
-        console.log(`🔹 Generating PMM for angle ${angle}°...`);
-    
-        let totalAxialForceArray = []
-        let totalMomentUArray = []
-        let totalMomentVArray = []
-        let totalMomentXArray = []
-        let totalMomentYArray = []
 
-        let totalPhiAxialForceArray = []
-        let totalPhiMomentXArray = []
-        let totalPhiMomentYArray = []
+        const cachedResponses = this.strainProfileResponses[angle];
+        const responses = cachedResponses?.length === this.strainProfiles[angle].length
+            ? cachedResponses
+            : this.strainProfiles[angle].map(
+                profile => this._calculateProfileResponse(angle, profile)
+            );
 
-        
+        this.PMMUVresults[angle] = {
+            P: [responses.map(response => response.P)],
+            Mu: [responses.map(response => response.Mu)],
+            Mv: [responses.map(response => response.Mv)]
+        };
+        this.PMMXYresults[angle] = {
+            P: [responses.map(response => response.P)],
+            Mx: [responses.map(response => response.Mx)],
+            My: [responses.map(response => response.My)],
+            MaxRebarStrain: [responses.map(response => response.maxRebarStrain)],
+            phiP: [responses.map(response => response.phiP)],
+            phiMx: [responses.map(response => response.phiMx)],
+            phiMy: [responses.map(response => response.phiMy)]
+        };
 
+        return this.PMMXYresults[angle];
+    }
 
-        // Retrieve centroid coordinates in U-V space
-        let centroidU = this.transformedFEMcentroids[angle].centroidCoordinates.u;
-        let centroidV = this.transformedFEMcentroids[angle].centroidCoordinates.v;
+    _calculateProfileResponse(angle, strainProfile) {
+        const transformed = this.transformedFEMcentroids[angle];
+        const centroidU = transformed.centroidCoordinates.u;
+        const centroidV = transformed.centroidCoordinates.v;
+        let concreteForce = 0;
+        let concreteMomentU = 0;
+        let concreteMomentV = 0;
+        let steelForce = 0;
+        let steelMomentU = 0;
+        let steelMomentV = 0;
+        let maxRebarStrain = -Infinity;
 
-        // Get material properties
-        let concMaterial = this.material;  // ✅ Concrete material stored in class
+        for (let index = 0; index < this.FEMmesh.length; index += 1) {
+            const concreteElement = this.FEMmesh[index];
+            const transformedConcrete = transformed.conc[index];
+            if (!transformedConcrete) continue;
 
-        if (!this.PMMUVresults) {
-            this.PMMUVresults = {};
-        }
-        if (!this.PMMXYresults) {
-            this.PMMXYresults = {};
-        }
-        if (!this.PMMUVresults[angle]) {
-            this.PMMUVresults[angle] = { P: [], Mu: [], Mv: [] };
-        }
-        if (!this.PMMXYresults[angle]) {
-            this.PMMXYresults[angle] = { P: [], Mx: [], My: [], MaxRebarStrain: [], phiP: [], phiMx: [], phiMy: [] };
-        }
-    
-        //looping through each stress strain profile
-        for (var strainProfile of this.strainProfiles[angle]) {
-            let concForce = 0
-            let concMomentV = 0
-            let concMomentU = 0
-            let steelForce = 0
-            let steelMomentV = 0
-            let steelMomentU = 0
-            let maxRebarStrain = -Infinity; // Track the maximum rebar strain
-    
-    
-            for (let i = 0; i < this.FEMmesh.length; i++) {
-                let concEle = this.FEMmesh[i]; // Get the concrete element
-                let transformedConc = this.transformedFEMcentroids[angle].conc[i]; // Get the transformed coordinates
-            
-                if (!transformedConc) {
-                    console.warn(`⚠️ Missing transformed centroid for concrete element at index ${i}`);
-                    continue;
-                }
-            
-                let concStrain = this.strainFunction(strainProfile[0], transformedConc.v, strainProfile[1]);
-                let nodalConcForce = concMaterial.stress(concStrain) * concEle.area;
-            
-            
-                concForce += nodalConcForce;
-                concMomentV += nodalConcForce * (centroidV - transformedConc.v);
-                concMomentU += nodalConcForce * (centroidU - transformedConc.u);
-            }
-            
-            for (let rebar of this.rebarObjects) {
-                //area times stress(strain)
-                let steelMaterial = rebar.materialData; // ✅ Retrieve steel material
-                let transformedRebar = rebar.transformedCentroid[angle]; // ✅ Get transformed U/V at angle
-                if (!transformedRebar) {
-                    console.warn(`⚠️ No transformed coordinates for rebar at angle ${angle}`);
-                    continue;
-                }
-    
-                let rebarStrain = this.strainFunction(strainProfile[0], transformedRebar.v, strainProfile[1]);
-                maxRebarStrain = Math.max(maxRebarStrain, rebarStrain); // Track the max strain
-                let nodalSteelForce = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2 * steelMaterial.stress(rebarStrain);
-
-                steelForce += nodalSteelForce
-                steelMomentV += nodalSteelForce*(centroidV-transformedRebar.v)
-                steelMomentU += nodalSteelForce*(centroidU-transformedRebar.u)
-            }
-            let resultForce = (steelForce + concForce)/1000;
-            let Mu = (-steelMomentU - concMomentU) / 12 / 1000;
-            let Mv = (-steelMomentV - concMomentV) / 12 / 1000;
-            let { Mx, My } = this.convertUVtoXY(angle, Mu, Mv);
-
-            
-
-            let phi = this.calculatePhi("other", maxRebarStrain);
-
-
-            let cappedP = Math.max(resultForce, this.Pnmax)
-            let phiP = phi * cappedP
-            let phiMx = phi * Mx
-            let phiMy = phi * My
-
-            totalAxialForceArray.push(resultForce);
-            totalMomentUArray.push(Mu);
-            totalMomentVArray.push(Mv);
-
-            totalMomentXArray.push(Mx);
-            totalMomentYArray.push(My);
-
-            totalPhiAxialForceArray.push(phiP);
-            totalPhiMomentXArray.push(phiMx);
-            totalPhiMomentYArray.push(phiMy);
-
+            const strain = this.strainFunction(
+                strainProfile[0],
+                transformedConcrete.v,
+                strainProfile[1]
+            );
+            const force = this.material.stress(strain) * concreteElement.area;
+            concreteForce += force;
+            concreteMomentV += force * (centroidV - transformedConcrete.v);
+            concreteMomentU += force * (centroidU - transformedConcrete.u);
         }
 
+        for (const rebar of this.rebarObjects) {
+            const transformedRebar = rebar.transformedCentroid[angle];
+            if (!transformedRebar || !rebar.materialData) continue;
 
+            const strain = this.strainFunction(
+                strainProfile[0],
+                transformedRebar.v,
+                strainProfile[1]
+            );
+            const area = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2;
+            const force = area * rebar.materialData.stress(strain);
+            maxRebarStrain = Math.max(maxRebarStrain, strain);
+            steelForce += force;
+            steelMomentV += force * (centroidV - transformedRebar.v);
+            steelMomentU += force * (centroidU - transformedRebar.u);
+        }
 
-        this.PMMUVresults[angle].P.push(totalAxialForceArray);
-        this.PMMUVresults[angle].Mu.push(totalMomentUArray);
-        this.PMMUVresults[angle].Mv.push(totalMomentVArray);
-        this.PMMXYresults[angle].P.push(totalAxialForceArray);
-        this.PMMXYresults[angle].Mx.push(totalMomentXArray);
-        this.PMMXYresults[angle].My.push(totalMomentYArray);
+        const P = (steelForce + concreteForce) / 1000;
+        const Mu = (-steelMomentU - concreteMomentU) / 12 / 1000;
+        const Mv = (-steelMomentV - concreteMomentV) / 12 / 1000;
+        const { Mx, My } = this.convertUVtoXY(angle, Mu, Mv);
+        const phi = this.calculatePhi("other", maxRebarStrain);
+        const phiP = phi * Math.max(P, this.Pnmax);
 
-
-        // ✅ Store phi values
-        this.PMMXYresults[angle].phiP.push(totalPhiAxialForceArray);
-        this.PMMXYresults[angle].phiMx.push(totalPhiMomentXArray);
-        this.PMMXYresults[angle].phiMy.push(totalPhiMomentYArray);
-        console.log(this.PMMXYresults[angle])
+        return {
+            P,
+            Mu,
+            Mv,
+            Mx,
+            My,
+            maxRebarStrain,
+            phi,
+            phiP,
+            phiMx: phi * Mx,
+            phiMy: phi * My
+        };
     }
 
     calculatePhi(type, maxRebarStrain) {
@@ -392,14 +566,34 @@ export class AnalyzableConcreteSection {
         if (!angleDropdown) {
             let resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = `
-                <h3>3D PMM Interaction Diagram</h3>
-                <label for="angleSelection">Select Bending Axis Angle:</label>
-                <select id="angleSelection"></select>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 1rem; align-items: start;">
+                    <section>
+                        <h3>3D PMM Interaction Diagram</h3>
+                        <label for="angleSelection">Select Bending Axis Angle:</label>
+                        <select id="angleSelection"></select>
 
-                <label for="indexSelection">Select Strain Profile Index:</label>
-                <select id="indexSelection"></select>
+                        <label for="indexSelection">Select Strain Profile Index:</label>
+                        <select id="indexSelection"></select>
 
-                <div id='pmPlot' style='width: 100%; height: 500px;'></div>
+                        <div id="pmPlot" style="width: 100%; height: 500px;"></div>
+                    </section>
+
+                    <section>
+                        <h3>Moment-Moment Interaction Diagram</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end;">
+                            <label for="mmAxialLoad" style="display: grid; gap: 0.25rem;">
+                                Axial load (kips)
+                                <input id="mmAxialLoad" type="number" step="1" value="0" style="min-width: 10rem; border: 1px solid #9ca3af; border-radius: 0.25rem; padding: 0.35rem 0.5rem;">
+                            </label>
+                            <button id="generateMMButton" type="button" style="border: 1px solid #6b7280; border-radius: 0.25rem; padding: 0.4rem 0.75rem; background: #f3f4f6;">
+                                Generate MM
+                            </button>
+                        </div>
+                        <div id="mmAxialRange" style="margin-top: 0.35rem; font-size: 0.8rem; color: #4b5563;"></div>
+                        <div id="mmStatus" role="status" style="min-height: 1.25rem; margin-top: 0.25rem; font-size: 0.8rem;"></div>
+                        <div id="mmPlot" style="width: 100%; height: 500px;"></div>
+                    </section>
+                </div>
             `;
             this.populateAngleDropdown(uniqueAngles);
             
@@ -536,6 +730,180 @@ export class AnalyzableConcreteSection {
             });
             indexDropdown.dataset.listenerAdded = true;
         }
+
+        this.setupMomentMomentControls();
+    }
+
+    setupMomentMomentControls() {
+        const input = document.getElementById("mmAxialLoad");
+        const button = document.getElementById("generateMMButton");
+        const plot = document.getElementById("mmPlot");
+        if (!input || !button || !plot) return;
+
+        this.momentMomentAnalysis = new MomentMomentAnalysis(this);
+        const limits = this.momentMomentAnalysis.getAxialLimits();
+        const currentValue = Number(input.value);
+        if (!Number.isFinite(currentValue) || currentValue < limits.compression || currentValue > limits.tension) {
+            input.value = limits.compression <= 0 && limits.tension >= 0
+                ? "0"
+                : ((limits.compression + limits.tension) / 2).toFixed(2);
+        }
+
+        this.validateMomentMomentInput();
+
+        const emptyLayout = {
+            title: "Enter an axial load to generate the MM curve",
+            xaxis: { title: "Mx (kip-ft)" },
+            yaxis: { title: "My (kip-ft)", scaleanchor: "x", scaleratio: 1 },
+            margin: { l: 60, r: 20, b: 55, t: 50 }
+        };
+        if (plot.data) {
+            Plotly.react(plot, [], emptyLayout, { responsive: true });
+        } else {
+            Plotly.newPlot(plot, [], emptyLayout, { responsive: true });
+        }
+
+        if (!input.dataset.listenerAdded) {
+            input.addEventListener("input", () => {
+                window.activeAnalysisSection?.validateMomentMomentInput();
+            });
+            input.dataset.listenerAdded = true;
+        }
+
+        if (!button.dataset.listenerAdded) {
+            button.addEventListener("click", () => {
+                window.activeAnalysisSection?.generateMomentMomentCurve();
+            });
+            button.dataset.listenerAdded = true;
+        }
+    }
+
+    validateMomentMomentInput() {
+        const input = document.getElementById("mmAxialLoad");
+        const button = document.getElementById("generateMMButton");
+        const range = document.getElementById("mmAxialRange");
+        const status = document.getElementById("mmStatus");
+        if (!input || !button || !range) return { valid: false };
+
+        const solver = this.momentMomentAnalysis ?? new MomentMomentAnalysis(this);
+        this.momentMomentAnalysis = solver;
+        const limits = solver.getAxialLimits();
+        const value = Number(input.value);
+        input.min = String(limits.compression);
+        input.max = String(limits.tension);
+        const valid = input.value.trim() !== ""
+            && Number.isFinite(value)
+            && value >= limits.compression
+            && value <= limits.tension;
+
+        range.textContent = `Valid axial range: ${limits.compression.toFixed(2)} to ${limits.tension.toFixed(2)} kips`;
+        input.style.color = valid ? "" : "#dc2626";
+        input.style.borderColor = valid ? "#9ca3af" : "#dc2626";
+        input.setAttribute("aria-invalid", String(!valid));
+        button.disabled = !valid;
+        button.style.opacity = valid ? "1" : "0.55";
+        button.style.cursor = valid ? "pointer" : "not-allowed";
+
+        if (!valid && status) {
+            status.textContent = "Axial load is outside the section capacity range.";
+            status.style.color = "#dc2626";
+            status.dataset.validationError = "true";
+        } else if (status?.dataset.validationError === "true") {
+            status.textContent = "";
+            status.style.color = "";
+            delete status.dataset.validationError;
+        }
+
+        return { valid, value, limits };
+    }
+
+    async generateMomentMomentCurve() {
+        const validation = this.validateMomentMomentInput();
+        if (!validation.valid) return;
+
+        const button = document.getElementById("generateMMButton");
+        const input = document.getElementById("mmAxialLoad");
+        const status = document.getElementById("mmStatus");
+        button.disabled = true;
+        input.disabled = true;
+        button.dataset.running = "true";
+        button.textContent = "Calculating…";
+        status.style.color = "#4b5563";
+        status.textContent = "Calculating initial MM points…";
+
+        try {
+            const result = await this.momentMomentAnalysis.generate(validation.value, {
+                onProgress: progress => {
+                    if (progress.stage === "initial") {
+                        status.textContent = `Calculating MM points ${progress.completed}/${progress.total}…`;
+                    } else {
+                        status.textContent = `Refining MM curve (${progress.completed} points)…`;
+                    }
+                }
+            });
+            this.renderMomentMomentCurve(result);
+        } catch (error) {
+            console.error("Failed to generate MM curve:", error);
+            status.textContent = error.message;
+            status.style.color = "#dc2626";
+        } finally {
+            delete button.dataset.running;
+            input.disabled = false;
+            button.textContent = "Generate MM";
+            this.validateMomentMomentInput();
+        }
+    }
+
+    renderMomentMomentCurve(result) {
+        const plot = document.getElementById("mmPlot");
+        const status = document.getElementById("mmStatus");
+        if (!plot || !status) return;
+
+        const angles = result.points.map(point => point.angle);
+        const nominalTrace = {
+            x: result.points.map(point => point.nominal?.Mx ?? null),
+            y: result.points.map(point => point.nominal?.My ?? null),
+            customdata: angles,
+            mode: "lines+markers",
+            type: "scatter",
+            name: "Nominal MM",
+            connectgaps: false,
+            line: { color: "#f97316", width: 3 },
+            marker: { color: "#f97316", size: 4 },
+            hovertemplate: "Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<br>NA angle: %{customdata:.2f}°<extra>Nominal</extra>"
+        };
+        const phiTrace = {
+            x: result.points.map(point => point.phi?.Mx ?? null),
+            y: result.points.map(point => point.phi?.My ?? null),
+            customdata: angles,
+            mode: "lines+markers",
+            type: "scatter",
+            name: "Reduced (φMM)",
+            connectgaps: false,
+            line: { color: "#2563eb", width: 3 },
+            marker: { color: "#2563eb", size: 4 },
+            hovertemplate: "φMx: %{x:.2f} kip-ft<br>φMy: %{y:.2f} kip-ft<br>NA angle: %{customdata:.2f}°<extra>φMM</extra>"
+        };
+
+        Plotly.react(plot, [nominalTrace, phiTrace], {
+            title: `M-M Capacity at P = ${result.axialLoad.toFixed(2)} kips`,
+            xaxis: { title: "Mx (kip-ft)", zeroline: true },
+            yaxis: {
+                title: "My (kip-ft)",
+                zeroline: true,
+                scaleanchor: "x",
+                scaleratio: 1
+            },
+            legend: { orientation: "h" },
+            margin: { l: 60, r: 20, b: 55, t: 55 }
+        }, { responsive: true });
+
+        const nominalCount = result.points.filter(point => point.nominal).length;
+        const phiCount = result.points.filter(point => point.phi).length;
+        status.textContent = phiCount
+            ? `Generated ${nominalCount} nominal and ${phiCount} φ MM points.`
+            : `Generated ${nominalCount} nominal MM points. No φMM solutions exist at this axial load.`;
+        status.style.color = phiCount ? "#166534" : "#92400e";
     }
 
     populateIndexDropdown(angle) {
