@@ -13,6 +13,7 @@ import { updateStressStrainChart, plotSelectedPoint } from "./materialsPlotting.
 let allSelectedPnts = []; // ✅ Declare globally so it is accessible everywhere
 let allSelectedRebar = [];
 let allSelectedConc = [];
+let activeResultsRaycastingCleanup = null;
 
 
 
@@ -43,7 +44,6 @@ export function setupDragAndAnalyze() {
     const concGui = document.getElementById("concGui");
     const results = document.getElementById("results");
     const dragBar = document.getElementById("drag-bar");
-    const analyzeButton = document.getElementById("analyze-button");
     const middleColumn = document.getElementById("middleColumn");
 
     let isDragging = false;
@@ -53,9 +53,12 @@ export function setupDragAndAnalyze() {
     middleColumn.style.flexDirection = "column";
     middleColumn.style.height = "100%";
 
-    // Set initial height percentages
-    concGui.style.flex = "1"; // Takes 50% of the available space
-    results.style.flex = "1"; // Takes 50% of the available space
+    // Design mode starts with the editable scene using the full height. The
+    // workflow tabs reveal the resizable results pane after analysis.
+    concGui.style.flex = "1";
+    results.style.flex = "1";
+    results.style.display = "none";
+    dragBar.style.display = "none";
 
     // Drag functionality
     dragBar.addEventListener("mousedown", (e) => {
@@ -86,26 +89,6 @@ export function setupDragAndAnalyze() {
         document.body.style.cursor = "default";
     });
 
-    // Hide results functionality
-    analyzeButton.addEventListener("click", () => {
-        if (results.style.display === "none") {
-            // Show results
-            results.style.display = "block";
-            dragBar.style.display = "block";
-            concGui.style.flex = "1";
-            results.style.flex = "1";
-            analyzeButton.textContent = "Close Results";
-        } else {
-            // Hide results
-            results.style.display = "none";
-            dragBar.style.display = "none";
-            concGui.style.flex = "1.9"; // Take full space
-            analyzeButton.textContent = "Show Results";
-        }
-
-        // Resize Three.js scene
-        resizeThreeJsScene();
-    });
 }
 
 
@@ -520,7 +503,14 @@ export function setupMouseInteractions(threeJSDiv) {
     document.getElementById("Conc").onclick = concSelection;
   
 
-    return { onPointerDown, onPointerMove, onPointerUp };
+    const dispose = () => {
+        threeJSDiv.removeEventListener("pointerdown", onPointerDown);
+        threeJSDiv.removeEventListener("pointermove", onPointerMove);
+        threeJSDiv.removeEventListener("pointerup", onPointerUp);
+        helper.dispose?.();
+    };
+
+    return { onPointerDown, onPointerMove, onPointerUp, dispose };
 }
 
 
@@ -669,14 +659,22 @@ export function deleteSelectedElements() {
     document.getElementById("concData").innerHTML = "";
 }
 
+export function teardownRaycastingForResults() {
+    activeResultsRaycastingCleanup?.();
+    activeResultsRaycastingCleanup = null;
+}
+
 export function setupRaycastingForResults(scene, camera, renderer) {
+    // Replacing the previous handlers makes repeated analysis iterations and
+    // PMM point selections idempotent instead of accumulating listeners.
+    teardownRaycastingForResults();
+
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let hoveredObject = null;
     let hoveredRebar = null;
-    let originalRebarColor = new THREE.Color();
     let originalRebarOpacity = 0.5;
-    let originalArrowOpacity = 0.5;
+    let originalMeshWireframe = true;
 
     function updateRaycaster(event) {
         const rect = renderer.domElement.getBoundingClientRect();
@@ -687,8 +685,7 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         return raycaster.intersectObjects(scene.children, true); // ✅ Always get fresh objects
     }
 
-    // ✅ Mouse Move Event - Highlight Object on Hover
-    renderer.domElement.addEventListener('mousemove', (event) => {
+    function onMouseMove(event) {
         let intersects = updateRaycaster(event);
         let meshFound = false;
         let rebarFound = false;
@@ -699,8 +696,9 @@ export function setupRaycastingForResults(scene, camera, renderer) {
 
             if (object instanceof THREE.Mesh && !meshFound) {
                 if (hoveredObject !== object) {
-                    if (hoveredObject) hoveredObject.material.wireframe = true;
+                    if (hoveredObject) hoveredObject.material.wireframe = originalMeshWireframe;
                     hoveredObject = object;
+                    originalMeshWireframe = object.material.wireframe;
                     hoveredObject.material.wireframe = false;
                 }
                 meshFound = true;
@@ -721,7 +719,7 @@ export function setupRaycastingForResults(scene, camera, renderer) {
 
         // ✅ Restore previous properties when mouse leaves
         if (!meshFound && hoveredObject) {
-            hoveredObject.material.wireframe = true;
+            hoveredObject.material.wireframe = originalMeshWireframe;
             hoveredObject = null;
         }
 
@@ -729,10 +727,9 @@ export function setupRaycastingForResults(scene, camera, renderer) {
             hoveredRebar.material.opacity = originalRebarOpacity;
             hoveredRebar = null;
         }
-    });
+    }
 
-    // ✅ Click Event Listener for Object Selection
-    renderer.domElement.addEventListener('click', (event) => {
+    function onClick(event) {
         let intersects = updateRaycaster(event);
         if (intersects.length === 0) return;
 
@@ -757,9 +754,18 @@ export function setupRaycastingForResults(scene, camera, renderer) {
             updateStressStrainChart(selectedObject.materialData);
             plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
         }
-    });
+    }
 
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('click', onClick);
 
+    activeResultsRaycastingCleanup = () => {
+        renderer.domElement.removeEventListener('mousemove', onMouseMove);
+        renderer.domElement.removeEventListener('click', onClick);
+        if (hoveredObject) hoveredObject.material.wireframe = originalMeshWireframe;
+        if (hoveredRebar) hoveredRebar.material.opacity = originalRebarOpacity;
+    };
 
+    return activeResultsRaycastingCleanup;
 }
 

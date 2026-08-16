@@ -146,18 +146,22 @@
         </div>
         <div id="analysis" class="bg-gray-400 p-3 py-2">
           <div class="border-b-2 text-lg"> Analysis </div>
-          <div class="grid grid-cols-4 gap-1 grid-flow-row py-2 p-1">
-            <div class="col-start-1 col-end-3">
-              <button id="generatePMM-button" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">Generate PM</button>
-            </div>
-            <div class="col-start-3 col-end-5">
-              <button id="analyze-button" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" >Analysis Pane</button>
-            </div>
+          <div class="grid grid-cols-1 gap-1 py-2 p-1">
+            <button id="generatePMM-button" class="block w-full uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">Generate PM</button>
           </div>
         </div>
     </div>
 
     <div id="middleColumn">
+      <nav id="workflowTabs" aria-label="Design workflow" role="tablist">
+        <button id="designModeTab" class="workflow-tab" type="button" role="tab" aria-selected="true">
+          Design Inputs
+        </button>
+        <button id="analysisModeTab" class="workflow-tab" type="button" role="tab" aria-selected="false" disabled>
+          Analysis Results
+        </button>
+        <span id="workflowModeStatus" aria-live="polite">Editing section</span>
+      </nav>
       <div id="concGui" class="relative">
           <div id="windowProps" class="absolute bottom-0 text-black p-2">
             <div id="userInputProps">

@@ -1465,9 +1465,8 @@ export class AnalyzableConcreteSection {
 
         if (!analysisResults) return;
 
-        if (userInputProps) {
-            userInputProps.innerHTML = "";
-        }
+        if (userInputProps) userInputProps.hidden = true;
+        analysisResults.hidden = false;
 
     
         // ✅ Ensure `this.FEMarea` and `this.centroidX` exist

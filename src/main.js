@@ -27,6 +27,191 @@ window.selectedAngle = 0;
 window.selectedStrainProfileIndex = 4;
 window.allConcShapes = window.allConcShapes || [];  // ✅ Ensure global list exists
 
+let designWorkspaceSnapshot = null;
+
+function setWorkflowMode(mode, statusText) {
+  const designTab = document.getElementById("designModeTab");
+  const analysisTab = document.getElementById("analysisModeTab");
+  const status = document.getElementById("workflowModeStatus");
+  const showingAnalysis = mode === "analysis";
+
+  designTab?.setAttribute("aria-selected", String(!showingAnalysis));
+  analysisTab?.setAttribute("aria-selected", String(showingAnalysis));
+  if (analysisTab) analysisTab.disabled = !showingAnalysis;
+  if (status) status.textContent = statusText;
+}
+
+function captureMaterialState(material) {
+  const materials = Array.isArray(material) ? material : [material];
+  return materials.filter(Boolean).map(item => ({
+    material: item,
+    color: item.color?.clone() ?? null,
+    opacity: item.opacity,
+    transparent: item.transparent,
+    wireframe: item.wireframe
+  }));
+}
+
+function captureDesignWorkspace() {
+  const captureObject = object => ({
+    object,
+    position: object.position.clone(),
+    quaternion: object.quaternion.clone(),
+    scale: object.scale.clone(),
+    visible: object.visible,
+    positionAttribute: object.geometry?.attributes?.position?.array?.slice() ?? null,
+    materials: captureMaterialState(object.material)
+  });
+
+  designWorkspaceSnapshot = {
+    children: [...scene.children],
+    objects: scene.children.map(captureObject),
+    camera: {
+      position: camera.position.clone(),
+      quaternion: camera.quaternion.clone(),
+      zoom: camera.zoom
+    },
+    controls: {
+      target: controls.target.clone(),
+      enableRotate: controls.enableRotate,
+      enablePan: controls.enablePan,
+      mouseButtons: { ...controls.mouseButtons },
+      keys: { ...controls.keys }
+    },
+    userResultsDisplay: document.getElementById("userResults")?.style.display ?? "",
+    shapeButtonsDisplay: document.getElementById("ShapeButtons")?.style.display ?? "",
+    prebuiltShapesDisplay: document.getElementById("square_rect_oval_shapes")?.style.display ?? "",
+    allConcShapes: window.allConcShapes
+  };
+}
+
+function showAnalysisWorkspace(statusText = "Analysis results") {
+  const userResults = document.getElementById("userResults");
+  const concGui = document.getElementById("concGui");
+  const results = document.getElementById("results");
+  const dragBar = document.getElementById("drag-bar");
+  const userInputProps = document.getElementById("userInputProps");
+  const analysisResults = document.getElementById("analysisResults");
+
+  if (userResults) userResults.style.display = "none";
+  if (userInputProps) userInputProps.hidden = true;
+  if (analysisResults) analysisResults.hidden = false;
+  if (results) {
+    results.style.display = "block";
+    results.style.flex = "1";
+  }
+  if (dragBar) dragBar.style.display = "block";
+  if (concGui) concGui.style.flex = "1";
+
+  setWorkflowMode("analysis", statusText);
+  requestAnimationFrame(SceneFunctions.resizeThreeJsScene);
+}
+
+function restoreObjectState(state) {
+  const { object } = state;
+  object.position.copy(state.position);
+  object.quaternion.copy(state.quaternion);
+  object.scale.copy(state.scale);
+  object.visible = state.visible;
+
+  const positionAttribute = object.geometry?.attributes?.position;
+  if (positionAttribute && state.positionAttribute) {
+    positionAttribute.array.set(state.positionAttribute);
+    positionAttribute.needsUpdate = true;
+    object.geometry.computeBoundingBox?.();
+    object.geometry.computeBoundingSphere?.();
+  }
+
+  for (const materialState of state.materials) {
+    const material = materialState.material;
+    if (materialState.color && material.color) material.color.copy(materialState.color);
+    material.opacity = materialState.opacity;
+    material.transparent = materialState.transparent;
+    if (materialState.wireframe !== undefined) material.wireframe = materialState.wireframe;
+    material.needsUpdate = true;
+  }
+}
+
+function disposeAnalysisObject(object) {
+  object.geometry?.dispose?.();
+  const materials = Array.isArray(object.material) ? object.material : [object.material];
+  for (const material of materials) material?.dispose?.();
+}
+
+function returnToDesignWorkspace() {
+  if (!designWorkspaceSnapshot) return;
+
+  const snapshot = designWorkspaceSnapshot;
+  const designObjects = new Set(snapshot.children);
+  SceneFunctions.teardownRaycastingForResults();
+
+  for (const object of [...scene.children]) {
+    scene.remove(object);
+    if (!designObjects.has(object)) disposeAnalysisObject(object);
+  }
+  for (const state of snapshot.objects) {
+    restoreObjectState(state);
+    scene.add(state.object);
+  }
+
+  camera.position.copy(snapshot.camera.position);
+  camera.quaternion.copy(snapshot.camera.quaternion);
+  camera.zoom = snapshot.camera.zoom;
+  camera.updateProjectionMatrix();
+  controls.target.copy(snapshot.controls.target);
+  controls.enableRotate = snapshot.controls.enableRotate;
+  controls.enablePan = snapshot.controls.enablePan;
+  controls.mouseButtons = { ...snapshot.controls.mouseButtons };
+  controls.keys = { ...snapshot.controls.keys };
+  controls.update();
+
+  document.getElementById("analysis-results-controls-style")?.remove();
+  document.getElementById("analysisResultsTable")?.remove();
+  const userResults = document.getElementById("userResults");
+  const results = document.getElementById("results");
+  const dragBar = document.getElementById("drag-bar");
+  const concGui = document.getElementById("concGui");
+  const userInputProps = document.getElementById("userInputProps");
+  const analysisResults = document.getElementById("analysisResults");
+  const selectedPointResults = document.getElementById("selectedPointResultProps");
+  const shapeButtons = document.getElementById("ShapeButtons");
+  const prebuiltShapes = document.getElementById("square_rect_oval_shapes");
+
+  if (userResults) userResults.style.display = snapshot.userResultsDisplay;
+  if (results) {
+    results.replaceChildren(Object.assign(document.createElement("h3"), { textContent: "Results" }));
+    results.style.display = "none";
+  }
+  if (dragBar) dragBar.style.display = "none";
+  if (concGui) concGui.style.flex = "1";
+  if (userInputProps) userInputProps.hidden = false;
+  if (analysisResults) {
+    analysisResults.innerHTML = "";
+    analysisResults.hidden = true;
+  }
+  if (selectedPointResults) selectedPointResults.innerHTML = "";
+  if (shapeButtons) shapeButtons.style.display = snapshot.shapeButtonsDisplay;
+  if (prebuiltShapes) prebuiltShapes.style.display = snapshot.prebuiltShapesDisplay;
+
+  window.activeAnalysisSection?.resetAnalysisResults?.();
+  window.activeAnalysisSection = null;
+  window.allConcShapes = snapshot.allConcShapes;
+  window.selectedAngle = 0;
+  window.selectedStrainProfileIndex = 4;
+
+  const threeJSDiv = document.getElementById("concGui");
+  if (!mouseTrackingHandler) {
+    mouseTrackingHandler = SceneFunctions.setupMouseTracking(threeJSDiv, plane, intersectionPoint);
+  }
+  if (!mouseInteractionHandlers) {
+    mouseInteractionHandlers = SceneFunctions.setupMouseInteractions(threeJSDiv);
+  }
+
+  designWorkspaceSnapshot = null;
+  setWorkflowMode("design", "Editing section — generate PM to analyze");
+  requestAnimationFrame(SceneFunctions.resizeThreeJsScene);
+}
+
 function loadTexture(url) {
   return new Promise((resolve, reject) => {
       const loader = new THREE.TextureLoader();
@@ -78,6 +263,8 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
+  document.getElementById("designModeTab")?.addEventListener("click", returnToDesignWorkspace);
+  setWorkflowMode("design", "Editing section");
 
 
   // Attach addConcGeo to the "Conc" button
@@ -157,7 +344,17 @@ document.addEventListener("DOMContentLoaded", () => {
               return;
             }
           }
-          
+
+          const edgeSpacing = parseFloat(document.getElementById("edgeSpa").value);
+          const interiorSpacing = parseFloat(document.getElementById("intSpa").value);
+          if (!Number.isFinite(edgeSpacing) || !Number.isFinite(interiorSpacing)) {
+            alert("Edge and interior spacing must be valid numbers.");
+            return;
+          }
+
+          captureDesignWorkspace();
+          showAnalysisWorkspace("Calculating PMM analysis…");
+           
           const threeJSDiv = document.getElementById("concGui");
 
           if (mouseTrackingHandler) {
@@ -170,35 +367,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // ✅ Disable Mouse Interactions
           if (mouseInteractionHandlers) {
-            threeJSDiv.removeEventListener("pointerdown", mouseInteractionHandlers.onPointerDown);
-            threeJSDiv.removeEventListener("pointermove", mouseInteractionHandlers.onPointerMove);
-            threeJSDiv.removeEventListener("pointerup", mouseInteractionHandlers.onPointerUp);
+            mouseInteractionHandlers.dispose();
             console.log("✅ Mouse interactions disabled.");
             mouseInteractionHandlers = null;
-          } else {
-              console.warn("⚠️ Mouse interactions were already disabled or not assigned properly.");
           }
             
           
 
-          if (!selectedConcShapes) {
-            console.warn("No concrete shape selected!");
-            return;
-          }
-
-          // Read input values for edge and interior spacing
-          const edgeSpacing = parseFloat(document.getElementById("edgeSpa").value);
-          const interiorSpacing = parseFloat(document.getElementById("intSpa").value);
-
-          if (isNaN(edgeSpacing) || isNaN(interiorSpacing)) {
-            console.error("Invalid edge or interior spacing input!");
-            return;
-          }
-          
-
-
-          
-
+          try {
           /////////////   BEGINNING ANALYSIS ///////////////////////
           if (selectedConcShapes.length === 1) {
 
@@ -264,7 +440,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             selectedConcShape.setupResultsControls();
             SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
-            window.allConcShapes = selectedConcShape
           }
           //testing for composite shape
           else {
@@ -317,8 +492,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             compConcShape.setupResultsControls();
             SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
-            window.allConcShapes = compConcShape
         }
+          showAnalysisWorkspace("Analysis ready — edit the design to iterate");
+          } catch (error) {
+            console.error("Failed to generate PMM analysis:", error);
+            alert(`Analysis failed: ${error.message}`);
+            returnToDesignWorkspace();
+          }
       });
   }
 });
