@@ -3,6 +3,7 @@ import Plotly from 'plotly.js-dist-min';
 import { scene, controls, camera, renderer } from '../main.js';
 import { rebarDia, setupRaycastingForResults } from '../threeJSscenefunctions.js';
 import { MomentMomentAnalysis } from './MomentMomentAnalysis.js';
+import { exportSectionAnalysisWorkbook } from './AnalysisExcelExporter.js';
 
 export class AnalyzableConcreteSection {
     constructor(material) {
@@ -599,9 +600,13 @@ export class AnalyzableConcreteSection {
                             <button id="generateMMButton" type="button" style="border: 1px solid #6b7280; border-radius: 0.25rem; padding: 0.4rem 0.75rem; background: #f3f4f6;">
                                 Generate MM
                             </button>
+                            <button id="exportAnalysisExcelButton" type="button" style="border: 1px solid #166534; border-radius: 0.25rem; padding: 0.4rem 0.75rem; background: #dcfce7; color: #14532d;">
+                                Export Excel
+                            </button>
                         </div>
                         <div id="mmAxialRange" style="margin-top: 0.35rem; font-size: 0.8rem; color: #4b5563;"></div>
                         <div id="mmStatus" role="status" style="min-height: 1.25rem; margin-top: 0.25rem; font-size: 0.8rem;"></div>
+                        <div id="excelExportStatus" role="status" style="min-height: 1.25rem; margin-top: 0.15rem; font-size: 0.8rem;"></div>
                         <div id="mmPlot" style="width: 100%; height: 500px;"></div>
                     </section>
                 </div>
@@ -762,6 +767,7 @@ export class AnalyzableConcreteSection {
     setupMomentMomentControls() {
         const input = document.getElementById("mmAxialLoad");
         const button = document.getElementById("generateMMButton");
+        const exportButton = document.getElementById("exportAnalysisExcelButton");
         const plot = document.getElementById("mmPlot");
         if (!input || !button || !plot) return;
 
@@ -810,6 +816,15 @@ export class AnalyzableConcreteSection {
             });
             button.dataset.listenerAdded = true;
         }
+
+        if (exportButton && !exportButton.dataset.listenerAdded) {
+            exportButton.addEventListener("click", () => {
+                window.activeAnalysisSection?.exportAnalysisResultsToExcel();
+            });
+            exportButton.dataset.listenerAdded = "true";
+        }
+
+        this.updateAnalysisExportButtonState();
 
         if (!this.currentMomentMomentResult && !button.dataset.running) {
             void this.generateMomentMomentCurve();
@@ -866,6 +881,7 @@ export class AnalyzableConcreteSection {
         input.disabled = true;
         button.dataset.running = "true";
         button.textContent = "Calculating…";
+        this.updateAnalysisExportButtonState(true);
         status.style.color = "#4b5563";
         status.textContent = "Calculating initial MM points…";
 
@@ -891,6 +907,54 @@ export class AnalyzableConcreteSection {
             input.disabled = false;
             button.textContent = "Generate MM";
             this.validateMomentMomentInput();
+            this.updateAnalysisExportButtonState();
+        }
+    }
+
+    updateAnalysisExportButtonState(forceDisabled = false) {
+        const button = document.getElementById("exportAnalysisExcelButton");
+        if (!button || button.dataset.exporting === "true") return;
+
+        const ready = !forceDisabled
+            && Boolean(this.currentMomentMomentResult)
+            && Object.keys(this.PMMXYresults ?? {}).length > 0;
+        button.disabled = !ready;
+        button.style.opacity = ready ? "1" : "0.55";
+        button.style.cursor = ready ? "pointer" : "not-allowed";
+        button.title = ready
+            ? "Export the current MM curve and selected neutral-axis results"
+            : "Wait for the MM curve to finish calculating";
+    }
+
+    async exportAnalysisResultsToExcel() {
+        const button = document.getElementById("exportAnalysisExcelButton");
+        const status = document.getElementById("excelExportStatus");
+        if (!button || !this.currentMomentMomentResult) return;
+
+        button.dataset.exporting = "true";
+        button.disabled = true;
+        button.textContent = "Building workbook…";
+        if (status) {
+            status.textContent = "Preparing section image and analysis tables…";
+            status.style.color = "#4b5563";
+        }
+
+        try {
+            const filename = await exportSectionAnalysisWorkbook(this);
+            if (status) {
+                status.textContent = `Downloaded ${filename}`;
+                status.style.color = "#166534";
+            }
+        } catch (error) {
+            console.error("Failed to export analysis workbook:", error);
+            if (status) {
+                status.textContent = `Excel export failed: ${error.message}`;
+                status.style.color = "#dc2626";
+            }
+        } finally {
+            delete button.dataset.exporting;
+            button.textContent = "Export Excel";
+            this.updateAnalysisExportButtonState();
         }
     }
 
