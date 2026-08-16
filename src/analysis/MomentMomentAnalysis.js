@@ -280,7 +280,8 @@ export class MomentMomentAnalysis {
             const nextResidual = this._getAxialValue(next.response, mode) - this.targetAxialLoad;
             // Opposite residual signs form a bracket containing a root.
             if (residual * nextResidual < 0) {
-                solutions.push(this._solveBracket(context, sample, next, mode));
+                const bracketedSolution = this._solveBracket(context, sample, next, mode);
+                if (bracketedSolution) solutions.push(bracketedSolution);
             }
         }
 
@@ -320,7 +321,10 @@ export class MomentMomentAnalysis {
             }
         }
 
-        return best;
+        // Do not allow a failed bracket solve to masquerade as a point on the
+        // requested constant-axial-load curve.
+        const bestResidual = this._getAxialValue(best.response, mode) - this.targetAxialLoad;
+        return Math.abs(bestResidual) <= this.axialTolerance ? best : null;
     }
 
     _evaluateParameter(context, parameter) {
@@ -406,8 +410,9 @@ export class MomentMomentAnalysis {
         const radians = angle * Math.PI / 180;
         const Mx = mode === "phi" ? response.phiMx : response.Mx;
         const My = mode === "phi" ? response.phiMy : response.My;
-        // The minus sign follows the section's current local/global convention.
-        return Mx * Math.cos(radians) - My * Math.sin(radians);
+        // With the section's local/global convention, increasing neutral-axis
+        // angle points outward along [cosθ, sinθ].
+        return Mx * Math.cos(radians) + My * Math.sin(radians);
     }
 
     _curveInterpolationError(left, midpoint, right, scale) {

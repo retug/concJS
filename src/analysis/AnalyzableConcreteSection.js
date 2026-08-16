@@ -19,6 +19,8 @@ export class AnalyzableConcreteSection {
         this.strainProfileResponses = {};
         this.Pnmax = 0;
         this.rebarObjects = [];
+        this.momentMomentAnalysis = null;
+        this.currentMomentMomentResult = null;
     }
 
     initializeRebarObjects(allSelectedRebar) {
@@ -37,6 +39,8 @@ export class AnalyzableConcreteSection {
         this.strainProfiles = {};
         this.strainProfileResponses = {};
         this.Pnmax = 0;
+        this.momentMomentAnalysis = null;
+        this.currentMomentMomentResult = null;
     }
 
     CalcPnmax(type) {
@@ -425,8 +429,15 @@ export class AnalyzableConcreteSection {
 
     convertUVtoXY(angle, Mu, Mv) {
         let radians = (Math.PI / 180) * angle;
-        let Mx = Mu * Math.sin(radians) - Mv * Math.cos(radians);
-        let My = Mu * Math.cos(radians) + Mv * Math.sin(radians);
+        const sinTheta = Math.sin(radians);
+        const cosTheta = Math.cos(radians);
+
+        // Coordinates are transformed as u = x cosθ + y sinθ and
+        // v = -x sinθ + y cosθ. Mu and Mv contain the corresponding force
+        // first moments, while the existing global convention is Mx = -ΣFy
+        // and My = ΣFx. Applying the inverse rotation gives these signs.
+        let Mx = -Mu * sinTheta - Mv * cosTheta;
+        let My = Mu * cosTheta - Mv * sinTheta;
         return { Mx, My };
     }
 
@@ -656,10 +667,16 @@ export class AnalyzableConcreteSection {
         let plotDiv = document.getElementById("pmPlot");
     
         // ✅ If the plot already exists, just update it instead of redrawing
+        const pmmTraces = [
+            originalTrace,
+            reducedTrace,
+            ...this._createMomentMoment3DTraces(this.currentMomentMomentResult)
+        ];
+
         if (plotDiv.data) {
-            Plotly.react("pmPlot", [originalTrace, reducedTrace], layout);
+            Plotly.react("pmPlot", pmmTraces, layout);
         } else {
-            Plotly.newPlot("pmPlot", [originalTrace, reducedTrace], layout);
+            Plotly.newPlot("pmPlot", pmmTraces, layout);
         }
     
         // ✅ Attach event listener only once
@@ -688,7 +705,15 @@ export class AnalyzableConcreteSection {
         if (!plotDiv.dataset.listenerAdded) {
             plotDiv.on('plotly_click', (data) => {
                 const section = window.activeAnalysisSection;
-                const clickedIndex = data.points[0].customdata;
+                const clickedPoint = data.points[0];
+                // MM slice points are display-only; PMM points continue to
+                // drive the strain-profile and stress-result selection.
+                if (
+                    clickedPoint.data.meta?.isMomentMomentSlice
+                    || clickedPoint.data.meta?.isPMMHighlight
+                ) return;
+
+                const clickedIndex = clickedPoint.customdata;
                 const clickedAngle = parseFloat(angleDropdown.value);
 
                 window.selectedIndex = clickedIndex;
@@ -740,10 +765,15 @@ export class AnalyzableConcreteSection {
         const plot = document.getElementById("mmPlot");
         if (!input || !button || !plot) return;
 
-        this.momentMomentAnalysis = new MomentMomentAnalysis(this);
+        this.momentMomentAnalysis ??= new MomentMomentAnalysis(this);
         const limits = this.momentMomentAnalysis.getAxialLimits();
         const currentValue = Number(input.value);
-        if (!Number.isFinite(currentValue) || currentValue < limits.compression || currentValue > limits.tension) {
+
+        // A newly created analysis starts by displaying the zero-axial-load
+        // slice on both the 2D MM plot and the 3D PMM plot.
+        if (!this.currentMomentMomentResult && limits.compression <= 0 && limits.tension >= 0) {
+            input.value = "0";
+        } else if (!Number.isFinite(currentValue) || currentValue < limits.compression || currentValue > limits.tension) {
             input.value = limits.compression <= 0 && limits.tension >= 0
                 ? "0"
                 : ((limits.compression + limits.tension) / 2).toFixed(2);
@@ -751,16 +781,20 @@ export class AnalyzableConcreteSection {
 
         this.validateMomentMomentInput();
 
-        const emptyLayout = {
-            title: "Enter an axial load to generate the MM curve",
-            xaxis: { title: "Mx (kip-ft)" },
-            yaxis: { title: "My (kip-ft)", scaleanchor: "x", scaleratio: 1 },
-            margin: { l: 60, r: 20, b: 55, t: 50 }
-        };
-        if (plot.data) {
-            Plotly.react(plot, [], emptyLayout, { responsive: true });
+        if (this.currentMomentMomentResult) {
+            this.renderMomentMomentCurve(this.currentMomentMomentResult);
         } else {
-            Plotly.newPlot(plot, [], emptyLayout, { responsive: true });
+            const emptyLayout = {
+                title: "Calculating the P = 0 MM curve…",
+                xaxis: { title: "Mx (kip-ft)" },
+                yaxis: { title: "My (kip-ft)", scaleanchor: "x", scaleratio: 1 },
+                margin: { l: 60, r: 20, b: 55, t: 50 }
+            };
+            if (plot.data) {
+                Plotly.react(plot, [], emptyLayout, { responsive: true });
+            } else {
+                Plotly.newPlot(plot, [], emptyLayout, { responsive: true });
+            }
         }
 
         if (!input.dataset.listenerAdded) {
@@ -775,6 +809,10 @@ export class AnalyzableConcreteSection {
                 window.activeAnalysisSection?.generateMomentMomentCurve();
             });
             button.dataset.listenerAdded = true;
+        }
+
+        if (!this.currentMomentMomentResult && !button.dataset.running) {
+            void this.generateMomentMomentCurve();
         }
     }
 
@@ -841,7 +879,9 @@ export class AnalyzableConcreteSection {
                     }
                 }
             });
+            this.currentMomentMomentResult = result;
             this.renderMomentMomentCurve(result);
+            await this.renderMomentMomentCurveOnPMM(result);
         } catch (error) {
             console.error("Failed to generate MM curve:", error);
             status.textContent = error.message;
@@ -906,6 +946,55 @@ export class AnalyzableConcreteSection {
         status.style.color = phiCount ? "#166534" : "#92400e";
     }
 
+    _createMomentMoment3DTraces(result) {
+        if (!result) return [];
+
+        const createTrace = (mode, name, color) => {
+            const hasSolutions = result.points.some(point => point[mode]);
+            if (!hasSolutions) return null;
+
+            return {
+                x: result.points.map(point => point[mode]?.Mx ?? null),
+                y: result.points.map(point => point[mode]?.My ?? null),
+                // Plot the solved curve as an exact horizontal slice at the
+                // axial load requested by the user.
+                z: result.points.map(point => point[mode] ? result.axialLoad : null),
+                customdata: result.points.map(point => point.angle),
+                mode: "lines+markers",
+                type: "scatter3d",
+                connectgaps: false,
+                name,
+                legendgroup: mode,
+                line: { color, width: 7 },
+                marker: { color, size: 3, opacity: 1 },
+                meta: { isMomentMomentSlice: true, mode },
+                hovertemplate: `${mode === "phi" ? "φ" : ""}Mx: %{x:.2f} kip-ft<br>`
+                    + `${mode === "phi" ? "φ" : ""}My: %{y:.2f} kip-ft<br>`
+                    + `P: %{z:.2f} kips<br>NA angle: %{customdata:.2f}°<extra>${name}</extra>`
+            };
+        };
+
+        return [
+            createTrace("nominal", "Nominal MM slice", "#f97316"),
+            createTrace("phi", "Reduced (φMM) slice", "#2563eb")
+        ].filter(Boolean);
+    }
+
+    async renderMomentMomentCurveOnPMM(result) {
+        const plot = document.getElementById("pmPlot");
+        if (!plot?.data) return;
+
+        const existingSliceIndices = plot.data
+            .map((trace, index) => trace.meta?.isMomentMomentSlice ? index : -1)
+            .filter(index => index >= 0);
+        if (existingSliceIndices.length) {
+            await Plotly.deleteTraces(plot, existingSliceIndices);
+        }
+
+        const traces = this._createMomentMoment3DTraces(result);
+        if (traces.length) await Plotly.addTraces(plot, traces);
+    }
+
     populateIndexDropdown(angle) {
         let indexDropdown = document.getElementById("indexSelection");
         indexDropdown.innerHTML = ""; // Clear previous options
@@ -954,7 +1043,7 @@ export class AnalyzableConcreteSection {
         Plotly.restyle("pmPlot", {
             "marker.color": [updatedColors],
             "marker.symbol": [updatedSymbols]
-        });
+        }, [0, 1]);
     }
 
     populateAngleDropdown(angles) {
@@ -973,10 +1062,14 @@ export class AnalyzableConcreteSection {
 
     resetHighlightedPoint() {
         let plotDiv = document.getElementById("pmPlot");
-        if (!plotDiv || plotDiv.data.length < 3) return; // Ensure a highlighted point exists
+        if (!plotDiv?.data) return;
 
-        // Remove the last trace, which is the highlighted point
-        Plotly.deleteTraces(plotDiv, plotDiv.data.length - 1);
+        const highlightedTraceIndex = plotDiv.data.findIndex(
+            trace => trace.meta?.isPMMHighlight
+        );
+        if (highlightedTraceIndex >= 0) {
+            Plotly.deleteTraces(plotDiv, highlightedTraceIndex);
+        }
     }
 
     highlightSelectedPoint(index, selectedAngle) {
@@ -1000,6 +1093,7 @@ export class AnalyzableConcreteSection {
             type: "scatter3d",
             marker: { size: 10, color: "rgb(255, 0, 0)", opacity: 1.0, symbol: "diamond" },
             name: "Selected Point",
+            meta: { isPMMHighlight: true },
             hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br>"
         };
 
