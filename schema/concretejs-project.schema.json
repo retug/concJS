@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://concretejs.local/schema/concretejs-project-v1.json",
+  "title": "ConcreteJS project",
+  "type": "object",
+  "required": [
+    "format",
+    "schemaVersion",
+    "metadata",
+    "units",
+    "materials",
+    "concreteShapes",
+    "reinforcement",
+    "analysisConfiguration"
+  ],
+  "properties": {
+    "format": { "const": "concretejs-project" },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "createdAt": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "description", "notes"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "units": {
+      "type": "object",
+      "required": ["length", "stress", "force", "moment"],
+      "properties": {
+        "length": { "const": "in" },
+        "stress": { "const": "psi" },
+        "force": { "const": "kip" },
+        "moment": { "const": "kip-ft" }
+      }
+    },
+    "materials": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/material" }
+    },
+    "concreteShapes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/concreteShape" }
+    },
+    "reinforcement": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rebar" }
+    },
+    "analysisConfiguration": {
+      "type": "object",
+      "required": ["edgeSpacing", "interiorSpacing", "momentMomentAxialLoad"],
+      "properties": {
+        "edgeSpacing": { "type": "number", "exclusiveMinimum": 0 },
+        "interiorSpacing": { "type": "number", "exclusiveMinimum": 0 },
+        "momentMomentAxialLoad": { "type": "number" }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "lineSegment": {
+      "type": "object",
+      "required": ["type", "from", "to"],
+      "properties": {
+        "type": { "const": "line" },
+        "from": { "$ref": "#/$defs/point" },
+        "to": { "$ref": "#/$defs/point" }
+      }
+    },
+    "ellipseSegment": {
+      "type": "object",
+      "required": [
+        "type",
+        "center",
+        "radiusX",
+        "radiusY",
+        "startAngle",
+        "endAngle",
+        "clockwise",
+        "rotation"
+      ],
+      "properties": {
+        "type": { "const": "ellipse" },
+        "center": { "$ref": "#/$defs/point" },
+        "radiusX": { "type": "number", "exclusiveMinimum": 0 },
+        "radiusY": { "type": "number", "exclusiveMinimum": 0 },
+        "startAngle": { "type": "number" },
+        "endAngle": { "type": "number" },
+        "clockwise": { "type": "boolean" },
+        "rotation": { "type": "number" }
+      }
+    },
+    "contour": {
+      "type": "object",
+      "required": ["segments"],
+      "properties": {
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/lineSegment" },
+              { "$ref": "#/$defs/ellipseSegment" }
+            ]
+          }
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "required": ["id", "name", "type", "strengthBasis", "stressStrain"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["concrete", "steel", "other"] },
+        "strengthBasis": { "enum": ["normal", "expected"] },
+        "stressStrain": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["strain", "stress"],
+            "properties": {
+              "strain": { "type": "number" },
+              "stress": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "concreteShape": {
+      "type": "object",
+      "required": ["id", "materialId", "geometry"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "materialId": { "type": "string", "minLength": 1 },
+        "geometry": {
+          "type": "object",
+          "required": ["exterior", "openings"],
+          "properties": {
+            "exterior": { "$ref": "#/$defs/contour" },
+            "openings": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/contour" }
+            }
+          }
+        }
+      }
+    },
+    "rebar": {
+      "type": "object",
+      "required": ["id", "x", "y", "materialId", "size"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "materialId": { "type": "string", "minLength": 1 },
+        "size": {
+          "type": "object",
+          "required": ["designation", "barNumber", "diameter", "area"],
+          "properties": {
+            "designation": { "type": "string", "minLength": 1 },
+            "barNumber": { "type": "number" },
+            "diameter": { "type": "number", "exclusiveMinimum": 0 },
+            "area": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}

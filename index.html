@@ -160,6 +160,11 @@
         <button id="analysisModeTab" class="workflow-tab" type="button" role="tab" aria-selected="false" disabled>
           Analysis Results
         </button>
+        <div id="projectFileActions" aria-label="Project file actions">
+          <button id="saveProjectButton" class="workflow-action" type="button">Save</button>
+          <button id="importProjectButton" class="workflow-action" type="button">Import</button>
+          <input id="projectFileInput" type="file" accept="application/json,.json" hidden>
+        </div>
         <span id="workflowModeStatus" aria-live="polite">Editing section</span>
       </nav>
       <div id="concGui" class="relative">
@@ -266,6 +271,47 @@
         </div>
       </div>
     </div>
+
+    <div id="saveProjectModal" class="project-modal modal hidden" role="dialog" aria-modal="true" aria-labelledby="saveProjectTitle" aria-hidden="true">
+      <form id="saveProjectForm" class="project-modal-card">
+        <button id="closeSaveProject" class="project-modal-close" type="button" aria-label="Close save dialog">&times;</button>
+        <h2 id="saveProjectTitle">Save ConcreteJS Project</h2>
+        <p class="project-modal-intro">Add project information for the JSON file and future Excel exports.</p>
+
+        <label for="projectName">Project name <span aria-hidden="true">*</span></label>
+        <input id="projectName" name="projectName" type="text" maxlength="120" required autocomplete="off">
+
+        <label for="projectDescription">Description</label>
+        <textarea id="projectDescription" name="projectDescription" rows="3" maxlength="1000"></textarea>
+
+        <label for="projectNotes">Notes</label>
+        <textarea id="projectNotes" name="projectNotes" rows="5" maxlength="5000"></textarea>
+
+        <div class="project-modal-actions">
+          <button id="cancelSaveProject" type="button" class="secondary-action">Cancel</button>
+          <button type="submit" class="primary-action">Download JSON</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="importProjectModal" class="project-modal modal hidden" role="dialog" aria-modal="true" aria-labelledby="importProjectTitle" aria-hidden="true">
+      <div class="project-modal-card">
+        <button id="closeImportProject" class="project-modal-close" type="button" aria-label="Close import dialog">&times;</button>
+        <h2 id="importProjectTitle">Replace current project?</h2>
+        <p id="importProjectSummary" class="project-modal-intro"></p>
+        <p id="importProjectWarning" class="project-import-warning" hidden></p>
+        <details id="importProjectDetails" class="project-import-details" hidden>
+          <summary>Show details</summary>
+          <ul id="importProjectDetailList"></ul>
+        </details>
+        <div class="project-modal-actions">
+          <button id="cancelImportProject" type="button" class="secondary-action">Cancel</button>
+          <button id="confirmImportProject" type="button" class="danger-action">Replace project</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="projectNotice" class="project-notice" role="status" aria-live="polite" hidden></div>
 
     
     <div id="materialsandShapes" class="bg-gray-400">

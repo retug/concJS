@@ -339,6 +339,189 @@ body {
   font-size: 0.78rem;
 }
 
+#projectFileActions {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: 0.35rem;
+}
+
+.workflow-action {
+  border: 1px solid #64748b;
+  border-radius: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.workflow-action:hover,
+.workflow-action:focus-visible {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.project-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.project-modal.hidden {
+  display: none;
+}
+
+.project-modal-card {
+  position: relative;
+  display: grid;
+  gap: 0.65rem;
+  width: min(38rem, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border: 1px solid #94a3b8;
+  border-radius: 0.75rem;
+  padding: 1.4rem;
+  background: #f8fafc;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.32);
+  color: #1f2937;
+}
+
+.project-modal-card h2 {
+  margin: 0;
+  padding-right: 2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.project-modal-card label {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-modal-card input,
+.project-modal-card textarea {
+  width: 100%;
+  border: 1px solid #94a3b8;
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  background: #ffffff;
+  color: #111827;
+}
+
+.project-modal-card textarea {
+  resize: vertical;
+}
+
+.project-modal-intro {
+  margin: 0;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.project-modal-close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.85rem;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.project-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.project-modal-actions button {
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  font-weight: 700;
+}
+
+.secondary-action {
+  border-color: #94a3b8 !important;
+  background: #ffffff;
+  color: #334155;
+}
+
+.primary-action {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.danger-action {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.project-import-warning {
+  margin: 0;
+  border-left: 4px solid #b45309;
+  padding: 0.75rem;
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.project-import-details {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.35rem;
+  padding: 0.65rem;
+  background: #ffffff;
+}
+
+.project-import-details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.project-import-details ul {
+  margin: 0.65rem 0 0 1.25rem;
+  list-style: disc;
+  color: #475569;
+}
+
+.project-notice {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 80;
+  max-width: min(30rem, calc(100vw - 2rem));
+  border: 1px solid #64748b;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.25);
+  color: #1f2937;
+}
+
+.project-notice[data-kind="success"] {
+  border-color: #15803d;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.project-notice[data-kind="warning"] {
+  border-color: #b45309;
+  background: #fffbeb;
+  color: #92400e;
+}
+
 /* Ensure #concGui and #results Fit Properly */
 #concGui, #results {
   width: 100%;

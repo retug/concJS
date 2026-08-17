@@ -94,14 +94,16 @@ export function setupDragAndAnalyze() {
 }
 
 
-export function addRebar(x, y, barSize, scene, sprite) {
-    if (!(barSize in rebarDia)) {
+export function addRebar(x, y, barSize, scene, sprite, options = {}) {
+    const diameter = Number(options.diameter ?? rebarDia[barSize]);
+    const area = Number(options.area ?? ((Math.PI / 4) * diameter ** 2));
+    if (!Number.isFinite(diameter) || diameter <= 0) {
         console.error("Invalid rebar size:", barSize);
         return null; // ✅ Return null if barSize is invalid
     }
 
-    let selectedMaterialName = document.getElementById("rebar_mat").value;
-    let materialObject = defaultMaterials.find(mat => mat.name === selectedMaterialName);
+    let selectedMaterialName = document.getElementById("rebar_mat")?.value;
+    let materialObject = options.material ?? defaultMaterials.find(mat => mat.name === selectedMaterialName);
 
     if (!materialObject) {
         console.error("Material not found:", selectedMaterialName);
@@ -114,7 +116,7 @@ export function addRebar(x, y, barSize, scene, sprite) {
 
     // ✅ Create rebar material
     const selectedDotMaterial = new THREE.PointsMaterial({
-        size: rebarDia[barSize], // ✅ Use correct size from `rebarDia`
+        size: diameter,
         map: sprite,
         transparent: true,
         color: 0xFF7F00 // ✅ Changed from 'blue' to 0xFF7F00
@@ -123,12 +125,26 @@ export function addRebar(x, y, barSize, scene, sprite) {
     // ✅ Create Three.js Points object
     const tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
     tempDot.isRebar = true; // ✅ Mark as rebar
-    tempDot.rebarSize = barSize; // ✅ Store rebar size
+    tempDot.rebarSize = Number(barSize); // ✅ Store rebar size
+    tempDot.rebarDiameter = diameter;
+    tempDot.rebarArea = Number.isFinite(area) && area > 0 ? area : (Math.PI / 4) * diameter ** 2;
     tempDot.materialData = materialObject; // ✅ Store material data
 
     // ✅ Add to the scene
-    scene.add(tempDot);
+    if (options.addToScene !== false) scene.add(tempDot);
     return tempDot; // ✅ Return the new rebar object
+}
+
+export function resetProjectSelections() {
+    allSelectedPnts = [];
+    allSelectedRebar = [];
+    allSelectedConc = [];
+    document.getElementById("pointData")?.replaceChildren();
+    document.getElementById("rebarData")?.replaceChildren();
+    document.getElementById("concData")?.replaceChildren();
+    if (document.getElementById("pointsSelected")) document.getElementById("pointsSelected").textContent = "0";
+    if (document.getElementById("rebarSelected")) document.getElementById("rebarSelected").textContent = "0";
+    if (document.getElementById("concSelected")) document.getElementById("concSelected").textContent = "0";
 }
 
 export function setupMouseTracking(threeJSDiv, plane, intersectionPoint) {

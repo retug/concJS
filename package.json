@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test",
     "preview": "vite preview",
     "webpack-build": "webpack --config webpack.config.cjs",
     "webpack-dev": "webpack serve --config webpack.config.js --open"

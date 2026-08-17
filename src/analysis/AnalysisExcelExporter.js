@@ -1,4 +1,5 @@
-import { rebarDia } from '../rebarProperties.js';
+import { getRebarDiameter } from '../rebarProperties.js';
+import { getProjectMetadata } from '../projectState.js';
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const encoder = new TextEncoder();
@@ -175,7 +176,7 @@ function createSectionImage(section, loops, bounds) {
         const position = rebar.geometry?.attributes?.position?.array;
         if (!position) continue;
         const center = project({ x: position[0], y: position[1] });
-        const diameter = rebarDia[rebar.rebarSize] ?? 0.5;
+        const diameter = getRebarDiameter(rebar) ?? 0.5;
         const radius = Math.max(4, diameter * scale / 2);
         context.beginPath();
         context.arc(center.x, center.y, radius, 0, Math.PI * 2);
@@ -296,6 +297,7 @@ function collectWorkbookModel(section) {
 
     return {
         generated: new Date(),
+        project: getProjectMetadata(),
         selectedAngle,
         mm,
         selectedRows,
@@ -323,45 +325,49 @@ function collectWorkbookModel(section) {
 
 function buildSummarySheet(model) {
     const p = model.parameters;
+    const project = model.project ?? {};
     const nominalCount = model.mmRows.filter(row => Number.isFinite(row.nominalMx)).length;
     const phiCount = model.mmRows.filter(row => Number.isFinite(row.phiMx)).length;
     const rows = [
         makeRow(1, [makeCell(1, 1, 'Concrete Section Analysis Export', 1, 'string')], 28),
-        makeRow(2, [
-            makeCell(2, 1, 'Generated', 3, 'string'),
-            makeCell(2, 2, model.generated.toLocaleString(), 0, 'string')
+        makeRow(2, [makeCell(2, 1, 'Project name', 3, 'string'), makeCell(2, 2, project.name || 'Untitled project', 9, 'string')]),
+        makeRow(3, [makeCell(3, 1, 'Description', 3, 'string'), makeCell(3, 2, project.description || '', 9, 'string')], 36),
+        makeRow(4, [makeCell(4, 1, 'Notes', 3, 'string'), makeCell(4, 2, project.notes || '', 9, 'string')], 54),
+        makeRow(5, [
+            makeCell(5, 1, 'Generated', 3, 'string'),
+            makeCell(5, 2, model.generated.toLocaleString(), 0, 'string')
         ]),
-        makeRow(4, [
-            makeCell(4, 1, 'Section Parameters', 2, 'string'),
-            makeCell(4, 4, 'Section Image', 2, 'string')
+        makeRow(7, [
+            makeCell(7, 1, 'Section Parameters', 2, 'string'),
+            makeCell(7, 4, 'Section Image', 2, 'string')
         ], 22),
-        makeRow(5, [makeCell(5, 1, 'Concrete material', 3, 'string'), makeCell(5, 2, p.concreteMaterial, 0, 'string')]),
-        makeRow(6, [makeCell(6, 1, 'Overall width (in)', 3, 'string'), makeCell(6, 2, p.width, 4)]),
-        makeRow(7, [makeCell(7, 1, 'Overall height (in)', 3, 'string'), makeCell(7, 2, p.height, 4)]),
-        makeRow(8, [makeCell(8, 1, 'Concrete area (in²)', 3, 'string'), makeCell(8, 2, p.concreteArea, 4)]),
-        makeRow(9, [makeCell(9, 1, 'Total number of rebar', 3, 'string'), makeCell(9, 2, p.rebarCount, 7)]),
-        makeRow(10, [makeCell(10, 1, 'Total steel area (in²)', 3, 'string'), makeCell(10, 2, p.steelArea, 4)]),
-        makeRow(11, [
-            makeCell(11, 1, 'Reinforcement ratio', 3, 'string'),
-            makeCell(11, 2, { formula: 'B10/B8', result: p.reinforcementRatio }, 8, 'formula')
+        makeRow(8, [makeCell(8, 1, 'Concrete material', 3, 'string'), makeCell(8, 2, p.concreteMaterial, 0, 'string')]),
+        makeRow(9, [makeCell(9, 1, 'Overall width (in)', 3, 'string'), makeCell(9, 2, p.width, 4)]),
+        makeRow(10, [makeCell(10, 1, 'Overall height (in)', 3, 'string'), makeCell(10, 2, p.height, 4)]),
+        makeRow(11, [makeCell(11, 1, 'Concrete area (in²)', 3, 'string'), makeCell(11, 2, p.concreteArea, 4)]),
+        makeRow(12, [makeCell(12, 1, 'Total number of rebar', 3, 'string'), makeCell(12, 2, p.rebarCount, 7)]),
+        makeRow(13, [makeCell(13, 1, 'Total steel area (in²)', 3, 'string'), makeCell(13, 2, p.steelArea, 4)]),
+        makeRow(14, [
+            makeCell(14, 1, 'Reinforcement ratio', 3, 'string'),
+            makeCell(14, 2, { formula: 'B13/B11', result: p.reinforcementRatio }, 8, 'formula')
         ]),
-        makeRow(12, [makeCell(12, 1, 'Centroid X (in)', 3, 'string'), makeCell(12, 2, p.centroidX, 4)]),
-        makeRow(13, [makeCell(13, 1, 'Centroid Y (in)', 3, 'string'), makeCell(13, 2, p.centroidY, 4)]),
-        makeRow(14, [makeCell(14, 1, 'Rebar provided', 3, 'string'), makeCell(14, 2, p.rebarSizes, 0, 'string')]),
-        makeRow(15, [makeCell(15, 1, 'Rebar material(s)', 3, 'string'), makeCell(15, 2, p.rebarMaterials, 0, 'string')]),
-        makeRow(16, [makeCell(16, 1, 'Edge mesh spacing (in)', 3, 'string'), makeCell(16, 2, p.edgeSpacing, 4)]),
-        makeRow(17, [makeCell(17, 1, 'Interior mesh spacing (in)', 3, 'string'), makeCell(17, 2, p.interiorSpacing, 4)]),
-        makeRow(19, [makeCell(19, 1, 'Exported Analysis', 2, 'string')], 22),
-        makeRow(20, [makeCell(20, 1, 'Selected NA angle (deg)', 3, 'string'), makeCell(20, 2, model.selectedAngle, 4)]),
-        makeRow(21, [makeCell(21, 1, 'MM axial load (kips)', 3, 'string'), makeCell(21, 2, model.mm.axialLoad, 4)]),
-        makeRow(22, [makeCell(22, 1, 'Nominal MM points', 3, 'string'), makeCell(22, 2, nominalCount, 7)]),
-        makeRow(23, [makeCell(23, 1, 'φMM points', 3, 'string'), makeCell(23, 2, phiCount, 7)])
+        makeRow(15, [makeCell(15, 1, 'Centroid X (in)', 3, 'string'), makeCell(15, 2, p.centroidX, 4)]),
+        makeRow(16, [makeCell(16, 1, 'Centroid Y (in)', 3, 'string'), makeCell(16, 2, p.centroidY, 4)]),
+        makeRow(17, [makeCell(17, 1, 'Rebar provided', 3, 'string'), makeCell(17, 2, p.rebarSizes, 0, 'string')]),
+        makeRow(18, [makeCell(18, 1, 'Rebar material(s)', 3, 'string'), makeCell(18, 2, p.rebarMaterials, 0, 'string')]),
+        makeRow(19, [makeCell(19, 1, 'Edge mesh spacing (in)', 3, 'string'), makeCell(19, 2, p.edgeSpacing, 4)]),
+        makeRow(20, [makeCell(20, 1, 'Interior mesh spacing (in)', 3, 'string'), makeCell(20, 2, p.interiorSpacing, 4)]),
+        makeRow(22, [makeCell(22, 1, 'Exported Analysis', 2, 'string')], 22),
+        makeRow(23, [makeCell(23, 1, 'Selected NA angle (deg)', 3, 'string'), makeCell(23, 2, model.selectedAngle, 4)]),
+        makeRow(24, [makeCell(24, 1, 'MM axial load (kips)', 3, 'string'), makeCell(24, 2, model.mm.axialLoad, 4)]),
+        makeRow(25, [makeCell(25, 1, 'Nominal MM points', 3, 'string'), makeCell(25, 2, nominalCount, 7)]),
+        makeRow(26, [makeCell(26, 1, 'φMM points', 3, 'string'), makeCell(26, 2, phiCount, 7)])
     ];
 
     return makeWorksheet({
         rows,
         columns: [29, 30, 3, 13, 13, 13, 13, 13, 13, 13, 13, 13],
-        merges: ['A1:L1', 'A4:B4', 'D4:L4', 'A19:B19'],
+        merges: ['A1:L1', 'B2:L2', 'B3:L3', 'B4:L4', 'A7:B7', 'D7:L7', 'A22:B22'],
         drawing: true
     });
 }
@@ -395,7 +401,7 @@ function buildSelectedAngleSheet(model) {
     const lastRow = Math.max(5, model.selectedRows.length + 4);
     return makeWorksheet({
         rows,
-        columns: [10, 16, 16, 18, 15, 15, 15, 19, 10, 15, 15, 15],
+        columns: [24, 16, 16, 18, 15, 15, 15, 19, 10, 15, 15, 15],
         merges: ['A1:L1'],
         freezeRows: 4,
         autoFilter: `A4:L${lastRow}`
@@ -433,7 +439,7 @@ function buildMomentMomentSheet(model) {
     const lastRow = Math.max(5, model.mmRows.length + 4);
     return makeWorksheet({
         rows,
-        columns: [10, 16, 18, 20, 20, 21, 23, 15, 17, 17, 18, 20],
+        columns: [24, 16, 18, 20, 20, 21, 23, 15, 17, 17, 18, 20],
         merges: ['A1:L1', 'D2:L2'],
         freezeRows: 4,
         autoFilter: `A4:L${lastRow}`
@@ -584,7 +590,7 @@ export function buildAnalysisWorkbookBytes(model) {
   </fills>
   <borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border></borders>
   <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="9">
+  <cellXfs count="10">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
     <xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>
@@ -594,6 +600,7 @@ export function buildAnalysisWorkbookBytes(model) {
     <xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
     <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
     <xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
   </cellXfs>
   <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`);
@@ -604,7 +611,7 @@ export function buildAnalysisWorkbookBytes(model) {
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`);
     files.set('xl/drawings/drawing1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <xdr:oneCellAnchor><xdr:from><xdr:col>3</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>4</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:ext cx="6858000" cy="4572000"/>
+  <xdr:oneCellAnchor><xdr:from><xdr:col>3</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>7</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:ext cx="6858000" cy="4572000"/>
     <xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="Concrete Section.png"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="6858000" cy="4572000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/>
   </xdr:oneCellAnchor>
 </xdr:wsDr>`);
