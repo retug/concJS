@@ -13,3 +13,16 @@ export const rebarDia = {
     18: 2.257
 };
 
+export function getRebarDiameter(rebar) {
+    const explicitDiameter = Number(rebar?.rebarDiameter);
+    if (Number.isFinite(explicitDiameter) && explicitDiameter > 0) return explicitDiameter;
+    return rebarDia[rebar?.rebarSize];
+}
+
+export function getRebarArea(rebar) {
+    const explicitArea = Number(rebar?.rebarArea);
+    if (Number.isFinite(explicitArea) && explicitArea > 0) return explicitArea;
+    const diameter = getRebarDiameter(rebar);
+    return Number.isFinite(diameter) ? (Math.PI / 4) * diameter ** 2 : 0;
+}
+

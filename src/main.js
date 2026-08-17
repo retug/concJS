@@ -6,6 +6,14 @@ import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveU
 import * as SceneFunctions from './threeJSscenefunctions.js';
 import { setupReplicateShortcut, setupMoveShortcut } from './CADfunctions.js';
 import { CompositeConcShape } from './compositeShapeAnalysis.js';
+import {
+  initializeProjectPersistence,
+  replaceCurrentProject,
+  serializeCurrentProject,
+  showProjectDiagnostics,
+  showProjectNotice
+} from './projectPersistence.js';
+import { initializeProjectCache } from './projectCache.js';
 //required for webpack bundling
 import "./materials.js";
 import "./materialsandShapes.js";
@@ -212,6 +220,41 @@ function returnToDesignWorkspace() {
   requestAnimationFrame(SceneFunctions.resizeThreeJsScene);
 }
 
+function getDesignModel() {
+  const designChildren = designWorkspaceSnapshot?.children ?? scene.children;
+  const childSet = new Set(designChildren);
+  return {
+    concreteShapes: (window.allConcShapes ?? []).filter(shape => shape?.mesh && childSet.has(shape.mesh)),
+    reinforcement: designChildren.filter(object => object?.isRebar === true)
+  };
+}
+
+function prepareForProjectImport() {
+  if (designWorkspaceSnapshot) {
+    returnToDesignWorkspace();
+  } else {
+    SceneFunctions.teardownRaycastingForResults();
+    window.activeAnalysisSection?.resetAnalysisResults?.();
+    window.activeAnalysisSection = null;
+    document.getElementById("analysis-results-controls-style")?.remove();
+    document.getElementById("analysisResultsTable")?.remove();
+    const results = document.getElementById("results");
+    if (results) {
+      results.replaceChildren(Object.assign(document.createElement("h3"), { textContent: "Results" }));
+      results.style.display = "none";
+    }
+    const dragBar = document.getElementById("drag-bar");
+    if (dragBar) dragBar.style.display = "none";
+    setWorkflowMode("design", "Editing imported section — generate PM to analyze");
+  }
+  designWorkspaceSnapshot = null;
+}
+
+function refreshMaterialControls() {
+  populateMaterialDropdown();
+  populateRebarDropdown();
+}
+
 function loadTexture(url) {
   return new Promise((resolve, reject) => {
       const loader = new THREE.TextureLoader();
@@ -256,13 +299,28 @@ export function getSprite() {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  initScene(); // Initialize scene after texture loads
+  const sceneReady = initScene(); // Cache restoration waits for the rebar texture.
   window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
   window.addEventListener('resize', SceneFunctions.resizeThreeJsScene);
   SceneFunctions.setupDragAndAnalyze();
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
+  const projectPersistenceContext = {
+    scene,
+    getSprite,
+    getDesignModel,
+    prepareForProjectImport,
+    refreshMaterialControls
+  };
+  initializeProjectPersistence(projectPersistenceContext);
+  initializeProjectCache({
+    ready: sceneReady,
+    serializeProject: () => serializeCurrentProject(getDesignModel()),
+    replaceProject: project => replaceCurrentProject(project, projectPersistenceContext),
+    showNotice: showProjectNotice,
+    showDiagnostics: showProjectDiagnostics
+  });
   document.getElementById("designModeTab")?.addEventListener("click", returnToDesignWorkspace);
   setWorkflowMode("design", "Editing section");
 

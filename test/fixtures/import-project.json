@@ -1,0 +1,89 @@
+{
+  "format": "concretejs-project",
+  "schemaVersion": 1,
+  "createdAt": "2026-08-16T20:00:00.000Z",
+  "metadata": {
+    "name": "Import Verification",
+    "description": "A section used to verify complete model replacement.",
+    "notes": "Analysis remains idle after import."
+  },
+  "units": {
+    "length": "in",
+    "stress": "psi",
+    "force": "kip",
+    "moment": "kip-ft"
+  },
+  "materials": [
+    {
+      "id": "material-1",
+      "name": "Verification Concrete",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        { "strain": -0.003, "stress": -5000 },
+        { "strain": 0, "stress": 0 }
+      ]
+    },
+    {
+      "id": "material-2",
+      "name": "Verification Steel",
+      "type": "steel",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        { "strain": -0.00207, "stress": -60000 },
+        { "strain": 0.00207, "stress": 60000 }
+      ]
+    }
+  ],
+  "concreteShapes": [
+    {
+      "id": "shape-1",
+      "materialId": "material-1",
+      "geometry": {
+        "exterior": {
+          "segments": [
+            { "type": "line", "from": { "x": -12, "y": -12 }, "to": { "x": 12, "y": -12 } },
+            { "type": "line", "from": { "x": 12, "y": -12 }, "to": { "x": 12, "y": 12 } },
+            { "type": "line", "from": { "x": 12, "y": 12 }, "to": { "x": -12, "y": 12 } },
+            { "type": "line", "from": { "x": -12, "y": 12 }, "to": { "x": -12, "y": -12 } }
+          ]
+        },
+        "openings": [
+          {
+            "segments": [
+              {
+                "type": "ellipse",
+                "center": { "x": 0, "y": 0 },
+                "radiusX": 3,
+                "radiusY": 3,
+                "startAngle": 0,
+                "endAngle": 6.283185307179586,
+                "clockwise": false,
+                "rotation": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "reinforcement": [
+    {
+      "id": "rebar-1",
+      "x": 8,
+      "y": 8,
+      "materialId": "material-2",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    }
+  ],
+  "analysisConfiguration": {
+    "edgeSpacing": 0.75,
+    "interiorSpacing": 1.25,
+    "momentMomentAxialLoad": -200
+  }
+}

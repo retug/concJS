@@ -1,0 +1,26 @@
+{
+  "format": "concretejs-project",
+  "schemaVersion": 2,
+  "metadata": {
+    "name": "Future Project",
+    "description": "Compatibility warning fixture",
+    "notes": "Contains a field unknown to schema version 1."
+  },
+  "units": {
+    "length": "in",
+    "stress": "psi",
+    "force": "kip",
+    "moment": "kip-ft"
+  },
+  "materials": [],
+  "concreteShapes": [],
+  "reinforcement": [],
+  "analysisConfiguration": {
+    "edgeSpacing": 1,
+    "interiorSpacing": 1,
+    "momentMomentAxialLoad": 0
+  },
+  "futureAnalysisOption": {
+    "enabled": true
+  }
+}

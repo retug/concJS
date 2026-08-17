@@ -1,0 +1,545 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="shortcut icon" type="image/png" href="{% static 'logo/favicon.ico' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Generate axial-moment (PMM) interaction diagrams for custom concrete shapes using ACI 318-19 or 318-25. Ideal for structural engineers.">
+    <meta name="keywords" content="structural engineering, concrete calculator, pmm diagram, aci 318-19, aci 318-25, axial moment interaction">
+    <title>Concrete Design Tool</title>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QHHKT2DQKV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag("config", "G-QHHKT2DQKV", {
+        page_title: document.title
+      });
+    </script>
+
+  </head>
+  <body>
+    <div id="userResults" class="column resizable">
+        <div id="userInput" class="p-3 bg-gray-400 py-1">
+          <div class="border-b-2 text-lg">User Input </div>
+          <div class="grid grid-cols-4 gap-4 grid-flow-row py-1">
+            <div class="col-start-1 col-end-3">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="X_Vals">
+                  X
+                </label>
+                <form action="" method="get" class="form-example"></form>
+                <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" name="X" id="X_Vals" placeholder="Input Value" value="0" fdprocessedid="1mz9nw">
+            </div>
+            <div class="col-start-3 col-end-5">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="Y_Vals">
+                  Y
+              </label>
+              <form action="" method="get" class="form-example"></form>
+              <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4  leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" name="Y" id="Y_Vals" placeholder="Input Value" value="0" required="" fdprocessedid="y6864i">
+            </div>
+            <div class="col-start-1 col-end-5">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_Vals">
+            Rebar Size
+          </label>
+              <select class="lock appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="rebar_Vals" fdprocessedid="7by2ng">
+                <option value="3"> #3</option>
+                <option value="4"> #4</option>
+                <option value="5"> #5</option>
+                <option value="6"> #6</option>
+                <option value="7"> #7</option>
+                <option value="8"> #8</option>
+                <option value="9"> #9</option>
+                <option value="10"> #10</option>
+                <option value="11"> #11</option>
+                <option value="14"> #14</option>
+                <option value="18"> #18</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="userBtns" class="p-3 py-2 bg-gray-400">
+          <div class="border-b-2 text-lg"> Add to View </div>
+          <div class="grid grid-cols-4 gap-1 grid-flow-row py-2 p-1">
+            <button id="addPointBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="7aqvht">Point</button>
+            <button id="addRebarBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="yy90b">Rebar</button>
+            <button id="addPolyBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="716c3o">Conc</button>
+            <button id="addHoleBtn" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="djanu5">Hole</button>
+    
+          </div>
+        </div>
+        <div id="userSelection" class="bg-gray-400 p-3 py-2">
+          <div class="border-b-2 text-lg">Current Selection </div>
+          <div class="grid grid-cols-4 gap-0 grid-flow-row pt-2 pb-0">
+            <button id="Points" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
+                                       rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="61h4q">Points</button>
+            <button id="Rebar" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
+                                      rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="rgrc2j">Rebar</button>
+            <button id="Conc" class="block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold mb-2 bg-white 
+                                     rounded-t-lg py-2 hover:bg-gray-900 hover:text-white" fdprocessedid="2u4m6e">Concrete</button>
+          </div>
+            <!-- Point Info Table -->
+          <div class="max-h-48 overflow-y-auto border border-gray-500 w-full">
+            <table id="pointInfo" class="border-separate border border-slate-500 w-full">
+              <thead>
+                <tr>
+                  <th class="bg-gray-900 text-white border border-slate-500">X</th>
+                  <th class="bg-gray-900 text-white border border-slate-500">Y</th>
+                </tr>
+              </thead>
+              <tbody id="pointData">
+                <!-- Data goes here -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Rebar Info Table -->
+          <div class="max-h-64 overflow-y-auto border border-gray-500 w-full">
+            <table id="rebarInfo" class="border-separate border border-slate-500 w-full">
+              <thead class="sticky top-0 bg-gray-900 text-white">
+                <tr>
+                  <th class="border border-slate-500 px-2 py-1">X</th>
+                  <th class="border border-slate-500 px-2 py-1">Y</th>
+                  <th class="border border-slate-500 px-2 py-1">Rebar</th>
+                  <th class="border border-slate-500 px-2 py-1">Mat</th>
+                </tr>
+              </thead>
+              <tbody id="rebarData">
+                <!-- Data goes here -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Concrete Info Table -->
+          <div class="max-h-48 overflow-y-auto border border-gray-500 w-full">
+            <table id="concInfo" class="border-separate border border-slate-500 w-full">
+              <thead>
+                <tr>
+                  <th class="bg-gray-900 text-white border border-slate-500">Concrete Shapes</th>
+                </tr>
+              </thead>
+              <tbody id="concData">
+                <!-- Data goes here -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        <div id="analysisInput" class="p-3 bg-gray-400 py-1">
+          <div class="border-b-2 text-lg">Analysis Input </div>
+          <div class="grid grid-cols-4 gap-4 grid-flow-row py-1">
+            <div class="col-start-1 col-end-3">
+                <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="edgeSpa">
+                  Edge Spa (in)
+                </label>
+                <form action="" method="get" class="form-example"></form>
+                <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" name="edge_Spa" id="edgeSpa" min="0.5" value="1" fdprocessedid="jipxi8">
+            </div>
+            <div class="col-start-3 col-end-5">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="intSpa">
+                  Interior Spa (in)
+              </label>
+              <form action="" method="get" class="form-example"></form>
+              <input class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4  leading-tight focus:outline-none focus:bg-white" type="number" step="0.5" min="0.5" name="int_Spa" id="intSpa" value="1" required="" fdprocessedid="ncwktk">
+            </div>
+          </div>
+        </div>
+        <div id="analysis" class="bg-gray-400 p-3 py-2">
+          <div class="border-b-2 text-lg"> Analysis </div>
+          <div class="grid grid-cols-1 gap-1 py-2 p-1">
+            <button id="generatePMM-button" class="block w-full uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">Generate PM</button>
+          </div>
+        </div>
+    </div>
+
+    <div id="middleColumn">
+      <nav id="workflowTabs" aria-label="Design workflow" role="tablist">
+        <button id="designModeTab" class="workflow-tab" type="button" role="tab" aria-selected="true">
+          Design Inputs
+        </button>
+        <button id="analysisModeTab" class="workflow-tab" type="button" role="tab" aria-selected="false" disabled>
+          Analysis Results
+        </button>
+        <div id="projectFileActions" aria-label="Project file actions">
+          <button id="saveProjectButton" class="workflow-action" type="button">Save</button>
+          <button id="importProjectButton" class="workflow-action" type="button">Import</button>
+          <input id="projectFileInput" type="file" accept="application/json,.json" hidden>
+        </div>
+        <span id="workflowModeStatus" aria-live="polite">Editing section</span>
+      </nav>
+      <div id="concGui" class="relative">
+          <div id="windowProps" class="absolute bottom-0 text-black p-2">
+            <div id="userInputProps">
+              <p> <var id="pointsSelected">0</var> Pnts,<var id="rebarSelected">0</var> Rebar,<var id="concSelected">0</var> Conc   </p>
+              <p> X = <var id="xVal">-13.</var> Y = <var id="yVal">-2.7</var> </p> 
+              <div id="commandandAbout">
+                <div id="commands" class = "flex gap-2">
+                  <button id="moveBtn" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded hover:bg-gray-900 py-2 px-4 hover:text-white">Move</button>
+                  <button id="replicateBtn" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded hover:bg-gray-900 py-2 px-4 hover:text-white">Copy</button>
+                </div>
+                <div id="modalAbout" class="pt-1">
+                  <button  onclick="document.getElementById('aboutModal').classList.remove('hidden')" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">About</button>
+                </div>
+              </div>
+            </div>
+            
+            <div id="analysisResults">
+            </div>
+            <div id="selectedPointResultProps">
+            </div>
+                
+          </div>
+          <div id="materialsandShapesClosed" class="absolute top-1 right-4"></div>
+          <canvas></canvas>
+          
+      </div>
+      <div id="drag-bar"></div> <!-- Drag bar for resizing -->
+      <div id="results">
+          <h3>Results</h3>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="aboutModal" class="fixed inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-50 hidden">
+      <div class="bg-gray-400 rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
+        <!-- Close Button -->
+        <button onclick="document.getElementById('aboutModal').classList.add('hidden')" class="absolute top-3 right-4 text-gray-700 hover:text-red-600 text-xl font-bold">&times;</button>
+
+        <!-- Modal Header -->
+        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-4 text-center text-2xl">RETUG Concrete Design Tool </label>
+        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-4 text-center text-2xl">V0.0.0 </label>
+
+        <!-- Sections -->
+        <div class="space-y-6">
+          <!-- How to Use -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">How to Use</label>
+            <p class="text-sm text-gray-800">Add prebuilt shapes to screen or create custom geometry using points and selection tools.</p>
+            <a href="https://www.youtube.com/watch?v=your_future_video_link" target="_blank" class="text-blue-700 underline text-sm mt-1 inline-block">Watch tutorial on YouTube</a>
+          </div>
+
+          <!-- Selection -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Selection</label>
+            <p class="text-sm text-gray-800 flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 bg-gray-300 px-2 py-0.5 rounded">
+                Ctrl
+              </span>
+              Hold <strong>Ctrl</strong> to add to current selection.
+            </p>
+          </div>
+
+          <!-- CAD Functions -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">CAD Functions</label>
+            <ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+              <li>
+                <span class="font-medium">Move</span> ➡️ — Shortcut: 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">M</kbd> + 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">V</kbd>
+              </li>
+              <li>
+                <span class="font-medium">Replicate</span> 🔁 — Shortcut: 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">C</kbd> + 
+                <kbd class="bg-gray-300 px-2 py-1 rounded">C</kbd>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Results -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Results</label>
+            <p class="text-sm text-gray-800">
+              Review results by changing the bending axis angle drop-down and strain profile. The 3D scene is updated to plot the stress profile of the selected results. Select either concrete mesh or rebar to review the stress-strain curve. A table is populated on the right that can be copied and pasted into Excel.
+            </p>
+            <li>
+              <span class="font-medium text-gray-800">Rotate</span> 🌀
+              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">Shift</kbd> +
+              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">🖱️ Middle</kbd>
+            </li>
+            <li>
+              <span class="font-medium text-gray-800">Pan</span> 
+              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">🖱️ Middle</kbd>
+            </li>
+          </div>
+
+          <!-- Issues / Requests -->
+          <div>
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Issues / Requests</label>
+            <a href="https://github.com/retug/concJS" target="_blank" class="text-blue-700 underline text-sm">Visit GitHub to report issues or request features</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="saveProjectModal" class="project-modal modal hidden" role="dialog" aria-modal="true" aria-labelledby="saveProjectTitle" aria-hidden="true">
+      <form id="saveProjectForm" class="project-modal-card">
+        <button id="closeSaveProject" class="project-modal-close" type="button" aria-label="Close save dialog">&times;</button>
+        <h2 id="saveProjectTitle">Save ConcreteJS Project</h2>
+        <p class="project-modal-intro">Add project information for the JSON file and future Excel exports.</p>
+
+        <label for="projectName">Project name <span aria-hidden="true">*</span></label>
+        <input id="projectName" name="projectName" type="text" maxlength="120" required autocomplete="off">
+
+        <label for="projectDescription">Description</label>
+        <textarea id="projectDescription" name="projectDescription" rows="3" maxlength="1000"></textarea>
+
+        <label for="projectNotes">Notes</label>
+        <textarea id="projectNotes" name="projectNotes" rows="5" maxlength="5000"></textarea>
+
+        <div class="project-modal-actions">
+          <button id="cancelSaveProject" type="button" class="secondary-action">Cancel</button>
+          <button type="submit" class="primary-action">Download JSON</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="importProjectModal" class="project-modal modal hidden" role="dialog" aria-modal="true" aria-labelledby="importProjectTitle" aria-hidden="true">
+      <div class="project-modal-card">
+        <button id="closeImportProject" class="project-modal-close" type="button" aria-label="Close import dialog">&times;</button>
+        <h2 id="importProjectTitle">Replace current project?</h2>
+        <p id="importProjectSummary" class="project-modal-intro"></p>
+        <p id="importProjectWarning" class="project-import-warning" hidden></p>
+        <details id="importProjectDetails" class="project-import-details" hidden>
+          <summary>Show details</summary>
+          <ul id="importProjectDetailList"></ul>
+        </details>
+        <div class="project-modal-actions">
+          <button id="cancelImportProject" type="button" class="secondary-action">Cancel</button>
+          <button id="confirmImportProject" type="button" class="danger-action">Replace project</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="projectNotice" class="project-notice" role="status" aria-live="polite" hidden></div>
+
+    
+    <div id="materialsandShapes" class="bg-gray-400">
+      <div id="shapeContent" class="block uppercase text-gray-700 text-xs font-bold mb-2">
+        <div class="flex space-x-2 py-1">
+          <div id="materialsandShapesExpanded">
+            <button class="toggle-button" onclick="toggleMaterialsAndShapes()">&#xab;</button>
+          </div>
+          <h3 text-gray-700>Prebuilt Shapes</h3>
+
+        </div>
+        
+        
+        <div id="ShapeButtons" class="flex space-x-2 py-1">
+          <div id="RectangleShape">
+            <button id="rectangleButton" class="modern-button active">
+              <span class="circle tl"></span>
+              <span class="circle tr"></span>
+              <span class="circle bl"></span>
+              <span class="circle br"></span>
+            </button>
+          </div>
+          <div id="BarBellShape">
+            <button id="barbellButton" class="barbell-button">
+              <span class="circle bbtl"></span>
+              <span class="circle bbtr"></span>
+              <span class="circle bbbl"></span>
+              <span class="circle bbbr"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="square_rect_oval_shapes" class="p-3 bg-gray-400 py-0">
+        <!-- Concrete Props Section -->
+        <div class="border-b-1 text-lg mb-1">Concrete Properties</div>
+        <div class="grid grid-cols-4 gap-2 grid-flow-row py-1">
+          <!-- Width Input -->
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="width_input">
+              Width
+            </label>
+            <input
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white"
+              type="number"
+              name="width"
+              id="width_input"
+              placeholder="Width"
+              min="0"
+              step="0.1"
+              required
+              value="24"  
+            />
+          </div>
+          <!-- Length Input -->
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="length_input">
+              Length
+            </label>
+            <input
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white"
+              type="number"
+              name="length"
+              id="length_input"
+              placeholder="Length"
+              min="0"
+              step="0.1"
+              required
+              value="24"  
+            />
+          </div>
+          <!-- Concrete Mat Dropdown -->
+          <div class="col-span-4">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="concrete_mat">
+              Concrete Material
+            </label>
+            <select
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
+              id="concrete_mat"
+              name="concrete_mat"
+            >
+              <option value="fy60">fy60</option>
+              <option value="fy75">fy75</option>
+            </select>
+          </div>
+        </div>
+      
+        <!-- Rebar Props Section -->
+        <div class="border-b-2 text-lg mt-2 mb-2">Rebar Properties</div>
+        <div class="grid grid-cols-4 gap-2 grid-flow-row py-1">
+          <!-- Rebar Dropdown -->
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar">
+              Rebar
+            </label>
+            <select
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
+              id="rebar"
+              name="rebar"
+            >
+              <option value="3">#3</option>
+              <option value="4">#4</option>
+              <option value="5">#5</option>
+              <option value="6">#6</option>
+              <option value="7">#7</option>
+              <option value="8">#8</option>
+              <option value="9" selected>#9</option>
+              <option value="10">#10</option>
+              <option value="11">#11</option>
+              <option value="14">#14</option>
+              <option value="18">#18</option>
+            </select>
+          </div>
+          <!-- Rebar Quantity Input -->
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_quantity">
+              Rebar Quantity
+            </label>
+            <input
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border rounded py-1 px-4 leading-tight focus:outline-none focus:bg-white"
+              type="number"
+              name="rebar_quantity"
+              id="rebar_quantity"
+              placeholder="Quantity"
+              required
+              value="8"  
+              min="1"
+              step="1"
+              required
+            />
+          </div>
+          <!-- Rebar Mat & Offset Inputs -->
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_mat">
+              Rebar Material
+            </label>
+            <select
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white"
+              id="rebar_mat"
+              name="rebar_mat"
+            >
+            </select>
+          </div>
+
+          <div class="col-span-2">
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="rebar_offset">
+              Rebar Offset (in)
+            </label>
+            <input
+              type="number"
+              id="rebar_offset"
+              name="rebar_offset"
+              class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 rounded leading-tight focus:outline-none focus:bg-white"
+              value="2"
+              step="0.1"
+            />
+          </div>
+
+          <div class="col-span-4 ">
+            <button id="addShapestoScene" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">Add To Scene</button>
+          </div>
+        </div>
+      </div>
+      <div id="materialCreation" class="block uppercase text-gray-700 text-xs font-bold mb-2" >
+        <h3 class="border-b-1 text-lg mb-1">Materials</h3>
+        <div class="grid grid-cols-4 items-center">
+          <label for="materialDropdown" class="text-sm font-medium text-gray-700 col-span-1">Material:</label>
+          <select id="materialDropdown" class="appearance-none block w-full bg-gray-200 border text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white col-span-3">
+            <option disabled selected>Select a material</option>
+          </select>
+        </div>
+        <div id="userDefinedInputs" class="hidden mt-4 space-y-4">
+          <!-- Material Name Input -->
+          <div class="flex flex-col space-y-2">
+            <label for="materialName" class="text-sm font-medium text-gray-700">Material Name:</label>
+            <input type="text" id="materialName" class="appearance-none bg-gray-200 border text-gray-700 px-4 py-2 rounded leading-tight focus:outline-none focus:bg-white" placeholder="Enter material name" />
+          </div>
+        
+          <!-- Expected Strength Checkbox -->
+          <div class="flex items-center space-x-2">
+            <label for="expectedStrength" class="text-sm font-medium text-gray-700">Expected Strength:</label>
+            <input type="checkbox" id="expectedStrength" class="w-4 h-4" />
+          </div>
+        
+          <!-- Stress-Strain Table -->
+          <table id="userStressStrainTable" class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border px-4 py-2">Strain</th>
+                <th class="border px-4 py-2">Stress (psi)</th>
+                <th class="border px-4 py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="border px-4 py-2"><input type="number" step="0.0001" class="strainInput w-full px-2 py-1 border rounded" /></td>
+                <td class="border px-4 py-2"><input type="number" step="0.01" class="stressInput w-full px-2 py-1 border rounded" /></td>
+                <td class="border px-4 py-2 text-center"><button class="removeRow text-red-600 hover:text-red-800">Remove</button></td>
+              </tr>
+            </tbody>
+          </table>
+        
+          <!-- Buttons Row -->
+          <div class="flex justify-between space-x-4">
+            <button id="addRow" class="w-1/2 uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">
+              Add Row
+            </button>
+            <button id="saveMaterial" class="w-1/2 uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">
+              Save Material
+            </button>
+          </div>
+        </div>
+
+        <table id="stressStrainTable" border="1" style="margin-top: 20px;">
+          <thead>
+            <tr>
+              <th>Strain</th>
+              <th>Stress (psi)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <canvas id="stressStrainChart"></canvas>
+      </div>
+    </div>
+    <script defer src="{% static 'concgui/concgui.bundle.js' %}"></script>
+    <script type="text/javascript" src="https://cookieconsent.popupsmart.com/src/js/popper.js"></script><script> window.start.init({Palette:"palette2",Mode:"floating right",Theme:"edgeless",Message:"This website uses cookies. In addition, if you use this website for engineering calculations, you must read the disclaimer.",ButtonText:"Accept",LinkText:"Disclaimer",Location:"https://www.re-tug.com/disclaimer",Time:"1",})</script>
+  </body>
+</html>

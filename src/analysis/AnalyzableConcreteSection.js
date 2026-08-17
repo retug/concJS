@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import Plotly from 'plotly.js-dist-min';
 import { scene, controls, camera, renderer } from '../main.js';
-import { rebarDia, setupRaycastingForResults } from '../threeJSscenefunctions.js';
+import { setupRaycastingForResults } from '../threeJSscenefunctions.js';
+import { getRebarArea } from '../rebarProperties.js';
+import { getAnalysisConfiguration, updateAnalysisConfiguration } from '../projectState.js';
 import { MomentMomentAnalysis } from './MomentMomentAnalysis.js';
 import { exportSectionAnalysisWorkbook } from './AnalysisExcelExporter.js';
 
@@ -28,8 +30,7 @@ export class AnalyzableConcreteSection {
         this.resetAnalysisResults();
         this.rebarObjects = allSelectedRebar;
         this.totalRebarArea = this.rebarObjects.reduce((sum, rebar) => {
-            const radius = rebarDia[rebar.rebarSize] / 2;
-            return sum + Math.PI * radius * radius;
+            return sum + getRebarArea(rebar);
         }, 0);
     }
 
@@ -61,7 +62,7 @@ export class AnalyzableConcreteSection {
             const steelMaterial = rebar.materialData;
             if (!steelMaterial) continue;
 
-            const area = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2;
+            const area = getRebarArea(rebar);
             totalSteelForce -= area * steelMaterial.stress(0.005);
         }
 
@@ -519,7 +520,7 @@ export class AnalyzableConcreteSection {
                 transformedRebar.v,
                 strainProfile[1]
             );
-            const area = (Math.PI / 4) * rebarDia[rebar.rebarSize] ** 2;
+            const area = getRebarArea(rebar);
             const force = area * rebar.materialData.stress(strain);
             maxRebarStrain = Math.max(maxRebarStrain, strain);
             steelForce += force;
@@ -773,13 +774,15 @@ export class AnalyzableConcreteSection {
 
         this.momentMomentAnalysis ??= new MomentMomentAnalysis(this);
         const limits = this.momentMomentAnalysis.getAxialLimits();
+        const savedAxialLoad = getAnalysisConfiguration().momentMomentAxialLoad;
+        if (!this.currentMomentMomentResult && Number.isFinite(savedAxialLoad)) {
+            input.value = String(savedAxialLoad);
+        }
         const currentValue = Number(input.value);
 
         // A newly created analysis starts by displaying the zero-axial-load
         // slice on both the 2D MM plot and the 3D PMM plot.
-        if (!this.currentMomentMomentResult && limits.compression <= 0 && limits.tension >= 0) {
-            input.value = "0";
-        } else if (!Number.isFinite(currentValue) || currentValue < limits.compression || currentValue > limits.tension) {
+        if (!Number.isFinite(currentValue) || currentValue < limits.compression || currentValue > limits.tension) {
             input.value = limits.compression <= 0 && limits.tension >= 0
                 ? "0"
                 : ((limits.compression + limits.tension) / 2).toFixed(2);
@@ -805,6 +808,8 @@ export class AnalyzableConcreteSection {
 
         if (!input.dataset.listenerAdded) {
             input.addEventListener("input", () => {
+                const value = Number(input.value);
+                if (Number.isFinite(value)) updateAnalysisConfiguration({ momentMomentAxialLoad: value });
                 window.activeAnalysisSection?.validateMomentMomentInput();
             });
             input.dataset.listenerAdded = true;
