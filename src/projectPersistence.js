@@ -102,9 +102,13 @@ export function initializeProjectPersistence({
       canConfirm: true,
       onConfirm: () => {
         try {
-          const staged = stageProject(project, scene, getSprite());
-          prepareForProjectImport();
-          commitStagedProject(staged, project, scene, getDesignModel, refreshMaterialControls);
+          replaceCurrentProject(project, {
+            scene,
+            getSprite,
+            getDesignModel,
+            prepareForProjectImport,
+            refreshMaterialControls
+          });
           setModalOpen(importModal, false);
           showNotice(
             `Imported “${project.metadata.name || file.name}”. Press Generate PM when you are ready to analyze.`,
@@ -189,6 +193,26 @@ export function serializeCurrentProject({ concreteShapes, reinforcement }) {
     reinforcement: rebars,
     analysisConfiguration
   });
+}
+
+export function replaceCurrentProject(project, {
+  scene,
+  getSprite,
+  getDesignModel,
+  prepareForProjectImport,
+  refreshMaterialControls
+}) {
+  const staged = stageProject(project, scene, getSprite());
+  prepareForProjectImport();
+  commitStagedProject(staged, project, scene, getDesignModel, refreshMaterialControls);
+}
+
+export function showProjectNotice(message, kind = 'success') {
+  showNotice(message, kind);
+}
+
+export function showProjectDiagnostics({ title, summary, details = [], warnings = [] }) {
+  showImportModal({ title, summary, details, warnings, canConfirm: false });
 }
 
 function stageProject(project, scene, sprite) {
@@ -386,4 +410,3 @@ function setModalOpen(modal, open) {
   modal.classList.toggle('hidden', !open);
   modal.setAttribute('aria-hidden', String(!open));
 }
-

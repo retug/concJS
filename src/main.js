@@ -6,7 +6,14 @@ import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveU
 import * as SceneFunctions from './threeJSscenefunctions.js';
 import { setupReplicateShortcut, setupMoveShortcut } from './CADfunctions.js';
 import { CompositeConcShape } from './compositeShapeAnalysis.js';
-import { initializeProjectPersistence } from './projectPersistence.js';
+import {
+  initializeProjectPersistence,
+  replaceCurrentProject,
+  serializeCurrentProject,
+  showProjectDiagnostics,
+  showProjectNotice
+} from './projectPersistence.js';
+import { initializeProjectCache } from './projectCache.js';
 //required for webpack bundling
 import "./materials.js";
 import "./materialsandShapes.js";
@@ -292,19 +299,27 @@ export function getSprite() {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  initScene(); // Initialize scene after texture loads
+  const sceneReady = initScene(); // Cache restoration waits for the rebar texture.
   window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
   window.addEventListener('resize', SceneFunctions.resizeThreeJsScene);
   SceneFunctions.setupDragAndAnalyze();
   toggleShapeButtons();
   populateMaterialDropdown();
   populateRebarDropdown();
-  initializeProjectPersistence({
+  const projectPersistenceContext = {
     scene,
     getSprite,
     getDesignModel,
     prepareForProjectImport,
     refreshMaterialControls
+  };
+  initializeProjectPersistence(projectPersistenceContext);
+  initializeProjectCache({
+    ready: sceneReady,
+    serializeProject: () => serializeCurrentProject(getDesignModel()),
+    replaceProject: project => replaceCurrentProject(project, projectPersistenceContext),
+    showNotice: showProjectNotice,
+    showDiagnostics: showProjectDiagnostics
   });
   document.getElementById("designModeTab")?.addEventListener("click", returnToDesignWorkspace);
   setWorkflowMode("design", "Editing section");
