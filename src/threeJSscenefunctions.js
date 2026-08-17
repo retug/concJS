@@ -259,12 +259,12 @@ export function setupMouseInteractions(threeJSDiv) {
 
     function applySelectionColors(selectedObjects) {
         for (const obj of selectedObjects) {
-            if (obj.isReference !== true && obj.isRebar !== true && obj.constructor.name === "Points") {
+            if (obj.isReference !== true && obj.isRebar !== true && obj.isPoints === true) {
                 obj.material.color.set(0xFF7F00);
-            } else if (obj.isRebar === true && obj.constructor.name === "Points") {
+            } else if (obj.isRebar === true && obj.isPoints === true) {
                 obj.material.color.set(0xFF7F00);
             }
-            else if (obj.constructor.name === "Mesh") {
+            else if (obj.isMesh === true) {
                 obj.material.color.set(0xFF7F00);
 
             } 
@@ -276,12 +276,12 @@ export function setupMouseInteractions(threeJSDiv) {
 
     function processSelection(selectedObjects) {
         for (const obj of selectedObjects) {
-            if (obj.isReference !== true && obj.isRebar !== true && obj.constructor.name === "Points") {
+            if (obj.isReference !== true && obj.isRebar !== true && obj.isPoints === true) {
                 allSelectedPnts.push(obj);
-            } else if (obj.isRebar === true && obj.constructor.name === "Points") {
+            } else if (obj.isRebar === true && obj.isPoints === true) {
                 allSelectedRebar.push(obj);
                 console.log(allSelectedRebar)
-            } else if (obj.constructor.name === "Mesh" && obj.userData.concShape) {
+            } else if (obj.isMesh === true && obj.userData.concShape) {
                 // allSelectedConc.push(obj);
                 allSelectedConc.push(obj.userData.concShape);
             }

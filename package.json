@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:deployment": "webpack --config webpack.config.cjs && node scripts/generate-django-template.mjs",
+    "deploy:retug": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-retug.ps1",
     "test": "node --test",
     "preview": "vite preview",
     "webpack-build": "webpack --config webpack.config.cjs",
