@@ -19,7 +19,8 @@ export function initializeProjectPersistence({
   getSprite,
   getDesignModel,
   prepareForProjectImport,
-  refreshMaterialControls
+  refreshMaterialControls,
+  onProjectReplaced
 }) {
   const saveButton = document.getElementById('saveProjectButton');
   const importButton = document.getElementById('importProjectButton');
@@ -107,7 +108,8 @@ export function initializeProjectPersistence({
             getSprite,
             getDesignModel,
             prepareForProjectImport,
-            refreshMaterialControls
+            refreshMaterialControls,
+            onProjectReplaced
           });
           setModalOpen(importModal, false);
           showNotice(
@@ -153,6 +155,7 @@ export function serializeCurrentProject({ concreteShapes, reinforcement }) {
   const shapes = concreteShapes.map((shape, index) => ({
     id: `shape-${index + 1}`,
     materialId: requireMaterialId(materialIds, shape.material),
+    priority: Number(shape.priority),
     geometry: {
       exterior: serializeContour(shape.baseshape),
       openings: shape.baseshape.holes.map(serializeContour)
@@ -200,11 +203,13 @@ export function replaceCurrentProject(project, {
   getSprite,
   getDesignModel,
   prepareForProjectImport,
-  refreshMaterialControls
+  refreshMaterialControls,
+  onProjectReplaced
 }) {
   const staged = stageProject(project, scene, getSprite());
   prepareForProjectImport();
   commitStagedProject(staged, project, scene, getDesignModel, refreshMaterialControls);
+  onProjectReplaced?.(staged);
 }
 
 export function showProjectNotice(message, kind = 'success') {
@@ -231,7 +236,12 @@ function stageProject(project, scene, sprite) {
     const concreteShapes = project.concreteShapes.map(shapeData => {
       const exterior = createPath(shapeData.geometry.exterior, true);
       const openings = shapeData.geometry.openings.map(contour => createPath(contour, false));
-      const shape = new ConcShape(exterior, materialsById.get(shapeData.materialId), openings);
+      const shape = new ConcShape(
+        exterior,
+        materialsById.get(shapeData.materialId),
+        openings,
+        { priority: shapeData.priority }
+      );
       shape.generateMesh();
       if (!shape.mesh) throw new Error(`Could not construct concrete shape ${shapeData.id}.`);
       return shape;

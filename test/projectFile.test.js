@@ -39,6 +39,7 @@ function makeProject() {
       {
         id: 'shape-1',
         materialId: 'material-1',
+        priority: 4,
         geometry: {
           exterior: {
             segments: [
@@ -98,10 +99,27 @@ test('valid project round-trips all input groups', () => {
   assert.deepEqual(validation.errors, []);
   assert.equal(validation.project.metadata.name, 'Bridge Pier P-2');
   assert.equal(validation.project.concreteShapes[0].geometry.openings.length, 1);
+  assert.equal(validation.project.concreteShapes[0].priority, 4);
   assert.equal(validation.project.reinforcement[0].size.diameter, 1);
   assert.equal(validation.project.reinforcement[0].size.area, Math.PI / 4);
   assert.equal(validation.project.analysisConfiguration.momentMomentAxialLoad, -250);
   assert.equal('results' in validation.project, false);
+});
+
+test('version 1 shapes migrate to material-based priorities', () => {
+  const source = makeProject();
+  source.schemaVersion = 1;
+  delete source.concreteShapes[0].priority;
+  source.concreteShapes.push({
+    ...structuredClone(source.concreteShapes[0]),
+    id: 'shape-2',
+    materialId: 'material-2'
+  });
+
+  const validation = validateAndNormalizeProject(source);
+
+  assert.equal(validation.canImport, true);
+  assert.deepEqual(validation.project.concreteShapes.map(shape => shape.priority), [0, 1]);
 });
 
 test('newer schema versions import recognized fields with a prominent data-loss warning', () => {

@@ -185,7 +185,16 @@ export class MomentMomentAnalysis {
         const rebarLocations = this.section.rebarObjects
             .map(rebar => rebar.transformedCentroid[angle]?.v)
             .filter(value => value !== undefined);
-        const tensionV = Math.min(...rebarLocations);
+        const plateSteelLocations = this.section.FEMmesh
+            .filter(element => (element.userData?.material ?? element.userData?.concShape?.material)?.type === 'steel')
+            .map(element => element.transformedCentroid?.[angle]?.v)
+            .filter(value => value !== undefined);
+        const tensionControlLocations = rebarLocations.length
+            ? [...rebarLocations, ...plateSteelLocations]
+            : plateSteelLocations.length
+                ? plateSteelLocations
+                : concreteCentroids;
+        const tensionV = Math.min(...tensionControlLocations);
         const tensionDistance = Math.abs(tensionV - compressionV);
 
         if (!Number.isFinite(tensionDistance) || tensionDistance <= Number.EPSILON) {
@@ -195,7 +204,7 @@ export class MomentMomentAnalysis {
         const concreteDistances = concreteCentroids
             .map(value => Math.abs(value - compressionV))
             .filter(value => value > 1e-9);
-        const rebarDistances = rebarLocations
+        const rebarDistances = tensionControlLocations
             .map(value => Math.abs(value - compressionV))
             .filter(value => value > 1e-9);
         const nearestConcrete = Math.min(...concreteDistances);
@@ -221,7 +230,8 @@ export class MomentMomentAnalysis {
             terminalTensionStrain,
             sampleCache: new Map()
         };
-        // Each parameter is the strain at the selected tension-side rebar.
+        // Each parameter is the strain at the selected tension-side steel or
+        // section control point.
         context.parameters = this._createSearchParameters(terminalTensionStrain);
         this.contextCache.set(cacheKey, context);
         return context;

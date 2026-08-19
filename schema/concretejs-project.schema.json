@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://concretejs.local/schema/concretejs-project-v1.json",
+  "$id": "https://concretejs.local/schema/concretejs-project-v2.json",
   "title": "ConcreteJS project",
   "type": "object",
   "required": [
@@ -139,10 +139,11 @@
     },
     "concreteShape": {
       "type": "object",
-      "required": ["id", "materialId", "geometry"],
+      "required": ["id", "materialId", "priority", "geometry"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "materialId": { "type": "string", "minLength": 1 },
+        "priority": { "type": "number" },
         "geometry": {
           "type": "object",
           "required": ["exterior", "openings"],

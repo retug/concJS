@@ -14,6 +14,12 @@ import {
   showProjectNotice
 } from './projectPersistence.js';
 import { initializeProjectCache } from './projectCache.js';
+import { removeEditablePolygonMeshes } from './analysisScene.js';
+import {
+  cameraInteractionForMode,
+  perspectiveFitDistance,
+  orthographicFitHeight
+} from './cameraView.js';
 //required for webpack bundling
 import "./materials.js";
 import "./materialsandShapes.js";
@@ -36,6 +42,8 @@ window.selectedStrainProfileIndex = 4;
 window.allConcShapes = window.allConcShapes || [];  // ✅ Ensure global list exists
 
 let designWorkspaceSnapshot = null;
+let sceneCameraMode = 'perspective';
+let savedPerspectiveView = null;
 
 function setWorkflowMode(mode, statusText) {
   const designTab = document.getElementById("designModeTab");
@@ -75,6 +83,7 @@ function captureDesignWorkspace() {
     children: [...scene.children],
     objects: scene.children.map(captureObject),
     camera: {
+      mode: sceneCameraMode,
       position: camera.position.clone(),
       quaternion: camera.quaternion.clone(),
       zoom: camera.zoom
@@ -100,16 +109,26 @@ function showAnalysisWorkspace(statusText = "Analysis results") {
   const dragBar = document.getElementById("drag-bar");
   const userInputProps = document.getElementById("userInputProps");
   const analysisResults = document.getElementById("analysisResults");
+  const responseControl = document.getElementById("sectionResponseControl");
 
   if (userResults) userResults.style.display = "none";
   if (userInputProps) userInputProps.hidden = true;
   if (analysisResults) analysisResults.hidden = false;
+  if (responseControl) responseControl.hidden = false;
   if (results) {
     results.style.display = "block";
     results.style.flex = "1";
   }
   if (dragBar) dragBar.style.display = "block";
   if (concGui) concGui.style.flex = "1";
+
+  setDesignGridVisible(false);
+  setSceneCameraMode('top');
+
+  // The editable filled polygons are design-only objects. Removing them from
+  // the live analysis scene exposes the resolved FEM surface and is safe
+  // because captureDesignWorkspace() restores the original objects later.
+  removeEditablePolygonMeshes(scene);
 
   setWorkflowMode("analysis", statusText);
   requestAnimationFrame(SceneFunctions.resizeThreeJsScene);
@@ -162,6 +181,10 @@ function returnToDesignWorkspace() {
     scene.add(state.object);
   }
 
+  setSceneCameraMode(snapshot.camera.mode ?? 'perspective', {
+    fit: false,
+    restorePerspective: false
+  });
   camera.position.copy(snapshot.camera.position);
   camera.quaternion.copy(snapshot.camera.quaternion);
   camera.zoom = snapshot.camera.zoom;
@@ -182,6 +205,7 @@ function returnToDesignWorkspace() {
   const userInputProps = document.getElementById("userInputProps");
   const analysisResults = document.getElementById("analysisResults");
   const selectedPointResults = document.getElementById("selectedPointResultProps");
+  const responseControl = document.getElementById("sectionResponseControl");
   const shapeButtons = document.getElementById("ShapeButtons");
   const prebuiltShapes = document.getElementById("square_rect_oval_shapes");
 
@@ -198,8 +222,10 @@ function returnToDesignWorkspace() {
     analysisResults.hidden = true;
   }
   if (selectedPointResults) selectedPointResults.innerHTML = "";
+  if (responseControl) responseControl.hidden = true;
   if (shapeButtons) shapeButtons.style.display = snapshot.shapeButtonsDisplay;
   if (prebuiltShapes) prebuiltShapes.style.display = snapshot.prebuiltShapesDisplay;
+  setDesignGridVisible(true);
 
   window.activeAnalysisSection?.resetAnalysisResults?.();
   window.activeAnalysisSection = null;
@@ -209,7 +235,7 @@ function returnToDesignWorkspace() {
 
   const threeJSDiv = document.getElementById("concGui");
   if (!mouseTrackingHandler) {
-    mouseTrackingHandler = SceneFunctions.setupMouseTracking(threeJSDiv, plane, intersectionPoint);
+    mouseTrackingHandler = SceneFunctions.setupMouseTracking(threeJSDiv, intersectionPoint);
   }
   if (!mouseInteractionHandlers) {
     mouseInteractionHandlers = SceneFunctions.setupMouseInteractions(threeJSDiv);
@@ -227,6 +253,123 @@ function getDesignModel() {
     concreteShapes: (window.allConcShapes ?? []).filter(shape => shape?.mesh && childSet.has(shape.mesh)),
     reinforcement: designChildren.filter(object => object?.isRebar === true)
   };
+}
+
+function frameCreatedShapes(shapes) {
+  const meshes = (shapes ?? []).map(shape => shape?.mesh).filter(Boolean);
+  fitCameraToObjects(meshes);
+}
+
+function getActiveCameraObjects() {
+  const activeSection = window.activeAnalysisSection;
+  const analysisObjects = [
+    ...(activeSection?.FEMmesh ?? []),
+    ...(activeSection?.rebarObjects ?? [])
+  ].filter(Boolean);
+  if (analysisObjects.length) return analysisObjects;
+
+  const design = getDesignModel();
+  return [
+    ...design.concreteShapes.map(shape => shape?.mesh),
+    ...design.reinforcement
+  ].filter(Boolean);
+}
+
+function fitCameraToObjects(objects, padding = 1.18) {
+  if (!objects?.length) return;
+  const bounds = new THREE.Box3();
+  for (const object of objects) bounds.expandByObject(object);
+  if (bounds.isEmpty()) return;
+
+  const center = bounds.getCenter(new THREE.Vector3());
+  const size = bounds.getSize(new THREE.Vector3());
+  const aspect = Math.max(concGui?.clientWidth ?? 1, 1) / Math.max(concGui?.clientHeight ?? 1, 1);
+
+  if (camera.isOrthographicCamera) {
+    const viewHeight = orthographicFitHeight(size, aspect, padding);
+    camera.userData.fitSize = { x: size.x, y: size.y };
+    camera.userData.fitPadding = padding;
+    camera.userData.viewHeight = viewHeight;
+    camera.left = -(viewHeight * aspect) / 2;
+    camera.right = (viewHeight * aspect) / 2;
+    camera.top = viewHeight / 2;
+    camera.bottom = -viewHeight / 2;
+    camera.zoom = 1;
+    camera.position.set(center.x, center.y, center.z + Math.max(100, size.z * 4 + 20));
+    camera.up.set(0, 1, 0);
+    camera.updateProjectionMatrix();
+  } else {
+    const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+    const distance = perspectiveFitDistance(size, verticalFov, aspect, padding);
+    camera.aspect = aspect;
+    camera.position.set(center.x, center.y, center.z + distance + size.z / 2);
+    camera.updateProjectionMatrix();
+  }
+
+  camera.lookAt(center);
+  controls.target.copy(center);
+  controls.update();
+}
+
+function captureCameraView(sourceCamera) {
+  return {
+    position: sourceCamera.position.clone(),
+    quaternion: sourceCamera.quaternion.clone(),
+    zoom: sourceCamera.zoom,
+    target: controls.target.clone()
+  };
+}
+
+function updateCameraControlUI(mode) {
+  document.querySelectorAll('input[name="sectionCameraMode"]').forEach(input => {
+    input.checked = input.value === mode;
+  });
+  const hint = document.getElementById('sectionCameraHint');
+  if (hint) {
+    hint.textContent = mode === 'top'
+      ? 'Orthographic top view · zoom only'
+      : 'Rotate, pan, and zoom';
+  }
+}
+
+export function setSceneCameraMode(mode, { fit = true, restorePerspective = true } = {}) {
+  const nextMode = mode === 'top' ? 'top' : 'perspective';
+
+  if (nextMode === 'top') {
+    if (camera.isPerspectiveCamera) savedPerspectiveView = captureCameraView(camera);
+    camera = orthographicCamera;
+  } else {
+    camera = perspectiveCamera;
+  }
+
+  sceneCameraMode = nextMode;
+  controls.object = camera;
+  const interaction = cameraInteractionForMode(nextMode);
+  controls.enableZoom = interaction.enableZoom;
+  controls.enableRotate = interaction.enableRotate && Boolean(designWorkspaceSnapshot);
+  controls.enablePan = interaction.enablePan && Boolean(designWorkspaceSnapshot);
+  controls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.PAN
+  };
+
+  if (nextMode === 'perspective' && restorePerspective && savedPerspectiveView) {
+    camera.position.copy(savedPerspectiveView.position);
+    camera.quaternion.copy(savedPerspectiveView.quaternion);
+    camera.zoom = savedPerspectiveView.zoom;
+    controls.target.copy(savedPerspectiveView.target);
+    camera.updateProjectionMatrix();
+    controls.update();
+  } else if (fit) {
+    fitCameraToObjects(getActiveCameraObjects());
+  }
+
+  updateCameraControlUI(nextMode);
+  SceneFunctions.resizeThreeJsScene();
+  if (window.activeAnalysisSection) {
+    SceneFunctions.setupRaycastingForResults(scene, camera, renderer);
+  }
 }
 
 function prepareForProjectImport() {
@@ -311,7 +454,13 @@ document.addEventListener("DOMContentLoaded", () => {
     getSprite,
     getDesignModel,
     prepareForProjectImport,
-    refreshMaterialControls
+    refreshMaterialControls,
+    onProjectReplaced: staged => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        SceneFunctions.resizeThreeJsScene();
+        frameCreatedShapes(staged.concreteShapes);
+      }));
+    }
   };
   initializeProjectPersistence(projectPersistenceContext);
   initializeProjectCache({
@@ -322,6 +471,22 @@ document.addEventListener("DOMContentLoaded", () => {
     showDiagnostics: showProjectDiagnostics
   });
   document.getElementById("designModeTab")?.addEventListener("click", returnToDesignWorkspace);
+  document.querySelectorAll('input[name="sectionResponseMode"]').forEach(input => {
+    input.addEventListener("change", event => {
+      if (!event.target.checked) return;
+      window.activeAnalysisSection?.setSectionResponseMode?.(event.target.value);
+    });
+  });
+  document.querySelectorAll('input[name="sectionCameraMode"]').forEach(input => {
+    input.addEventListener("change", event => {
+      if (!event.target.checked) return;
+      setSceneCameraMode(event.target.value);
+    });
+  });
+  if (typeof ResizeObserver !== 'undefined') {
+    const sceneResizeObserver = new ResizeObserver(() => SceneFunctions.resizeThreeJsScene());
+    sceneResizeObserver.observe(concGui);
+  }
   setWorkflowMode("design", "Editing section");
 
 
@@ -352,7 +517,13 @@ document.addEventListener("DOMContentLoaded", () => {
           console.warn("Texture not yet loaded, please wait.");
           return;
       }
-      addShapeToScene(scene, sprite);
+      try {
+        const createdShapes = addShapeToScene(scene, sprite);
+        frameCreatedShapes(createdShapes);
+      } catch (error) {
+        console.error('Could not add prebuilt shape:', error);
+        alert(error.message);
+      }
   });
 
   document.addEventListener('keyup', function (e) {
@@ -389,18 +560,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const selectedConcShapes = SceneFunctions.getAllSelectedConcShape();
           const selectedRebar = SceneFunctions.getAllSelectedRebar();
 
-          // ✅ Check if either is missing or empty
-          if (!selectedConcShapes || selectedConcShapes.length === 0 || !selectedRebar || selectedRebar.length === 0) {
-            alert("⚠️ You must select at least one concrete shape and one rebar to proceed.");
+          if (!selectedConcShapes || selectedConcShapes.length === 0) {
+            alert("Select at least one section polygon to proceed. Rebar is optional for plate-composite sections.");
             return;
-          }
-
-          if (selectedConcShapes.length > 1) {
-            const selectedMaterials = new Set(selectedConcShapes.map(shape => shape.material));
-            if (selectedMaterials.size !== 1) {
-              alert("Composite analysis requires all selected shapes to use the same concrete material.");
-              return;
-            }
           }
 
           const edgeSpacing = parseFloat(document.getElementById("edgeSpa").value);
@@ -454,7 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
               });
                 console.log("Rebar successfully plotted in the scene.");
             } else {
-                console.error("Rebar generation failed or returned empty.");
+                console.info("No discrete rebar selected; using polygon material regions for analysis.");
             }
             
 
@@ -513,7 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 console.log("Rebar successfully plotted in the scene.");
             } else {
-                console.error("Rebar generation failed or returned empty.");
+                console.info("No discrete rebar selected; using polygon material regions for analysis.");
             }
         
             // Generate FEM mesh for the selected concrete shape
@@ -566,7 +728,10 @@ const concGui = document.querySelector('#concGui');
 
 //Setting up the scene
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(75, concGui.offsetWidth/concGui.offsetHeight, 0.1, 1000)
+const initialAspect = Math.max(concGui.offsetWidth, 1) / Math.max(concGui.offsetHeight, 1);
+const perspectiveCamera = new THREE.PerspectiveCamera(75, initialAspect, 0.1, 1000)
+const orthographicCamera = new THREE.OrthographicCamera(-10 * initialAspect, 10 * initialAspect, 10, -10, 0.1, 2000)
+let camera = perspectiveCamera;
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   canvas: document.querySelector('canvas')
@@ -628,26 +793,93 @@ controls.mouseButtons = {MIDDLE: THREE.MOUSE.PAN}
 controls.enableRotate = false;
 //controls.enablePan = false;
 
-camera.position.z = 50
+perspectiveCamera.position.z = 50
+orthographicCamera.position.z = 100
 
 const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
 
-const size = 20;
-const divisions = 20;
+const gridPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const gridRaycaster = new THREE.Raycaster();
+let gridHelper = null;
+let gridSignature = '';
 
-const gridHelper = new THREE.GridHelper( size, divisions );
-gridHelper.rotation.x=Math.PI/2; //gets grid oriented in XY axis
-scene.add( gridHelper );
+function setDesignGridVisible(visible) {
+  if (gridHelper) gridHelper.visible = visible;
+}
+
+function gridStepForSpan(span) {
+  const roughStep = Math.max(span / 180, 1);
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const normalized = roughStep / magnitude;
+  const multiplier = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return multiplier * magnitude;
+}
+
+function visibleGridBounds() {
+  camera.updateMatrixWorld();
+  const bounds = new THREE.Box2();
+  const hit = new THREE.Vector3();
+  const corners = [
+    new THREE.Vector2(-1, -1),
+    new THREE.Vector2(1, -1),
+    new THREE.Vector2(1, 1),
+    new THREE.Vector2(-1, 1)
+  ];
+
+  for (const corner of corners) {
+    gridRaycaster.setFromCamera(corner, camera);
+    if (!gridRaycaster.ray.intersectPlane(gridPlane, hit)) return null;
+    bounds.expandByPoint(new THREE.Vector2(hit.x, hit.y));
+  }
+  return bounds.isEmpty() ? null : bounds;
+}
+
+function updateDynamicGrid() {
+  // The design snapshot owns its helper objects while results are visible.
+  // Freeze the grid during analysis so returning to design restores it intact.
+  if (designWorkspaceSnapshot) return;
+  const bounds = visibleGridBounds();
+  if (!bounds) return;
+
+  const center = bounds.getCenter(new THREE.Vector2());
+  const span = Math.max(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y, 1);
+  const step = gridStepForSpan(span);
+  const centerX = Math.round(center.x / step) * step;
+  const centerY = Math.round(center.y / step) * step;
+  const halfExtent = Math.max(
+    Math.abs(bounds.min.x - centerX),
+    Math.abs(bounds.max.x - centerX),
+    Math.abs(bounds.min.y - centerY),
+    Math.abs(bounds.max.y - centerY)
+  ) * 1.08;
+  let divisions = Math.max(2, Math.ceil((halfExtent * 2) / step));
+  if (divisions % 2 !== 0) divisions += 1;
+  const size = divisions * step;
+  const nextSignature = [centerX, centerY, size, divisions].join(':');
+  if (nextSignature === gridSignature) return;
+
+  const nextGrid = new THREE.GridHelper(size, divisions, 0x7b818a, 0xa7adb5);
+  nextGrid.rotation.x = Math.PI / 2;
+  nextGrid.position.set(centerX, centerY, -0.02);
+  nextGrid.userData.isDynamicDesignGrid = true;
+  nextGrid.renderOrder = -10;
+
+  if (gridHelper) {
+    scene.remove(gridHelper);
+    gridHelper.geometry.dispose();
+    const materials = Array.isArray(gridHelper.material) ? gridHelper.material : [gridHelper.material];
+    materials.forEach(material => material?.dispose?.());
+  }
+  gridHelper = nextGrid;
+  gridSignature = nextSignature;
+  scene.add(gridHelper);
+}
+
+updateDynamicGrid();
 
 // Assuming `concGui` is your top-level div
 const topDiv = document.querySelector('#concGui');
-
-// Create a reference plane for intersection detection
-const planeGeometry = new THREE.PlaneGeometry(50, 50);
-const planeMaterial = new THREE.MeshBasicMaterial({ visible: false });
-const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-scene.add(plane);
 
 // Create the intersection point marker
 const intersectionPointGeometry = new THREE.SphereGeometry(0.3, 16, 16);
@@ -662,7 +894,7 @@ scene.add(intersectionPoint);
 
 
 // Call the function to enable mouse tracking and store the handler
-let mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, plane, intersectionPoint);
+let mouseTrackingHandler = SceneFunctions.setupMouseTracking(topDiv, intersectionPoint);
 let mouseInteractionHandlers = SceneFunctions.setupMouseInteractions(topDiv);
 
 renderer.render( scene, camera );
@@ -672,6 +904,7 @@ let frame = 0
 function animate() {
   requestAnimationFrame(animate);  // Keep looping
   controls.update();               // Update OrbitControls
+  updateDynamicGrid();             // Keep the design grid fitted to the visible XY plane
   renderer.render(scene, camera);  // Render the scene
 }
 

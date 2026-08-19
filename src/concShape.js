@@ -14,12 +14,17 @@ import * as THREE from 'three';
 import Delaunator from 'delaunator';
 import { scene } from "./main.js";
 import { AnalyzableConcreteSection } from './analysis/AnalyzableConcreteSection.js';
+import { buildResolvedSectionMesh, defaultPriorityForMaterial } from './sectionMeshing.js';
 
 
 export class ConcShape extends AnalyzableConcreteSection {
-    constructor(input, material, holes = []) {
+    constructor(input, material, holes = [], options = {}) {
         super(material);
         this.holes = holes;
+        const requestedPriority = typeof options === 'number' ? options : options?.priority;
+        this.priority = Number.isFinite(Number(requestedPriority))
+            ? Number(requestedPriority)
+            : defaultPriorityForMaterial(material);
         this.mesh = null; // base polygon with any holes
         this.baseShape = null;
         this.containsEllipse = false; //checking for circles and barbells 
@@ -28,7 +33,10 @@ export class ConcShape extends AnalyzableConcreteSection {
         this.holesPolyXY = []; // ✅ Stores hole points
 
         // ✅ Register this ConcShape in the global list
-        window.allConcShapes.push(this);
+        if (typeof window !== 'undefined') {
+            window.allConcShapes ??= [];
+            window.allConcShapes.push(this);
+        }
         
         if (Array.isArray(input)) {
             // If input is an array of points
@@ -81,12 +89,34 @@ export class ConcShape extends AnalyzableConcreteSection {
     generateMesh() {
         if (!this.baseshape) return;
         const geometry = new THREE.ShapeGeometry(this.baseshape);
-        const meshMaterial = new THREE.MeshStandardMaterial({ color: 0xE5E5E5, transparent: true, opacity: 0.4});
+        const color = this.material?.type === 'steel' ? 0x64748B : 0xCBD5E1;
+        const meshMaterial = new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.46});
         this.mesh = new THREE.Mesh(geometry, meshMaterial);
         this.mesh.userData.concShape = this; // ✅ Store ConcShape instance in the mesh
+        this.mesh.userData.sectionShape = this;
+        this.mesh.userData.material = this.material;
+        this.mesh.userData.priority = this.priority;
     }
 
-    generateFEMMesh() {
+    generateFEMMesh(interiorSpacing, edgeSpacing) {
+        const requestedInterior = Number(interiorSpacing ?? document.getElementById("intSpa")?.value);
+        const requestedEdge = Number(edgeSpacing ?? document.getElementById("edgeSpa")?.value);
+        const resolved = buildResolvedSectionMesh([this], {
+            interiorSpacing: requestedInterior,
+            edgeSpacing: requestedEdge
+        });
+        this.FEMmesh = resolved.elements;
+        this.FEMarea = resolved.area;
+        this.centroidX = resolved.centroidX;
+        this.centroidY = resolved.centroidY;
+        this.materialSummary = resolved.materialSummary;
+        for (const element of this.FEMmesh) {
+            element.userData.compShape = this;
+            scene.add(element);
+        }
+        return this.FEMmesh;
+
+        /* Legacy Delaunay implementation retained below for reference. */
         if (!this.mesh) {
             console.error("Mesh does not exist for ConcShape.");
             return;

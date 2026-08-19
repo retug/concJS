@@ -4,7 +4,7 @@
 
 import { ConcShape } from './concShape.js'; // Adjust path as needed
 import * as THREE from 'three';
-import { defaultMaterials } from "./materials.js";
+import { DEFAULT_PLATED_CORE_STEEL_NAME, defaultMaterials } from "./materials.js";
 import { resizeThreeJsScene, setupDragAndAnalyze } from "./threeJSscenefunctions.js";
 import { addRebar, rebarDia } from './threeJSscenefunctions.js';
 
@@ -26,6 +26,8 @@ export function toggleMaterialsAndShapesDiv() {
         shapeContent.style.display = 'block';
         materialsAndShapes.style.width = '16.667%';
         materialsAndShapes.style.flex = '0 0 16.667%'; // Prevent flex from overriding width
+        materialsAndShapes.style.overflowX = 'hidden';
+        materialsAndShapes.style.overflowY = 'auto';
         middleColumn.style.flexGrow = '1'; // Reset to normal
         button.innerHTML = '&#xab;'; 
         button.setAttribute('data-tooltip', 'Close materials and shapes');
@@ -62,16 +64,32 @@ export function toggleMaterialsAndShapesDiv() {
 export function toggleShapeButtons() {
     const rectangleButton = document.getElementById("rectangleButton");
     const barbellButton = document.getElementById("barbellButton");
+    const platedCoreButton = document.getElementById("platedCoreButton");
+
+    const activate = activeButton => {
+      for (const button of [rectangleButton, barbellButton, platedCoreButton]) {
+        button?.classList.toggle("active", button === activeButton);
+      }
+      const platedOptions = document.getElementById('platedCoreOptions');
+      const rebarOptions = document.getElementById('prebuiltRebarOptions');
+      if (platedOptions) platedOptions.hidden = activeButton !== platedCoreButton;
+      if (rebarOptions) rebarOptions.hidden = activeButton === platedCoreButton;
+      if (activeButton === platedCoreButton) {
+        document.getElementById('width_input').value = '18';
+        document.getElementById('length_input').value = '120';
+        document.getElementById('concrete_mat').value = 'fc5ksi';
+        document.getElementById('plate_mat').value = DEFAULT_PLATED_CORE_STEEL_NAME;
+      }
+    };
   
     rectangleButton.addEventListener("click", () => {
-      rectangleButton.classList.add("active");
-      barbellButton.classList.remove("active");
+      activate(rectangleButton);
     });
   
     barbellButton.addEventListener("click", () => {
-      barbellButton.classList.add("active");
-      rectangleButton.classList.remove("active");
+      activate(barbellButton);
     });
+    platedCoreButton?.addEventListener("click", () => activate(platedCoreButton));
 }
 
 // Function to check which button is active
@@ -80,6 +98,8 @@ export function getActiveShape() {
         return 'rectangle';
     } else if (document.getElementById('barbellButton').classList.contains('active')) {
         return 'barbell';
+    } else if (document.getElementById('platedCoreButton')?.classList.contains('active')) {
+        return 'platedCore';
     }
     return null;
 }
@@ -152,16 +172,31 @@ export function addShapeToScene(scene, sprite) {
         return;
     }
 
-    const segmentCount = parseInt(document.getElementById('rebar_quantity').value);
-    if (isNaN(segmentCount) || segmentCount < 1) {
-        console.warn('Invalid rebar quantity');
-        return;
-    }
-
     const materialNameConc = document.getElementById("concrete_mat").value;
     const selectedMaterialConc = defaultMaterials.find(material => material.name === materialNameConc);
     if (!selectedMaterialConc) {
         console.warn(`Material "${materialNameConc}" not found in default materials.`);
+        return;
+    }
+
+    const xOffset = parseFloat(document.getElementById('X_Vals').value) || 0;
+    const yOffset = parseFloat(document.getElementById('Y_Vals').value) || 0;
+
+    if (activeShape === 'platedCore') {
+        return addPlatedConcreteCore(scene, {
+            length,
+            width,
+            thickness: parseFloat(document.getElementById('plate_thickness').value),
+            xOffset,
+            yOffset,
+            concreteMaterial: selectedMaterialConc,
+            steelMaterial: defaultMaterials.find(material => material.name === document.getElementById('plate_mat').value)
+        });
+    }
+
+    const segmentCount = parseInt(document.getElementById('rebar_quantity').value);
+    if (isNaN(segmentCount) || segmentCount < 1) {
+        console.warn('Invalid rebar quantity');
         return;
     }
 
@@ -186,9 +221,6 @@ export function addShapeToScene(scene, sprite) {
     }
 
     // ✅ Get X and Y offsets from the input fields
-    const xOffset = parseFloat(document.getElementById('X_Vals').value) || 0;
-    const yOffset = parseFloat(document.getElementById('Y_Vals').value) || 0;
-
     let concShape;
     
     if (activeShape === 'rectangle') {
@@ -216,6 +248,44 @@ export function addShapeToScene(scene, sprite) {
     } else {
         addEvenlySpacedPointsAlongCurve(concShape.baseshape, segmentCount, rebarOffset, scene, sprite, rebarSize);
     }
+    return [concShape];
+}
+
+export function addPlatedConcreteCore(scene, options) {
+    const { length, width, thickness, xOffset, yOffset, concreteMaterial, steelMaterial } = options;
+    if (!Number.isFinite(thickness) || thickness <= 0) {
+        throw new Error('Steel plate thickness must be greater than zero.');
+    }
+    if (!concreteMaterial || !steelMaterial) {
+        throw new Error('Concrete and steel plate materials are required.');
+    }
+    if (thickness * 2 >= Math.min(length, width)) {
+        throw new Error('Steel plate thickness must be less than half the wall width and length.');
+    }
+
+    const createBox = (xMin, yMin, xMax, yMax, material, priority) => {
+        const points = [
+            new THREE.Vector2(xMin + xOffset, yMin + yOffset),
+            new THREE.Vector2(xMax + xOffset, yMin + yOffset),
+            new THREE.Vector2(xMax + xOffset, yMax + yOffset),
+            new THREE.Vector2(xMin + xOffset, yMax + yOffset)
+        ];
+        const shape = new ConcShape(points, material, [], { priority });
+        shape.generateMesh();
+        scene.add(shape.mesh);
+        return shape;
+    };
+
+    const halfWidth = width / 2;
+    const halfLength = length / 2;
+    const shapes = [
+        createBox(-halfWidth, -halfLength, halfWidth, halfLength, concreteMaterial, 0),
+        createBox(-halfWidth, -halfLength, -halfWidth + thickness, halfLength, steelMaterial, 1),
+        createBox(halfWidth - thickness, -halfLength, halfWidth, halfLength, steelMaterial, 1),
+        createBox(-halfWidth, -halfLength, halfWidth, -halfLength + thickness, steelMaterial, 1),
+        createBox(-halfWidth, halfLength - thickness, halfWidth, halfLength, steelMaterial, 1)
+    ];
+    return shapes;
 }
 
 

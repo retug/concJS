@@ -1,5 +1,5 @@
 export const PROJECT_FORMAT = "concretejs-project";
-export const PROJECT_SCHEMA_VERSION = 1;
+export const PROJECT_SCHEMA_VERSION = 2;
 
 export function createProjectDocument({
   metadata,
@@ -65,17 +65,17 @@ export function validateAndNormalizeProject(raw) {
 
   const metadata = normalizeMetadata(raw.metadata, warnings);
   const materials = normalizeMaterials(raw.materials, errors, warnings, isFutureVersion);
-  const materialIds = new Set(materials.map(material => material.id));
+  const materialsById = new Map(materials.map(material => [material.id, material]));
   const concreteShapes = normalizeConcreteShapes(
     raw.concreteShapes,
-    materialIds,
+    materialsById,
     errors,
     warnings,
     isFutureVersion
   );
   const reinforcement = normalizeReinforcement(
     raw.reinforcement,
-    materialIds,
+    new Set(materialsById.keys()),
     errors,
     warnings,
     isFutureVersion
@@ -170,7 +170,7 @@ function normalizeMaterials(value, errors, warnings, isFutureVersion) {
   });
 }
 
-function normalizeConcreteShapes(value, materialIds, errors, warnings, isFutureVersion) {
+function normalizeConcreteShapes(value, materialsById, errors, warnings, isFutureVersion) {
   if (!Array.isArray(value)) {
     errors.push("concreteShapes must be an array.");
     return [];
@@ -185,7 +185,9 @@ function normalizeConcreteShapes(value, materialIds, errors, warnings, isFutureV
     }
     const id = normalizeId(shape.id, `shape-${index + 1}`, `${path}.id`, errors, warnings, isFutureVersion);
     const materialId = stringOrBlank(shape.materialId);
-    if (!materialIds.has(materialId)) errors.push(`${path}.materialId does not reference a saved material.`);
+    if (!materialsById.has(materialId)) errors.push(`${path}.materialId does not reference a saved material.`);
+    const defaultPriority = materialsById.get(materialId)?.type === 'steel' ? 1 : 0;
+    const priority = finiteNumber(shape.priority ?? defaultPriority, `${path}.priority`, errors) ?? defaultPriority;
     if (seenIds.has(id)) errors.push(`${path}.id duplicates shape id "${id}".`);
     seenIds.add(id);
 
@@ -208,7 +210,7 @@ function normalizeConcreteShapes(value, materialIds, errors, warnings, isFutureV
         )).filter(Boolean)
       : [];
 
-    return exterior ? [{ id, materialId, geometry: { exterior, openings } }] : [];
+    return exterior ? [{ id, materialId, priority, geometry: { exterior, openings } }] : [];
   });
 }
 

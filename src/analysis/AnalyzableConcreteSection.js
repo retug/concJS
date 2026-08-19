@@ -6,6 +6,12 @@ import { getRebarArea } from '../rebarProperties.js';
 import { getAnalysisConfiguration, updateAnalysisConfiguration } from '../projectState.js';
 import { MomentMomentAnalysis } from './MomentMomentAnalysis.js';
 import { exportSectionAnalysisWorkbook } from './AnalysisExcelExporter.js';
+import {
+    linearStrainAtPoint,
+    responseColor,
+    responseGradientCSS
+} from './sectionResponseField.js';
+import { cameraInteractionForMode } from '../cameraView.js';
 
 export class AnalyzableConcreteSection {
     constructor(material) {
@@ -24,6 +30,12 @@ export class AnalyzableConcreteSection {
         this.rebarObjects = [];
         this.momentMomentAnalysis = null;
         this.currentMomentMomentResult = null;
+        this.materialSummary = [];
+        this.sectionResponseMode = 'stress';
+        this.currentResponseAngle = null;
+        this.currentStrainProfile = null;
+        this.currentResponseSelection = null;
+        this.selectedMomentMomentPoint = null;
     }
 
     initializeRebarObjects(allSelectedRebar) {
@@ -43,6 +55,10 @@ export class AnalyzableConcreteSection {
         this.Pnmax = 0;
         this.momentMomentAnalysis = null;
         this.currentMomentMomentResult = null;
+        this.currentResponseAngle = null;
+        this.currentStrainProfile = null;
+        this.currentResponseSelection = null;
+        this.selectedMomentMomentPoint = null;
     }
 
     CalcPnmax(type) {
@@ -51,22 +67,26 @@ export class AnalyzableConcreteSection {
             return;
         }
 
-        if (!this.material) {
-            throw new Error("Concrete material is required before calculating Pnmax.");
+        if (!this.FEMmesh.length) {
+            throw new Error("A resolved section mesh is required before calculating Pnmax.");
         }
 
-        const fpc = this.material.stress(-0.003);
-        let totalSteelForce = 0;
+        let nominalAxialStrength = 0;
+        for (const element of this.FEMmesh) {
+            const material = element.userData?.material ?? element.userData?.concShape?.material ?? this.material;
+            if (!material) continue;
+            const materialFactor = material.type === 'concrete' ? 0.85 : 1;
+            nominalAxialStrength += materialFactor * material.stress(-0.003) * element.area;
+        }
 
         for (const rebar of this.rebarObjects) {
             const steelMaterial = rebar.materialData;
             if (!steelMaterial) continue;
 
             const area = getRebarArea(rebar);
-            totalSteelForce -= area * steelMaterial.stress(0.005);
+            nominalAxialStrength -= area * steelMaterial.stress(0.005);
         }
 
-        const nominalAxialStrength = 0.85 * fpc * this.FEMarea + totalSteelForce;
         this.Pnmax = 0.8 * nominalAxialStrength / 1000;
         return this.Pnmax;
     }
@@ -140,20 +160,30 @@ export class AnalyzableConcreteSection {
             .map(rebar => rebar.transformedCentroid[angle]?.v)
             .filter(value => value !== undefined);
 
-        if (!rebarLocations.length || !concLocations.length) {
-            console.error("❌ Rebar or Concrete locations are empty. Cannot generate strain profiles.");
+        const plateSteelLocations = this.FEMmesh
+            .filter(element => (element.userData?.material ?? element.userData?.concShape?.material)?.type === 'steel')
+            .map(element => element.transformedCentroid?.[angle]?.v)
+            .filter(value => value !== undefined);
+        const tensionControlLocations = rebarLocations.length
+            ? [...rebarLocations, ...plateSteelLocations]
+            : plateSteelLocations.length
+                ? plateSteelLocations
+                : concLocations;
+
+        if (!concLocations.length) {
+            console.error("❌ Section element locations are empty. Cannot generate strain profiles.");
             return;
         }
 
         const { min: concreteMin, max: concreteMax } = this._getConcreteVBounds(angle);
-        const rebarMin = Math.min(...rebarLocations);
-        const rebarMax = Math.max(...rebarLocations);
+        const rebarMin = Math.min(...tensionControlLocations);
+        const rebarMax = Math.max(...tensionControlLocations);
 
         const positiveBranch = this._generateAdaptiveStrainBranch(angle, {
             compressionV: concreteMax,
             tensionV: rebarMin,
             concreteCentroids: concLocations,
-            rebarLocations,
+            rebarLocations: tensionControlLocations,
             targetCount: 51
         });
 
@@ -161,7 +191,7 @@ export class AnalyzableConcreteSection {
             compressionV: concreteMin,
             tensionV: rebarMax,
             concreteCentroids: concLocations,
-            rebarLocations,
+            rebarLocations: tensionControlLocations,
             targetCount: 51
         });
 
@@ -505,7 +535,13 @@ export class AnalyzableConcreteSection {
                 transformedConcrete.v,
                 strainProfile[1]
             );
-            const force = this.material.stress(strain) * concreteElement.area;
+            const elementMaterial = concreteElement.userData?.material
+                ?? concreteElement.userData?.concShape?.material
+                ?? this.material;
+            const force = elementMaterial.stress(strain) * concreteElement.area;
+            if (elementMaterial.type === 'steel') {
+                maxRebarStrain = Math.max(maxRebarStrain, strain);
+            }
             concreteForce += force;
             concreteMomentV += force * (centroidV - transformedConcrete.v);
             concreteMomentU += force * (centroidU - transformedConcrete.u);
@@ -526,6 +562,15 @@ export class AnalyzableConcreteSection {
             steelForce += force;
             steelMomentV += force * (centroidV - transformedRebar.v);
             steelMomentU += force * (centroidU - transformedRebar.u);
+        }
+
+        if (!Number.isFinite(maxRebarStrain)) {
+            maxRebarStrain = Math.max(...this.FEMmesh.map((element, index) => {
+                const transformedConcrete = transformed.conc[index];
+                return transformedConcrete
+                    ? this.strainFunction(strainProfile[0], transformedConcrete.v, strainProfile[1])
+                    : -Infinity;
+            }));
         }
 
         const P = (steelForce + concreteForce) / 1000;
@@ -579,36 +624,33 @@ export class AnalyzableConcreteSection {
         if (!angleDropdown) {
             let resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 1rem; align-items: start;">
-                    <section>
-                        <h3>3D PMM Interaction Diagram</h3>
-                        <label for="angleSelection">Select Bending Axis Angle:</label>
-                        <select id="angleSelection"></select>
-
-                        <label for="indexSelection">Select Strain Profile Index:</label>
-                        <select id="indexSelection"></select>
-
-                        <div id="pmPlot" style="width: 100%; height: 500px;"></div>
+                <div class="analysis-plots-grid">
+                    <section class="analysis-plot-card">
+                        <div class="analysis-plot-header">
+                            <div><span class="analysis-eyebrow">Interaction surface</span><h3>Axial–Moment Capacity</h3></div>
+                            <div class="plot-control-row">
+                                <label for="angleSelection">Bending axis<select id="angleSelection"></select></label>
+                                <label for="indexSelection">Strain profile<select id="indexSelection"></select></label>
+                            </div>
+                        </div>
+                        <div id="pmPlot" class="analysis-plot"></div>
                     </section>
 
-                    <section>
-                        <h3>Moment-Moment Interaction Diagram</h3>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end;">
-                            <label for="mmAxialLoad" style="display: grid; gap: 0.25rem;">
-                                Axial load (kips)
-                                <input id="mmAxialLoad" type="number" step="1" value="0" style="min-width: 10rem; border: 1px solid #9ca3af; border-radius: 0.25rem; padding: 0.35rem 0.5rem;">
-                            </label>
-                            <button id="generateMMButton" type="button" style="border: 1px solid #6b7280; border-radius: 0.25rem; padding: 0.4rem 0.75rem; background: #f3f4f6;">
-                                Generate MM
-                            </button>
-                            <button id="exportAnalysisExcelButton" type="button" style="border: 1px solid #166534; border-radius: 0.25rem; padding: 0.4rem 0.75rem; background: #dcfce7; color: #14532d;">
-                                Export Excel
-                            </button>
+                    <section class="analysis-plot-card">
+                        <div class="analysis-plot-header">
+                            <div><span class="analysis-eyebrow">Constant axial slice</span><h3>Moment–Moment Capacity</h3></div>
                         </div>
-                        <div id="mmAxialRange" style="margin-top: 0.35rem; font-size: 0.8rem; color: #4b5563;"></div>
-                        <div id="mmStatus" role="status" style="min-height: 1.25rem; margin-top: 0.25rem; font-size: 0.8rem;"></div>
-                        <div id="excelExportStatus" role="status" style="min-height: 1.25rem; margin-top: 0.15rem; font-size: 0.8rem;"></div>
-                        <div id="mmPlot" style="width: 100%; height: 500px;"></div>
+                        <div class="plot-action-row">
+                            <label for="mmAxialLoad">
+                                Axial load (kips)<input id="mmAxialLoad" type="number" step="1" value="0">
+                            </label>
+                            <button id="generateMMButton" type="button">Generate MM</button>
+                            <button id="exportAnalysisExcelButton" class="export-plot-button" type="button">Export Excel</button>
+                        </div>
+                        <div id="mmAxialRange" class="plot-helper-text"></div>
+                        <div id="mmStatus" class="plot-status" role="status"></div>
+                        <div id="excelExportStatus" class="plot-status" role="status"></div>
+                        <div id="mmPlot" class="analysis-plot"></div>
                     </section>
                 </div>
             `;
@@ -638,14 +680,15 @@ export class AnalyzableConcreteSection {
             strainProfileIndices.push(...Array.from({ length: numPoints }, (_, i) => i));
         }
     
-        let colors = angles.map(angle => angle === selectedAngle ? "rgb(255, 100, 0)" : "rgb(200, 200, 200)");
+        let nominalColors = angles.map(angle => angle === selectedAngle ? "#0f4c81" : "#b8c4d1");
+        let designColors = angles.map(angle => angle === selectedAngle ? "#0f766e" : "#a7d1cd");
         let symbolTypes = angles.map(angle => angle === selectedAngle ? "circle" : "cross");
     
         let originalTrace = {
             x: Mx_values, y: My_values, z: P_values,
             mode: "markers", type: "scatter3d",
-            marker: { size: 6, color: colors, opacity: 0.8, symbol: symbolTypes },
-            name: "Original PMM",
+            marker: { size: 5, color: nominalColors, opacity: 0.82, symbol: symbolTypes },
+            name: "Nominal capacity",
             hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br> Index - %{customdata}",
             customdata: strainProfileIndices
         };
@@ -653,21 +696,26 @@ export class AnalyzableConcreteSection {
         let reducedTrace = {
             x: phiMx_values, y: phiMy_values, z: phiP_values,
             mode: "markers", type: "scatter3d",
-            marker: { size: 6, color: colors, opacity: 0.8, symbol: symbolTypes },
-            name: "Reduced (φPMM)",
+            marker: { size: 5, color: designColors, opacity: 0.82, symbol: symbolTypes },
+            name: "Design capacity (φ)",
             hovertemplate: "φP - %{z:.1f} (k)<br> φMx - %{x:.1f} (kip*ft)<br> φMy - %{y:.1f} (kip*ft)<br> Index - %{customdata}",
             customdata: strainProfileIndices
         };
     
         let layout = {
-            title: "3D P-M Interaction Diagram",
+            paper_bgcolor: "#ffffff",
+            plot_bgcolor: "#ffffff",
+            font: { family: "Inter, system-ui, sans-serif", color: "#334155", size: 11 },
             scene: {
-                xaxis: { title: "Mx (kip-ft)" },
-                yaxis: { title: "My (kip-ft)" },
-                zaxis: { title: "P (k)" },
-                aspectmode: "cube"
+                bgcolor: "#ffffff",
+                xaxis: { title: "Mx (kip-ft)", gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+                yaxis: { title: "My (kip-ft)", gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+                zaxis: { title: "P (kips)", gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+                aspectmode: "data",
+                camera: { eye: { x: 1.45, y: 1.45, z: 1.05 } }
             },
-            margin: { l: 0, r: 0, b: 0, t: 50 }
+            legend: { orientation: "h", x: 0, y: 1.04, bgcolor: "rgba(255,255,255,0.82)" },
+            margin: { l: 0, r: 0, b: 0, t: 38 }
         };
     
         let plotDiv = document.getElementById("pmPlot");
@@ -680,9 +728,9 @@ export class AnalyzableConcreteSection {
         ];
 
         if (plotDiv.data) {
-            Plotly.react("pmPlot", pmmTraces, layout);
+            Plotly.react("pmPlot", pmmTraces, layout, { responsive: true, displaylogo: false });
         } else {
-            Plotly.newPlot("pmPlot", pmmTraces, layout);
+            Plotly.newPlot("pmPlot", pmmTraces, layout, { responsive: true, displaylogo: false });
         }
     
         // ✅ Attach event listener only once
@@ -901,6 +949,7 @@ export class AnalyzableConcreteSection {
                 }
             });
             this.currentMomentMomentResult = result;
+            this.selectedMomentMomentPoint = null;
             this.renderMomentMomentCurve(result);
             await this.renderMomentMomentCurveOnPMM(result);
         } catch (error) {
@@ -968,51 +1017,123 @@ export class AnalyzableConcreteSection {
         const status = document.getElementById("mmStatus");
         if (!plot || !status) return;
 
-        const angles = result.points.map(point => point.angle);
+        const pointMetadata = result.points.map((point, pointIndex) => [point.angle, pointIndex]);
         const nominalTrace = {
             x: result.points.map(point => point.nominal?.Mx ?? null),
             y: result.points.map(point => point.nominal?.My ?? null),
-            customdata: angles,
+            customdata: pointMetadata,
             mode: "lines+markers",
             type: "scatter",
             name: "Nominal MM",
             connectgaps: false,
-            line: { color: "#f97316", width: 3 },
-            marker: { color: "#f97316", size: 4 },
-            hovertemplate: "Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<br>NA angle: %{customdata:.2f}°<extra>Nominal</extra>"
+            line: { color: "#0f4c81", width: 3 },
+            marker: { color: "#0f4c81", size: 4 },
+            meta: { isMomentMomentCurve: true, mode: 'nominal' },
+            hovertemplate: "Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<br>NA angle: %{customdata[0]:.2f}°<extra>Nominal</extra>"
         };
         const phiTrace = {
             x: result.points.map(point => point.phi?.Mx ?? null),
             y: result.points.map(point => point.phi?.My ?? null),
-            customdata: angles,
+            customdata: pointMetadata,
             mode: "lines+markers",
             type: "scatter",
-            name: "Reduced (φMM)",
+            name: "Design MM (φ)",
             connectgaps: false,
-            line: { color: "#2563eb", width: 3 },
-            marker: { color: "#2563eb", size: 4 },
-            hovertemplate: "φMx: %{x:.2f} kip-ft<br>φMy: %{y:.2f} kip-ft<br>NA angle: %{customdata:.2f}°<extra>φMM</extra>"
+            line: { color: "#0f766e", width: 3 },
+            marker: { color: "#0f766e", size: 4 },
+            meta: { isMomentMomentCurve: true, mode: 'phi' },
+            hovertemplate: "φMx: %{x:.2f} kip-ft<br>φMy: %{y:.2f} kip-ft<br>NA angle: %{customdata[0]:.2f}°<extra>φMM</extra>"
         };
 
-        Plotly.react(plot, [nominalTrace, phiTrace], {
-            title: `M-M Capacity at P = ${result.axialLoad.toFixed(2)} kips`,
-            xaxis: { title: "Mx (kip-ft)", zeroline: true },
+        const traces = [nominalTrace, phiTrace];
+        const selected = this.selectedMomentMomentPoint;
+        const selectedPoint = selected ? result.points[selected.pointIndex] : null;
+        const selectedSolution = selectedPoint?.[selected?.mode];
+        if (selectedSolution) {
+            traces.push({
+                x: [selectedSolution.Mx],
+                y: [selectedSolution.My],
+                customdata: [[selectedPoint.angle, selected.pointIndex]],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Selected MM point',
+                marker: {
+                    color: '#7c3aed',
+                    size: 11,
+                    symbol: 'diamond',
+                    line: { color: '#ffffff', width: 1.5 }
+                },
+                meta: { isMomentMomentHighlight: true },
+                hovertemplate: "Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<extra>Selected</extra>"
+            });
+        }
+
+        Plotly.react(plot, traces, {
+            title: { text: `P = ${result.axialLoad.toFixed(2)} kips`, font: { size: 14, color: "#334155" } },
+            paper_bgcolor: "#ffffff",
+            plot_bgcolor: "#ffffff",
+            font: { family: "Inter, system-ui, sans-serif", color: "#334155", size: 11 },
+            xaxis: { title: "Mx (kip-ft)", zeroline: true, gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
             yaxis: {
                 title: "My (kip-ft)",
                 zeroline: true,
+                gridcolor: "#e2e8f0",
+                zerolinecolor: "#94a3b8",
                 scaleanchor: "x",
                 scaleratio: 1
             },
-            legend: { orientation: "h" },
+            legend: { orientation: "h", x: 0, y: 1.08 },
             margin: { l: 60, r: 20, b: 55, t: 55 }
         }, { responsive: true });
 
+        if (!plot.dataset.responseSelectionListenerAdded) {
+            plot.on('plotly_click', event => {
+                const clicked = event.points?.[0];
+                if (!clicked?.data?.meta?.isMomentMomentCurve) return;
+                const pointIndex = Number(clicked.customdata?.[1] ?? clicked.pointIndex);
+                window.activeAnalysisSection?.selectMomentMomentPoint?.(
+                    pointIndex,
+                    clicked.data.meta.mode
+                );
+            });
+            plot.dataset.responseSelectionListenerAdded = 'true';
+        }
+
         const nominalCount = result.points.filter(point => point.nominal).length;
         const phiCount = result.points.filter(point => point.phi).length;
-        status.textContent = phiCount
+        const generatedMessage = phiCount
             ? `Generated ${nominalCount} nominal and ${phiCount} φ MM points.`
             : `Generated ${nominalCount} nominal MM points. No φMM solutions exist at this axial load.`;
+        const selectionMessage = selectedSolution
+            ? ` Selected ${selected.mode === 'phi' ? 'design' : 'nominal'} point at ${selectedPoint.angle.toFixed(2)}°.`
+            : '';
+        status.textContent = generatedMessage + selectionMessage;
         status.style.color = phiCount ? "#166534" : "#92400e";
+    }
+
+    selectMomentMomentPoint(pointIndex, mode) {
+        const result = this.currentMomentMomentResult;
+        const point = result?.points?.[pointIndex];
+        const solution = point?.[mode];
+        if (!solution?.strainProfile) return;
+
+        const normalizedAngle = ((point.angle % 360) + 360) % 360;
+        this.selectedMomentMomentPoint = { pointIndex, mode };
+        this.generate3dStressPlot(normalizedAngle, solution.strainProfile, {
+            source: 'MM',
+            title: 'Selected MM Values',
+            subtitle: `${mode === 'phi' ? 'Design (φ)' : 'Nominal'} · NA angle ${point.angle.toFixed(2)}°`,
+            rows: [{
+                label: mode === 'phi' ? 'Design (φ)' : 'Nominal',
+                P: solution.P,
+                Mx: solution.Mx,
+                My: solution.My
+            }]
+        });
+        this.renderMomentMomentCurve(result);
+        void this.renderMomentMomentCurveOnPMM(result);
+
+        setTimeout(() => setupRaycastingForResults(scene, camera, renderer), 100);
     }
 
     _createMomentMoment3DTraces(result) {
@@ -1028,7 +1149,7 @@ export class AnalyzableConcreteSection {
                 // Plot the solved curve as an exact horizontal slice at the
                 // axial load requested by the user.
                 z: result.points.map(point => point[mode] ? result.axialLoad : null),
-                customdata: result.points.map(point => point.angle),
+                customdata: result.points.map((point, pointIndex) => [point.angle, pointIndex]),
                 mode: "lines+markers",
                 type: "scatter3d",
                 connectgaps: false,
@@ -1039,14 +1160,37 @@ export class AnalyzableConcreteSection {
                 meta: { isMomentMomentSlice: true, mode },
                 hovertemplate: `${mode === "phi" ? "φ" : ""}Mx: %{x:.2f} kip-ft<br>`
                     + `${mode === "phi" ? "φ" : ""}My: %{y:.2f} kip-ft<br>`
-                    + `P: %{z:.2f} kips<br>NA angle: %{customdata:.2f}°<extra>${name}</extra>`
+                    + `P: %{z:.2f} kips<br>NA angle: %{customdata[0]:.2f}°<extra>${name}</extra>`
             };
         };
 
-        return [
-            createTrace("nominal", "Nominal MM slice", "#f97316"),
-            createTrace("phi", "Reduced (φMM) slice", "#2563eb")
+        const traces = [
+            createTrace("nominal", "Nominal MM slice", "#0f4c81"),
+            createTrace("phi", "Design MM slice (φ)", "#0f766e")
         ].filter(Boolean);
+
+        const selected = this.selectedMomentMomentPoint;
+        const selectedPoint = selected ? result.points[selected.pointIndex] : null;
+        const selectedSolution = selectedPoint?.[selected?.mode];
+        if (selectedSolution) {
+            traces.push({
+                x: [selectedSolution.Mx],
+                y: [selectedSolution.My],
+                z: [result.axialLoad],
+                mode: 'markers',
+                type: 'scatter3d',
+                name: 'Selected MM point',
+                marker: {
+                    color: '#7c3aed',
+                    size: 8,
+                    symbol: 'diamond',
+                    line: { color: '#ffffff', width: 1 }
+                },
+                meta: { isMomentMomentSlice: true, isMomentMomentHighlight: true },
+                hovertemplate: 'Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<br>P: %{z:.2f} kips<extra>Selected MM</extra>'
+            });
+        }
+        return traces;
     }
 
     async renderMomentMomentCurveOnPMM(result) {
@@ -1101,8 +1245,11 @@ export class AnalyzableConcreteSection {
         let originalSymbols = plotDiv.data[0].marker.symbol; // Get existing symbols
     
         // ✅ Highlight all points belonging to the selected angle
-        let updatedColors = originalColors.map((_, i) =>
-            allAngles[i] === selectedAngle ? "rgb(255, 100, 0)" : "rgb(200, 200, 200)"
+        let updatedNominalColors = originalColors.map((_, i) =>
+            allAngles[i] === selectedAngle ? "#0f4c81" : "#b8c4d1"
+        );
+        let updatedDesignColors = originalColors.map((_, i) =>
+            allAngles[i] === selectedAngle ? "#0f766e" : "#a7d1cd"
         );
     
         let updatedSymbols = originalSymbols.map((_, i) =>
@@ -1110,9 +1257,13 @@ export class AnalyzableConcreteSection {
         );
     
         Plotly.restyle("pmPlot", {
-            "marker.color": [updatedColors],
+            "marker.color": [updatedNominalColors],
             "marker.symbol": [updatedSymbols]
-        }, [0, 1]);
+        }, [0]);
+        Plotly.restyle("pmPlot", {
+            "marker.color": [updatedDesignColors],
+            "marker.symbol": [updatedSymbols]
+        }, [1]);
     }
 
     populateAngleDropdown(angles) {
@@ -1160,7 +1311,7 @@ export class AnalyzableConcreteSection {
             z: [P_selected],
             mode: "markers",
             type: "scatter3d",
-            marker: { size: 10, color: "rgb(255, 0, 0)", opacity: 1.0, symbol: "diamond" },
+            marker: { size: 9, color: "#7c3aed", opacity: 1.0, symbol: "diamond", line: { color: "#ffffff", width: 1 } },
             name: "Selected Point",
             meta: { isPMMHighlight: true },
             hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br>"
@@ -1176,277 +1327,246 @@ export class AnalyzableConcreteSection {
         this.plotPMMResults();
     }
 
-    generate3dStressPlot(angle, strainProfile) {
-        //this function will update the 3d scene, plotting the stress of each element in the scene.
-        //given the angle and strainProfile, calculate the stress at the centroid of all concrete elemments given strain.
-        // Then modify concrete FEMmesh z index to plot stress, times a factor say 2 (stress/2 for 4ksi concrete is 2 units of displacment.) apply this to all FEMmesh objects in the scene.
-        // let positions = mesh.geometry.attributes.position.array, positions[i + 2] = zOffset; positions[i + 5] = zOffset; positions[i + 8] = zOffset;
-        // do a similar process for all rebarObjects in the scene. offset the rebar point object by its stress with some factor say stress/5
-        // Function to calculate stress based on strain profile
-        // Function to calculate stress based on strain profile, U, and V values
-
-        const concreteScaleFactor = 4; // Adjust as needed
-        const rebarScaleFactor = 5; // Adjust as needed
-        const arrowScaleFactor = 4;
-        let minConcreteStress = Infinity, maxConcreteStress = -Infinity;
-        let minRebarStress = Infinity, maxRebarStress = -Infinity;
-
-        function calculateStress(element, strainProfile, angle, concreteMat) {
-            let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
-            if (!transformed) {
-                console.warn(`⚠️ No transformed coordinates for element at angle ${angle}`);
-                return 0;
-            }
-            
-            let strain = strainProfile[0] * transformed.v + strainProfile[1];
-            if (element instanceof THREE.Mesh) {
-                return concreteMat.stress(strain);
-            }
-            else {
-                return element.materialData.stress(strain);
-            }
+    setSectionResponseMode(mode) {
+        if (!['stress', 'strain'].includes(mode)) return;
+        this.sectionResponseMode = mode;
+        this.syncSectionResponseControl();
+        if (this.currentStrainProfile && Number.isFinite(this.currentResponseAngle)) {
+            this.render3dSectionResponse();
         }
-        //used to plot point at concrete stress location.
-        function calculateRebarNormalizedStress(element, strainProfile, angle, concreteMat) {
-            let transformed = element.transformedCentroid[angle]; // Get transformed U/V at angle
-            if (!transformed) {
-                console.warn(`⚠️ No transformed coordinates for element at angle ${angle}`);
-                return 0;
-            }
-            let strain = strainProfile[0] * transformed.v + strainProfile[1];
-            return concreteMat.stress(strain);
-        }
-
-        let minZ = Infinity, maxZ = -Infinity;
-
-        // Iterate through all FEMmesh objects in the scene
-        const concreteMat = this.material
-
-        this.FEMmesh.forEach((object) => {
-            if (!object.geometry || !object.geometry.attributes.position) return;
-
-            let positions = object.geometry.attributes.position.array;
-            let stress = calculateStress(object, strainProfile, angle, concreteMat);
-            minConcreteStress = Math.min(minConcreteStress, stress);
-            maxConcreteStress = Math.max(maxConcreteStress, stress);
-            let zOffset = (stress / 4000) * concreteScaleFactor;
-
-            for (let i = 2; i < positions.length; i += 9) {
-                let newZ = zOffset;
-                minZ = Math.min(minZ, newZ);
-                maxZ = Math.max(maxZ, newZ);
-            }
-        });
-        
-        // Second pass to update position and apply colors
-        this.FEMmesh.forEach((object) => {
-            let positions = object.geometry.attributes.position.array;
-            let colors = object.geometry.attributes.color.array;
-            let stress = calculateStress(object, strainProfile, angle, concreteMat);
-            let zOffset = (stress / 4000) * concreteScaleFactor;
-        
-            for (let i = 0; i < positions.length; i += 3) { // Loop through ALL vertices
-                positions[i + 2] = zOffset; // Modify Z-coordinate
-        
-                let normalizedZ = (positions[i + 2] - minZ) / (maxZ - minZ);
-        
-                // Assign color per vertex
-                colors[i] = 1 - normalizedZ;  // Red channel
-                colors[i + 1] = 0;            // Green channel
-                colors[i + 2] = normalizedZ;  // Blue channel
-            }
-        
-            object.geometry.attributes.position.needsUpdate = true;
-            object.geometry.attributes.color.needsUpdate = true;
-            object.geometry.computeBoundingBox()
-            object.geometry.computeBoundingSphere()
-        });
-
-        let minZrebar = Infinity, maxZrebar = -Infinity;
-
-        this.rebarObjects.forEach((object) => {
-            if (!object.geometry || !object.geometry.attributes.position) return;
-
-            // let positions = object.geometry.attributes.position.array;
-
-            let stress = calculateStress(object, strainProfile, angle, object.materialData);
-            minRebarStress = Math.min(minRebarStress, stress);
-            maxRebarStress = Math.max(maxRebarStress, stress);
-            
-            
-            let zOffset = (stress / 60000) * rebarScaleFactor;
-            let newZ = zOffset;
-            minZrebar = Math.min(minZ, newZ);
-            maxZrebar = Math.max(maxZ, newZ);
-        });
-
-        // ✅ Remove existing arrows before adding new ones
-        scene.children.filter(obj => obj.userData.isCustomArrow === true).forEach(arrow => scene.remove(arrow));
-
-
-        // Second pass to update position and apply colors
-        this.rebarObjects.forEach((object) => {
-            // Get the position attribute
-            let positionAttribute = object.geometry.getAttribute('position');
-
-            // Access the underlying Float32Array
-            let p = positionAttribute.array;
-
-            //let's plot the point at the location of the concrete stress to allow the point to be in the same position.
-            //the length of the arrow will be based on the actual rebar stress in the object
-            // start point of arrow head
-            let rebarNormalizestress  = calculateRebarNormalizedStress(object, strainProfile, angle, concreteMat);
-            let zOffsetRebar = (rebarNormalizestress / 4000) * concreteScaleFactor;
-
-            let stress = calculateStress(object, strainProfile, angle, object.materialData);
-            // Update the z value of the first vertex
-            p[2] = zOffsetRebar;
-            // Mark the attribute as needing an update
-            positionAttribute.needsUpdate = true;
-            object.geometry.computeBoundingBox()
-            object.geometry.computeBoundingSphere()
-
-            // Normalize rebar stress for coloring
-            let normalizedStress = Math.abs(stress) / 60000; // Normalize for color mapping
-            normalizedStress = Math.min(normalizedStress, 1); // Ensure max value of 1
-
-            // Assign colors
-            let rebarColor = new THREE.Color();
-            if (stress < 0) {
-                // 🔴 **Compression: Fully Red if Normalized Stress = 1, otherwise Red-to-Purple**
-                let red = 1.0;  // Always fully red
-                let green = 0.0; // No green component
-                let blue = normalizedStress === 1 ? 0.0 : normalizedStress * 0.8; // Fully red if 1, else red to purple
-
-                rebarColor.setRGB(red, green, blue);
-            } else {
-                // 🔵 **Tension: Fully Blue if Normalized Stress = 0, otherwise Blue-to-Green**
-                let red = 0.0; // No red component
-                let green = normalizedStress;  // Green increases with stress
-                let blue = normalizedStress === 0 ? 1.0 : 1.0 - (normalizedStress * 0.5); // Fully blue at 0 stress
-
-                rebarColor.setRGB(red, green, blue);
-            }
-            object.material.color = rebarColor;
-            // ✅ Set transparency to 50%
-            object.material.transparent = true;
-            object.material.opacity = 0.5;
-            object.material.needsUpdate = true;
-
-            // Create and add arrow
-            let startX = p[0];
-            let startY = p[1];
-            let extrusionDepth = p[2];
-
-            let arrowDirection = new THREE.Vector3(0, 0, stress < 0 ? -1 : 1); // Flip for compression
-            let arrowLength = Math.abs(stress) / 60000 * arrowScaleFactor; // Scale by stress
-
-            let start, end;
-            if (stress < 0) {
-                // 📌 **Compression: Start in air, end at rebar**
-                start = [startX, startY, extrusionDepth + arrowLength];
-                end = [startX, startY, extrusionDepth];
-            } else {
-                // 📌 **Tension: Start at rebar, extend outward**
-                start = [startX, startY, extrusionDepth];
-                end = [startX, startY, extrusionDepth + arrowLength];
-            }
-            // Call the new custom arrow function
-            createCustomArrow(start, end, rebarColor.getHex(), 0.1, 0.3, stress);
-            
-        });
-
-        function createCustomArrow(start, end, color, thickness = 0.1, coneSize = 0.3, stress) {
-            const arrowGroup = new THREE.Group();
-        
-            // Convert start and end to Vector3
-            const startVec = new THREE.Vector3(...start);
-            const endVec = new THREE.Vector3(...end);
-        
-            // Compute direction and length
-            const direction = new THREE.Vector3().subVectors(endVec, startVec);
-            const length = direction.length();
-            direction.normalize();
-        
-            // Create cylinder for the shaft
-            const shaftGeometry = new THREE.CylinderGeometry(thickness, thickness, length - coneSize, 12);
-            const shaftMaterial = new THREE.MeshBasicMaterial({ color: color });
-            const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
-        
-            // Align the shaft along the Z-axis
-            shaft.position.set(0, 0, (length - coneSize) / 2);
-            shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction); // Align to direction
-        
-            // Create cone for the arrowhead
-            const coneGeometry = new THREE.ConeGeometry(coneSize * 1.5, coneSize, 12);
-            const coneMaterial = new THREE.MeshBasicMaterial({ color: color });
-            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
-        
-            // Position the cone
-            cone.position.set(0, 0, length - coneSize / 2);
-        
-            // Reverse cone direction if in compression (stress < 0)
-            let coneDirection = direction.clone(); // Copy direction so shaft is not affected
-            if (stress < 0) {
-                coneDirection.negate(); // Flip only the cone direction
-            }
-        
-            // Rotate the cone to align with direction
-            cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), coneDirection);
-        
-            // Add shaft and cone to arrow group
-            arrowGroup.add(shaft);
-            arrowGroup.add(cone);
-            //This is to filter and remove from the scene.
-            arrowGroup.userData.isCustomArrow = true
-        
-            // Position the entire arrow
-            arrowGroup.position.copy(startVec);
-            arrowGroup.position.z += 0.5;  // ✅ Move up by 0.5 units in the Z direction
-            arrowGroup.lookAt(endVec);
-        
-            scene.add(arrowGroup);
-            return arrowGroup;
-        }
-
-        // ✅ Update the concShape class with new stress values
-        minConcreteStress = minConcreteStress / 1000; // Convert to ksi
-        maxConcreteStress = maxConcreteStress / 1000;
-        minRebarStress = minRebarStress / 1000;
-        maxRebarStress = maxRebarStress / 1000;
-
-        console.log("Min/Max Concrete Stress:", minConcreteStress, maxConcreteStress);
-        console.log("Min/Max Rebar Stress:", minRebarStress, maxRebarStress);
-
-        // ✅ Inject the updated color scale
-        this.colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress);
     }
 
-    colorScaleHTML(minConcreteStress, maxConcreteStress, minRebarStress, maxRebarStress) {
-        let selectedPointProps = document.getElementById("selectedPointResultProps");
+    syncSectionResponseControl() {
+        document.querySelectorAll('input[name="sectionResponseMode"]').forEach(input => {
+            input.checked = input.value === this.sectionResponseMode;
+        });
+        const hint = document.getElementById('sectionResponseHint');
+        if (hint) {
+            hint.textContent = this.sectionResponseMode === 'strain'
+                ? 'Linear compatible strain'
+                : 'Element stress';
+        }
+    }
+
+    generate3dStressPlot(angle, strainProfile, selection = null) {
+        if (!Array.isArray(strainProfile) || strainProfile.length < 2) return;
+        if (!this.transformedFEMcentroids[angle]) {
+            this.transformCoordinatesAtAngle(angle, false);
+        }
+
+        this.currentResponseAngle = Number(angle);
+        this.currentStrainProfile = [...strainProfile];
+        this.currentResponseSelection = selection ?? this.createPMMResponseSelection(angle);
+        this.syncSectionResponseControl();
+        this.render3dSectionResponse();
+    }
+
+    createPMMResponseSelection(angle) {
+        const selectedIndex = Number(window.selectedIndex ?? 0);
+        const data = this.PMMXYresults[angle];
+        const valueAt = key => Number(data?.[key]?.[0]?.[selectedIndex] ?? 0);
+        return {
+            source: 'PMM',
+            title: 'Selected PMM Values',
+            subtitle: `NA angle ${Number(angle).toFixed(2)}° · Strain profile ${selectedIndex}`,
+            rows: [
+                {
+                    label: 'Nominal',
+                    P: valueAt('P'),
+                    Mx: valueAt('Mx'),
+                    My: valueAt('My')
+                },
+                {
+                    label: 'Capacity',
+                    P: valueAt('phiP'),
+                    Mx: valueAt('phiMx'),
+                    My: valueAt('phiMy')
+                }
+            ]
+        };
+    }
+
+    render3dSectionResponse() {
+        const mode = this.sectionResponseMode;
+        const angle = this.currentResponseAngle;
+        const strainProfile = this.currentStrainProfile;
+        const responseDepth = 4;
+        const concreteMat = this.material;
+        const sectionValuesByElement = new Map();
+        let sectionMin = Infinity;
+        let sectionMax = -Infinity;
+
+        const centroidStrain = element => {
+            const transformed = element.transformedCentroid?.[angle];
+            return transformed
+                ? strainProfile[0] * transformed.v + strainProfile[1]
+                : 0;
+        };
+        const elementMaterial = element => element.userData?.material
+            ?? element.userData?.concShape?.material
+            ?? concreteMat;
+
+        for (const object of this.FEMmesh) {
+            const positions = object.geometry?.attributes?.position?.array;
+            if (!positions) continue;
+
+            const values = [];
+            const stress = elementMaterial(object).stress(centroidStrain(object));
+            for (let index = 0; index < positions.length; index += 3) {
+                const value = mode === 'strain'
+                    ? linearStrainAtPoint(
+                        positions[index],
+                        positions[index + 1],
+                        this.centroidX,
+                        this.centroidY,
+                        angle,
+                        strainProfile
+                    )
+                    : stress;
+                values.push(value);
+                sectionMin = Math.min(sectionMin, value);
+                sectionMax = Math.max(sectionMax, value);
+            }
+            sectionValuesByElement.set(object, values);
+        }
+
+        if (!Number.isFinite(sectionMin) || !Number.isFinite(sectionMax)) {
+            sectionMin = 0;
+            sectionMax = 0;
+        }
+        const sectionScale = Math.max(
+            Math.abs(sectionMin),
+            Math.abs(sectionMax),
+            mode === 'stress' ? 1 : 1e-9
+        );
+
+        for (const [object, values] of sectionValuesByElement) {
+            const positionAttribute = object.geometry.attributes.position;
+            let colorAttribute = object.geometry.attributes.color;
+            if (!colorAttribute || colorAttribute.array.length !== positionAttribute.array.length) {
+                colorAttribute = new THREE.BufferAttribute(
+                    new Float32Array(positionAttribute.array.length),
+                    3
+                );
+                object.geometry.setAttribute('color', colorAttribute);
+            }
+
+            for (let vertexIndex = 0; vertexIndex < values.length; vertexIndex += 1) {
+                const value = values[vertexIndex];
+                const arrayIndex = vertexIndex * 3;
+                const [red, green, blue] = responseColor(value, sectionMin, sectionMax);
+                positionAttribute.array[arrayIndex + 2] = value / sectionScale * responseDepth;
+                colorAttribute.array[arrayIndex] = red / 255;
+                colorAttribute.array[arrayIndex + 1] = green / 255;
+                colorAttribute.array[arrayIndex + 2] = blue / 255;
+            }
+            positionAttribute.needsUpdate = true;
+            colorAttribute.needsUpdate = true;
+            object.geometry.computeVertexNormals?.();
+            object.geometry.computeBoundingBox();
+            object.geometry.computeBoundingSphere();
+        }
+
+        const rebarResponses = this.rebarObjects.map(object => {
+            const strain = centroidStrain(object);
+            return {
+                object,
+                strain,
+                stress: object.materialData?.stress?.(strain) ?? 0
+            };
+        });
+        const rebarStresses = rebarResponses.map(item => item.stress).filter(Number.isFinite);
+        const minRebarStress = rebarStresses.length ? Math.min(...rebarStresses) : Infinity;
+        const maxRebarStress = rebarStresses.length ? Math.max(...rebarStresses) : -Infinity;
+        const rebarStressScale = Math.max(
+            Math.abs(minRebarStress),
+            Math.abs(maxRebarStress),
+            1
+        );
+
+        scene.children
+            .filter(object => object.userData.isCustomArrow === true)
+            .forEach(arrow => scene.remove(arrow));
+
+        for (const { object, strain, stress } of rebarResponses) {
+            const positionAttribute = object.geometry?.getAttribute?.('position');
+            if (!positionAttribute) continue;
+
+            const displayValue = mode === 'strain'
+                ? strain
+                : concreteMat.stress(strain);
+            positionAttribute.array[2] = displayValue / sectionScale * responseDepth;
+            positionAttribute.needsUpdate = true;
+            object.geometry.computeBoundingBox();
+            object.geometry.computeBoundingSphere();
+
+            const colorValue = mode === 'strain' ? strain : stress;
+            const colorMin = mode === 'strain' ? sectionMin : minRebarStress;
+            const colorMax = mode === 'strain' ? sectionMax : maxRebarStress;
+            const [red, green, blue] = responseColor(colorValue, colorMin, colorMax);
+            object.material.color.setRGB(red / 255, green / 255, blue / 255);
+            object.material.transparent = true;
+            object.material.opacity = mode === 'strain' ? 0.9 : 0.78;
+            object.material.needsUpdate = true;
+
+            if (mode === 'stress') {
+                const arrowLength = Math.abs(stress) / rebarStressScale * responseDepth;
+                if (arrowLength > 0.04) {
+                    const direction = new THREE.Vector3(0, 0, stress < 0 ? -1 : 1);
+                    const start = new THREE.Vector3(
+                        positionAttribute.array[0],
+                        positionAttribute.array[1],
+                        positionAttribute.array[2] + (stress < 0 ? arrowLength : 0)
+                    );
+                    const arrow = new THREE.ArrowHelper(
+                        direction,
+                        start,
+                        arrowLength,
+                        object.material.color.getHex(),
+                        Math.min(0.3, arrowLength * 0.35),
+                        Math.min(0.2, arrowLength * 0.25)
+                    );
+                    arrow.userData.isCustomArrow = true;
+                    scene.add(arrow);
+                }
+            }
+        }
+
+        this.colorScaleHTML({
+            mode,
+            sectionMin: mode === 'stress' ? sectionMin / 1000 : sectionMin,
+            sectionMax: mode === 'stress' ? sectionMax / 1000 : sectionMax,
+            rebarMin: minRebarStress / 1000,
+            rebarMax: maxRebarStress / 1000
+        });
+    }
+
+    colorScaleHTML({ mode, sectionMin, sectionMax, rebarMin, rebarMax }) {
+        const selectedPointProps = document.getElementById('selectedPointResultProps');
         if (!selectedPointProps) return;
 
-        // ✅ Retrieve the selected PMM results
-        let selectedAngle = window.selectedAngle || 0;  // Ensure angle is defined
-        let selectedIndex = window.selectedIndex || 0; // Ensure index is defined
-        console.log("YOUR SELECTED INDEX IS", selectedIndex)
-        window.selectedStrainProfileIndex = selectedIndex
+        const selection = this.currentResponseSelection ?? this.createPMMResponseSelection(
+            this.currentResponseAngle ?? 0
+        );
+        const rows = (selection.rows ?? []).map(row => `
+            <tr>
+                <td class="py-1 px-2 font-medium border border-gray-300">${row.label}</td>
+                <td class="py-1 px-2 border border-gray-300">${Number(row.P ?? 0).toFixed(2)}</td>
+                <td class="py-1 px-2 border border-gray-300">${Number(row.Mx ?? 0).toFixed(2)}</td>
+                <td class="py-1 px-2 border border-gray-300">${Number(row.My ?? 0).toFixed(2)}</td>
+            </tr>
+        `).join('');
+        const formatValue = value => mode === 'strain'
+            ? Number(value).toExponential(3)
+            : Number(value).toFixed(1);
+        const hasRebarStress = mode === 'stress'
+            && Number.isFinite(rebarMin)
+            && Number.isFinite(rebarMax);
 
-        let P = this.PMMXYresults[selectedAngle]?.P[0]?.[selectedIndex] || 0;
-        let Mx = this.PMMXYresults[selectedAngle]?.Mx[0]?.[selectedIndex] || 0;
-        let My = this.PMMXYresults[selectedAngle]?.My[0]?.[selectedIndex] || 0;
-
-        let phiP = this.PMMXYresults[selectedAngle]?.phiP[0]?.[selectedIndex] || 0;
-        let phiMx = this.PMMXYresults[selectedAngle]?.phiMx[0]?.[selectedIndex] || 0;
-        let phiMy = this.PMMXYresults[selectedAngle]?.phiMy[0]?.[selectedIndex] || 0;
-    
-        // ✅ Generate color stops for concrete and rebar
-        let concreteColors = this.generateColorScale(minConcreteStress, maxConcreteStress, this.getConcreteColor);
-        let rebarColors = this.generateColorScale(minRebarStress, maxRebarStress, this.getRebarColor);
-    
         selectedPointProps.innerHTML = `
             <div class="pmm-values p-3 bg-white shadow-md rounded-md">
-                <h3 class="text-sm font-semibold text-center mb-2">Selected PMM Values</h3>
+                <h3 class="text-sm font-semibold text-center mb-1">${selection.title}</h3>
+                <p class="response-selection-subtitle">${selection.subtitle ?? ''}</p>
                 <table class="w-auto mx-auto border border-gray-300 text-center text-xs rounded-md overflow-hidden">
                     <thead class="bg-gray-100 text-gray-600">
                         <tr>
@@ -1456,76 +1576,29 @@ export class AnalyzableConcreteSection {
                             <th class="py-1 px-2 border border-gray-300">My (k*ft)</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr class="bg-white hover:bg-gray-50">
-                            <td class="py-1 px-2 font-medium border border-gray-300">Nominal</td>
-                            <td class="py-1 px-2 border border-gray-300">${P.toFixed(2)}</td>
-                            <td class="py-1 px-2 border border-gray-300">${Mx.toFixed(2)}</td>
-                            <td class="py-1 px-2 border border-gray-300">${My.toFixed(2)}</td>
-                        </tr>
-                        <tr class="bg-gray-50 hover:bg-gray-100">
-                            <td class="py-1 px-2 font-medium border border-gray-300">Capacity</td>
-                            <td class="py-1 px-2 border border-gray-300">${phiP.toFixed(2)}</td>
-                            <td class="py-1 px-2 border border-gray-300">${phiMx.toFixed(2)}</td>
-                            <td class="py-1 px-2 border border-gray-300">${phiMy.toFixed(2)}</td>
-                        </tr>
-                    </tbody>
+                    <tbody>${rows}</tbody>
                 </table>
             </div>
             <div class="stress-scale">
-                <p><strong>Concrete Stress (ksi)</strong></p>
-                <div class="color-bar" style="background: ${concreteColors};"></div>
+                <p><strong>Section ${mode === 'strain' ? 'Strain (in/in)' : 'Polygon Stress (ksi)'}</strong></p>
+                <div class="color-bar" style="background: ${responseGradientCSS(sectionMin, sectionMax)};"></div>
                 <div class="scale-labels">
-                    <span>${minConcreteStress.toFixed(1)}</span> 
-                    <span>${((minConcreteStress + maxConcreteStress) / 2).toFixed(1)}</span> 
-                    <span>${maxConcreteStress.toFixed(1)}</span>
+                    <span>${formatValue(sectionMin)}</span>
+                    <span>${formatValue((sectionMin + sectionMax) / 2)}</span>
+                    <span>${formatValue(sectionMax)}</span>
                 </div>
+                ${mode === 'strain' ? '<p class="response-field-note">Compatible strain is evaluated at every triangle vertex.</p>' : ''}
             </div>
-    
-            <div class="stress-scale">
+            ${hasRebarStress ? `<div class="stress-scale">
                 <p><strong>Rebar Stress (ksi)</strong></p>
-                <div class="color-bar" style="background: ${rebarColors};"></div>
+                <div class="color-bar" style="background: ${responseGradientCSS(rebarMin, rebarMax)};"></div>
                 <div class="scale-labels">
-                    <span>${minRebarStress.toFixed(1)}</span> 
-                    <span>${((minRebarStress + maxRebarStress) / 2).toFixed(1)}</span> 
-                    <span>${maxRebarStress.toFixed(1)}</span>
+                    <span>${rebarMin.toFixed(1)}</span>
+                    <span>${((rebarMin + rebarMax) / 2).toFixed(1)}</span>
+                    <span>${rebarMax.toFixed(1)}</span>
                 </div>
-            </div>
+            </div>` : ''}
         `;
-    }
-
-    generateColorScale(min, max, colorFunction) {
-        if (min === max) {
-            return colorFunction(max, min, max); // Solid color when min == max
-        }
-        return `linear-gradient(to right, ${colorFunction(min, min, max)}, ${colorFunction((min + max) / 2, min, max)}, ${colorFunction(max, min, max)})`;
-    }
-
-    getConcreteColor(stress, minConcreteStress, maxConcreteStress) {
-        let normalized = (stress - minConcreteStress) / (maxConcreteStress - minConcreteStress);
-        return `rgb(${(1 - normalized) * 255}, 0, ${normalized * 255})`; // Red to Blue
-    }
-
-    getRebarColor(stress, minRebarStress, maxRebarStress) {
-        let normalized = Math.abs(stress) / (maxRebarStress || 1);
-    
-        if (minRebarStress === maxRebarStress) {
-            return stress < 0 ? "rgb(255, 0, 0)" : "rgb(0, 255, 0)"; // Solid red or green
-        }
-    
-        if (stress < 0) {
-            // 🔴 **Compression: Fully Red if Normalized = 1, otherwise Red-to-Purple**
-            let red = 255;
-            let green = 0;
-            let blue = normalized === 1 ? 0 : normalized * 200; // Fully red if 1, else red to purple
-            return `rgb(${red}, ${green}, ${blue})`;
-        } else {
-            // 🔵 **Tension: Fully Blue if Normalized = 0, otherwise Blue-to-Green**
-            let red = 0;
-            let green = normalized * 255; // Green increases with stress
-            let blue = normalized === 0 ? 255 : 255 - (normalized * 125); // Fully blue at 0 stress
-            return `rgb(${red}, ${green}, ${blue})`;
-        }
     }
 
     populateAnalysisResults() {
@@ -1543,33 +1616,53 @@ export class AnalyzableConcreteSection {
         let centroidX = this.centroidX || 0;
         let centroidY = this.centroidY || 0;
         let rebarArea = this.totalRebarArea||0;
-        let reinforcementRatio = (rebarArea / FEMarea) * 100; // Convert to percentage
-        
-    
-        // ✅ Inject content dynamically
+        let reinforcementRatio = FEMarea > 0 ? (rebarArea / FEMarea) * 100 : 0;
+        const escapeHTML = value => String(value).replace(/[&<>'"]/g, character => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        })[character]);
+        const materialRows = (this.materialSummary ?? []).map((item, index) => `
+            <tr>
+                <td><span class="material-swatch material-swatch-${item.type}"></span>${escapeHTML(item.name)}</td>
+                <td>${escapeHTML(item.type)}</td>
+                <td>${item.area.toFixed(2)}</td>
+                <td>${item.percentage.toFixed(1)}%</td>
+                <td>${item.priorities.join(', ')}</td>
+                <td>${item.triangleCount.toLocaleString()}</td>
+            </tr>
+        `).join('');
+
         analysisResults.innerHTML = `
-        <div class="pmm-values p-3 bg-white shadow-md rounded-md">
-            <h3 class="text-sm font-semibold text-center mb-2">Concrete Shape Properties</h3>
-            <table class="w-auto mx-auto border border-gray-300 text-center text-xs rounded-md overflow-hidden">
-                <thead class="bg-gray-100 text-gray-600">
+        <div class="analysis-summary-card">
+            <div class="analysis-summary-heading">
+                <div>
+                    <span class="analysis-eyebrow">Resolved section</span>
+                    <h3>Section Properties</h3>
+                </div>
+                <span class="analysis-total-area">${FEMarea.toFixed(1)} in²</span>
+            </div>
+            <table class="section-metrics-table">
+                <thead>
                     <tr>
-                        <th class="py-1 px-2 border border-gray-300" title="Concrete Area (in²)">Conc Area</th>
-                        <th class="py-1 px-2 border border-gray-300" title="Rebar Area (in²)">Stl Area</th>
-                        <th class="py-1 px-2 border border-gray-300" title="Reinforcing Ratio (%)">ρ (%)</th>
-                        <th class="py-1 px-2 border border-gray-300" title="X Centriod of Shape (in)">X (in)</th>
-                        <th class="py-1 px-2 border border-gray-300" title="Y Centriod of Shape (in)">Y (in)</th>
+                        <th>Polygon area</th><th>Rebar area</th><th>Rebar ratio</th><th>Centroid X</th><th>Centroid Y</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="bg-white hover:bg-gray-50">
-                        <td class="py-1 px-2 border border-gray-300">${FEMarea.toFixed(1)}</td>
-                        <td class="py-1 px-2 border border-gray-300">${rebarArea.toFixed(2)}</td>
-                        <td class="py-1 px-2 border border-gray-300">${reinforcementRatio.toFixed(2)}</td>
-                        <td class="py-1 px-2 border border-gray-300">${centroidX.toFixed(1)}</td>
-                        <td class="py-1 px-2 border border-gray-300">${centroidY.toFixed(1)}</td>
+                    <tr>
+                        <td>${FEMarea.toFixed(2)} in²</td><td>${rebarArea.toFixed(2)} in²</td><td>${reinforcementRatio.toFixed(2)}%</td>
+                        <td>${centroidX.toFixed(2)} in</td><td>${centroidY.toFixed(2)} in</td>
                     </tr>
                 </tbody>
             </table>
+            <div class="material-breakdown-heading">
+                <h4>Material Breakdown</h4>
+                <span>Priority-resolved FEM area</span>
+            </div>
+            <div class="material-breakdown-scroll">
+                <table class="material-breakdown-table">
+                    <thead><tr><th>Material</th><th>Type</th><th>Area (in²)</th><th>Share</th><th>Priority</th><th>Triangles</th></tr></thead>
+                    <tbody>${materialRows || '<tr><td colspan="6">No material regions were generated.</td></tr>'}</tbody>
+                </table>
+            </div>
         </div>
         `;
     }
@@ -1581,16 +1674,16 @@ export class AnalyzableConcreteSection {
 
         // Re-enable orbit controls rotation and panning
         if (typeof controls !== 'undefined') {
-            controls.enableRotate = true;
-            controls.enablePan = true;
+            const interaction = cameraInteractionForMode(camera.isOrthographicCamera ? 'top' : 'perspective');
+            controls.enableRotate = interaction.enableRotate;
+            controls.enablePan = interaction.enablePan;
+            controls.enableZoom = interaction.enableZoom;
+            controls.mouseButtons = {
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+            };
             
-            // Assign default controls
-            // controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE; // Right mouse rotates
-            controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;   // Middle mouse pans
-    
-            // Assign Shift + Middle Mouse Button to Rotate
-            controls.keys = { SHIFT: THREE.MOUSE.ROTATE };
-    
             console.log(controls);
         }
 
