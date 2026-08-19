@@ -7,6 +7,9 @@ import { SelectionHelper } from 'three/examples/jsm/interactive/SelectionHelper.
 import { defaultMaterials } from "./materials.js";
 import { ConcShape } from './concShape.js';
 import { updateStressStrainChart, plotSelectedPoint } from "./materialsPlotting.js";
+import { defaultPriorityForMaterial, getShapePriority } from './sectionMeshing.js';
+import { getAnalysisRaycastTargets } from './analysisScene.js';
+import { orthographicFitHeight } from './cameraView.js';
 
 
 
@@ -26,11 +29,11 @@ export function resizeThreeJsScene() {
     if (!concGui || !canvas) return;
 
     // Get new size
-    const newWidth = concGui.clientWidth;
-    const newHeight = concGui.clientHeight;
+    const newWidth = Math.max(concGui.clientWidth, 1);
+    const newHeight = Math.max(concGui.clientHeight, 1);
 
     // Update the renderer
-    renderer.setSize(newWidth, newHeight);
+    renderer.setSize(newWidth, newHeight, false);
     renderer.setPixelRatio(window.devicePixelRatio);
 
     // Force the canvas to match the new size
@@ -38,7 +41,21 @@ export function resizeThreeJsScene() {
     canvas.style.height = `${newHeight}px`;
 
     // Adjust camera aspect ratio
-    camera.aspect = newWidth / newHeight;
+    const aspect = newWidth / newHeight;
+    if (camera.isPerspectiveCamera) {
+        camera.aspect = aspect;
+    } else if (camera.isOrthographicCamera) {
+        const fitSize = camera.userData.fitSize;
+        const padding = camera.userData.fitPadding ?? 1.18;
+        const viewHeight = fitSize
+            ? orthographicFitHeight(fitSize, aspect, padding)
+            : (camera.userData.viewHeight ?? 20);
+        camera.userData.viewHeight = viewHeight;
+        camera.left = -(viewHeight * aspect) / 2;
+        camera.right = (viewHeight * aspect) / 2;
+        camera.top = viewHeight / 2;
+        camera.bottom = -viewHeight / 2;
+    }
     camera.updateProjectionMatrix();
 }
 
@@ -61,6 +78,8 @@ export function setupDragAndAnalyze() {
     results.style.flex = "1";
     results.style.display = "none";
     dragBar.style.display = "none";
+
+    requestAnimationFrame(() => requestAnimationFrame(resizeThreeJsScene));
 
     // Drag functionality
     dragBar.addEventListener("mousedown", (e) => {
@@ -119,7 +138,7 @@ export function addRebar(x, y, barSize, scene, sprite, options = {}) {
         size: diameter,
         map: sprite,
         transparent: true,
-        color: 0xFF7F00 // ✅ Changed from 'blue' to 0xFF7F00
+        color: 0x334155
     });
 
     // ✅ Create Three.js Points object
@@ -147,9 +166,11 @@ export function resetProjectSelections() {
     if (document.getElementById("concSelected")) document.getElementById("concSelected").textContent = "0";
 }
 
-export function setupMouseTracking(threeJSDiv, plane, intersectionPoint) {
+export function setupMouseTracking(threeJSDiv, intersectionPoint) {
     const mouse = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
+    const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    const intersectPoint = new THREE.Vector3();
 
     function onMouseMove(event) {
         const rect = renderer.domElement.getBoundingClientRect();
@@ -159,12 +180,9 @@ export function setupMouseTracking(threeJSDiv, plane, intersectionPoint) {
         // Update the raycaster
         raycaster.setFromCamera(mouse, camera);
 
-        // Check for intersection with the plane
-        const intersects = raycaster.intersectObject(plane);
-
-        if (intersects.length > 0) {
-            const intersectPoint = intersects[0].point;
-
+        // Intersect an infinite XY work plane. Mouse tracking is therefore not
+        // limited by the visible grid's current geometry or camera zoom.
+        if (raycaster.ray.intersectPlane(xyPlane, intersectPoint)) {
             // Update the position of the intersection point and make it visible
             intersectionPoint.position.copy(intersectPoint);
             intersectionPoint.visible = true;
@@ -191,8 +209,11 @@ export function setupMouseTracking(threeJSDiv, plane, intersectionPoint) {
 
 export function setupMouseInteractions(threeJSDiv) {
     const mouse = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+    raycaster.params.Points.threshold = 1.25;
     let middlemouse = 0;
     let isLeftMouseDown = false;
+    let pointerStart = null;
 
     const selectionBox = new SelectionBox(camera, scene);
     const helper = new SelectionHelper(renderer, "selectBox");
@@ -205,6 +226,7 @@ export function setupMouseInteractions(threeJSDiv) {
             middlemouse = 1;
         } else if (event.button === 0) {
             isLeftMouseDown = true;
+            pointerStart = { x: event.clientX, y: event.clientY };
             if (!event.ctrlKey) resetSelections();
             setMousePosition(event);
             selectionBox.startPoint.set(mouse.x, mouse.y, 0.5);
@@ -215,7 +237,6 @@ export function setupMouseInteractions(threeJSDiv) {
         if (middlemouse !== 1 && isLeftMouseDown) {
             setMousePosition(event);
             selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
-            applySelectionColors(selectionBox.select());
         }
     }
 
@@ -224,7 +245,12 @@ export function setupMouseInteractions(threeJSDiv) {
         if (middlemouse !== 1) {
             setMousePosition(event);
             selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
-            const allSelected = selectionBox.select();
+            const distance = pointerStart
+                ? Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y)
+                : 0;
+            const allSelected = distance <= 4
+                ? getClickSelection()
+                : getWindowSelection(selectionBox.startPoint, selectionBox.endPoint);
             applySelectionColors(allSelected);
             processSelection(allSelected);
         }
@@ -248,7 +274,7 @@ export function setupMouseInteractions(threeJSDiv) {
         for (const concShape of allSelectedConc) {
             console.log('your concrete shape is a instance of concrete shape?', concShape instanceof ConcShape )
             if (concShape instanceof ConcShape && concShape.mesh && concShape.mesh.material) { // ✅ Ensure valid `ConcShape`
-                concShape.mesh.material.color.set(0xE5E5E5);
+                concShape.mesh.material.color.set(concShape.material?.type === 'steel' ? 0x64748B : 0xCBD5E1);
             }
         }
         allSelectedPnts = [];
@@ -260,16 +286,16 @@ export function setupMouseInteractions(threeJSDiv) {
     function applySelectionColors(selectedObjects) {
         for (const obj of selectedObjects) {
             if (obj.isReference !== true && obj.isRebar !== true && obj.isPoints === true) {
-                obj.material.color.set(0xFF7F00);
+                obj.material.color.set(0x2563EB);
             } else if (obj.isRebar === true && obj.isPoints === true) {
-                obj.material.color.set(0xFF7F00);
+                obj.material.color.set(0x2563EB);
             }
             else if (obj.isMesh === true) {
-                obj.material.color.set(0xFF7F00);
+                obj.material.color.set(0x2563EB);
 
             } 
             else if (obj instanceof ConcShape) {
-                obj.mesh.material.color.set(0xFF7F00);
+                obj.mesh.material.color.set(0x2563EB);
             }
         }
     }
@@ -277,16 +303,114 @@ export function setupMouseInteractions(threeJSDiv) {
     function processSelection(selectedObjects) {
         for (const obj of selectedObjects) {
             if (obj.isReference !== true && obj.isRebar !== true && obj.isPoints === true) {
-                allSelectedPnts.push(obj);
+                if (!allSelectedPnts.includes(obj)) allSelectedPnts.push(obj);
             } else if (obj.isRebar === true && obj.isPoints === true) {
-                allSelectedRebar.push(obj);
+                if (!allSelectedRebar.includes(obj)) allSelectedRebar.push(obj);
                 console.log(allSelectedRebar)
             } else if (obj.isMesh === true && obj.userData.concShape) {
-                // allSelectedConc.push(obj);
-                allSelectedConc.push(obj.userData.concShape);
+                if (!allSelectedConc.includes(obj.userData.concShape)) allSelectedConc.push(obj.userData.concShape);
             }
         }
         updateTables();
+    }
+
+    function getClickSelection() {
+        raycaster.setFromCamera(mouse, camera);
+        const intersections = raycaster.intersectObjects(scene.children, true)
+            .filter(hit => isSelectable(hit.object));
+        const pointHit = intersections.find(hit => hit.object.isPoints === true);
+        if (pointHit) return [pointHit.object];
+
+        const polygonHits = intersections
+            .filter(hit => hit.object.isMesh === true && hit.object.userData?.concShape)
+            .sort((left, right) => (
+                getShapePriority(right.object.userData.concShape) - getShapePriority(left.object.userData.concShape)
+            ));
+        return polygonHits.length ? [polygonHits[0].object] : [];
+    }
+
+    function getWindowSelection(start, end) {
+        const bounds = {
+            left: Math.min(start.x, end.x),
+            right: Math.max(start.x, end.x),
+            bottom: Math.min(start.y, end.y),
+            top: Math.max(start.y, end.y)
+        };
+        return scene.children.filter(object => {
+            if (!isSelectable(object)) return false;
+            if (object.isPoints === true) {
+                const position = object.geometry?.attributes?.position;
+                if (!position) return false;
+                const point = object.localToWorld(new THREE.Vector3(
+                    position.getX(0), position.getY(0), position.getZ(0)
+                )).project(camera);
+                return pointInBounds(point, bounds, 0.012);
+            }
+            return object.isMesh === true && meshIntersectsSelection(object, bounds);
+        });
+    }
+
+    function isSelectable(object) {
+        return object?.visible !== false && (
+            (object.isPoints === true && object.isReference !== true)
+            || (object.isMesh === true && Boolean(object.userData?.concShape))
+        );
+    }
+
+    function meshIntersectsSelection(object, bounds) {
+        const geometry = object.geometry;
+        const positions = geometry?.attributes?.position;
+        if (!positions) return false;
+        const index = geometry.index;
+        const triangleCount = index ? index.count / 3 : positions.count / 3;
+        const projected = vertexIndex => {
+            const sourceIndex = index ? index.getX(vertexIndex) : vertexIndex;
+            return object.localToWorld(new THREE.Vector3(
+                positions.getX(sourceIndex), positions.getY(sourceIndex), positions.getZ(sourceIndex)
+            )).project(camera);
+        };
+
+        for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+            const points = [0, 1, 2].map(offset => projected(triangle * 3 + offset));
+            if (triangleIntersectsBounds(points, bounds)) return true;
+        }
+        return false;
+    }
+
+    function triangleIntersectsBounds(points, bounds) {
+        if (points.some(point => pointInBounds(point, bounds))) return true;
+        const corners = [
+            { x: bounds.left, y: bounds.bottom },
+            { x: bounds.right, y: bounds.bottom },
+            { x: bounds.right, y: bounds.top },
+            { x: bounds.left, y: bounds.top }
+        ];
+        if (corners.some(corner => pointInTriangle(corner, points))) return true;
+
+        const triangleEdges = [[0, 1], [1, 2], [2, 0]].map(([a, b]) => [points[a], points[b]]);
+        const rectangleEdges = [[0, 1], [1, 2], [2, 3], [3, 0]].map(([a, b]) => [corners[a], corners[b]]);
+        return triangleEdges.some(edge => rectangleEdges.some(rectEdge => segmentsIntersect(edge, rectEdge)));
+    }
+
+    function pointInBounds(point, bounds, padding = 0) {
+        return point.x >= bounds.left - padding && point.x <= bounds.right + padding
+            && point.y >= bounds.bottom - padding && point.y <= bounds.top + padding;
+    }
+
+    function pointInTriangle(point, [a, b, c]) {
+        const cross = (p1, p2, p3) => (
+            (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+        );
+        const d1 = cross(point, a, b);
+        const d2 = cross(point, b, c);
+        const d3 = cross(point, c, a);
+        return !(d1 < 0 || d2 < 0 || d3 < 0) || !(d1 > 0 || d2 > 0 || d3 > 0);
+    }
+
+    function segmentsIntersect([a, b], [c, d]) {
+        const orientation = (p, q, r) => Math.sign((q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y));
+        return orientation(a, b, c) !== orientation(a, b, d)
+            && orientation(c, d, a) !== orientation(c, d, b);
     }
 
     function updateTables() {
@@ -340,12 +464,23 @@ export function setupMouseInteractions(threeJSDiv) {
             let row = document.createElement("tr");
 
             let materialDropdown = createMaterialDropdown(concShape.material.name, newMaterial => {
+                const previousMaterial = concShape.material;
+                const wasDefaultPriority = concShape.priority === defaultPriorityForMaterial(previousMaterial);
                 concShape.material = defaultMaterials.find(mat => mat.name === newMaterial) || concShape.material;
+                if (wasDefaultPriority) concShape.priority = defaultPriorityForMaterial(concShape.material);
+                concShape.mesh.userData.material = concShape.material;
+                concShape.mesh.userData.priority = concShape.priority;
+                concShape.mesh.material.color.set(concShape.material?.type === 'steel' ? 0x64748B : 0xCBD5E1);
                 updateTables();
-                
             });
 
-            row.appendChild(wrapInTableCell(materialDropdown)); // ✅ Add material dropdown for concrete
+            const priorityInput = createInputField(concShape.priority, newPriority => {
+                concShape.priority = newPriority;
+                concShape.mesh.userData.priority = newPriority;
+            });
+
+            row.appendChild(wrapInTableCell(materialDropdown));
+            row.appendChild(wrapInTableCell(priorityInput));
             concTable.appendChild(row);
         });
 
@@ -359,7 +494,6 @@ export function setupMouseInteractions(threeJSDiv) {
         let input = document.createElement("input");
         input.type = "number";
         input.value = value;
-        input.min = "0";
         input.step = "0.1";
         input.placeholder = "Enter value";
 
@@ -683,7 +817,12 @@ export function setupRaycastingForResults(scene, camera, renderer) {
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        return raycaster.intersectObjects(scene.children, true); // ✅ Always get fresh objects
+        // Design geometry, helpers, and response arrows must never intercept a
+        // result click. Only the active section's FEM and rebar are selectable.
+        return raycaster.intersectObjects(
+            getAnalysisRaycastTargets(window.activeAnalysisSection),
+            true
+        );
     }
 
     function onMouseMove(event) {
@@ -748,12 +887,12 @@ export function setupRaycastingForResults(scene, camera, renderer) {
 
         if (selectedObject instanceof THREE.Mesh && selectedObject.userData) {
             console.log("Concrete Mesh Clicked:", selectedObject);
-            updateStressStrainChart(selectedObject.userData.concShape.material);
-            plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
+            updateStressStrainChart(selectedObject.userData.material ?? selectedObject.userData.concShape.material);
+            plotSelectedPoint(selectedObject);
         } else if (selectedObject instanceof THREE.Points && selectedObject.materialData) {
             console.log("Rebar Point Clicked:", selectedObject);
             updateStressStrainChart(selectedObject.materialData);
-            plotSelectedPoint(selectedObject, window.selectedStrainProfileIndex, window.selectedAngle);
+            plotSelectedPoint(selectedObject);
         }
     }
 

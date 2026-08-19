@@ -35,6 +35,7 @@
     "chart.js": "^4.4.7",
     "delaunator": "^5.0.1",
     "plotly.js-dist-min": "^3.0.1",
+    "polygon-clipping": "^0.15.7",
     "three": "^0.172.0"
   }
 }

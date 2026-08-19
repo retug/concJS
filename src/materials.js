@@ -56,6 +56,9 @@ export class StructuralMaterial {
       return 0; // Should never reach here
   }
   }
+
+export const A992_GRADE_50_MATERIAL_NAME = "A992 Grade 50";
+export const DEFAULT_PLATED_CORE_STEEL_NAME = A992_GRADE_50_MATERIAL_NAME;
   
   export const defaultMaterials = [
     new StructuralMaterial(
@@ -87,11 +90,25 @@ export class StructuralMaterial {
       [-2, -1, -0.002, 0.]
     ),
     new StructuralMaterial(
+      "fy50ksi",
+      "steel",
+      "normal",
+      [-10, -50000, -50000, -50000, 0, 50000, 50000, 50000, 10],
+      [-2, -1, -0.005, -0.001725, 0, 0.001725, 0.005, 1, 2]
+    ),
+    new StructuralMaterial(
       "fy60ksi",
       "steel",
       "normal",
       [-10, -60000, -60000, -60000, 0, 60000, 60000, 60000, 10],
       [-2, -1, -0.005, -0.00207, 0, 0.00207, 0.005, 1, 2]
+    ),
+    new StructuralMaterial(
+      A992_GRADE_50_MATERIAL_NAME,
+      "steel",
+      "normal",
+      [-10, -50000, -50000, -50000, 0, 50000, 50000, 50000, 10],
+      [-2, -1, -0.005, -0.001725, 0, 0.001725, 0.005, 1, 2]
     ),
     new StructuralMaterial(
       "fye75ksi",

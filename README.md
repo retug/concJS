@@ -7,6 +7,15 @@ recording
 
 ![Alt text](images/concJS.gif)
 
+## Multi-material sections
+
+Section polygons may overlap and each polygon has a numeric priority. The
+higher-priority polygon governs an overlap (concrete defaults to `0`, steel to
+`1`). Analysis resolves the polygons into disjoint FEM material regions,
+automatically tightens the mesh for thin shapes, and reports resolved area by
+material. Saved projects use schema version 2; version 1 projects remain
+importable and receive material-based default priorities.
+
 ## Deploy to the RETUG Django site
 
 Run the complete production build, Django-template conversion, and changed-file copy with:
