@@ -146,6 +146,9 @@ export function serializeCurrentProject({ concreteShapes, reinforcement }) {
     name: material.name,
     type: material.type,
     strengthBasis: material.normal_or_expected,
+    ...(material.type === 'concrete'
+      ? { compressiveStrengthACI: material.compressiveStrengthACI }
+      : {}),
     stressStrain: material.strainData.map((strain, pointIndex) => ({
       strain,
       stress: material.stressData[pointIndex]
@@ -226,7 +229,8 @@ function stageProject(project, scene, sprite) {
     material.type,
     material.strengthBasis,
     material.stressStrain.map(point => point.stress),
-    material.stressStrain.map(point => point.strain)
+    material.stressStrain.map(point => point.strain),
+    material.compressiveStrengthACI
   ));
   const materialsById = new Map(project.materials.map((material, index) => [material.id, materials[index]]));
 

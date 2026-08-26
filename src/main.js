@@ -2,7 +2,14 @@ import './style.css';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import { toggleMaterialsAndShapesDiv, toggleShapeButtons, getActiveShape, createRectangleShape, addShapeToScene } from './materialsandShapes.js';
-import { populateMaterialDropdown, updateChartAndTable, addUserDefinedRow, saveUserDefinedMaterial, populateRebarDropdown } from './materialsPlotting.js';
+import {
+  populateMaterialDropdown,
+  updateChartAndTable,
+  addUserDefinedRow,
+  saveUserDefinedMaterial,
+  populateRebarDropdown,
+  updateCustomConcreteStrengthVisibility
+} from './materialsPlotting.js';
 import * as SceneFunctions from './threeJSscenefunctions.js';
 import { setupReplicateShortcut, setupMoveShortcut } from './CADfunctions.js';
 import { CompositeConcShape } from './compositeShapeAnalysis.js';
@@ -509,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Attach event listeners for material and rebar handling
   document.getElementById("materialDropdown").addEventListener("change", updateChartAndTable);
+  document.getElementById("materialType").addEventListener("change", updateCustomConcreteStrengthVisibility);
   document.getElementById("addRow").addEventListener("click", addUserDefinedRow);
   document.getElementById("saveMaterial").addEventListener("click", saveUserDefinedMaterial);
 

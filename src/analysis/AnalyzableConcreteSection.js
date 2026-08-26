@@ -83,8 +83,7 @@ export class AnalyzableConcreteSection {
         for (const element of this.FEMmesh) {
             const material = element.userData?.material ?? element.userData?.concShape?.material ?? this.material;
             if (!material) continue;
-            const materialFactor = material.type === 'concrete' ? 0.85 : 1;
-            nominalAxialStrength += materialFactor * material.stress(-0.003) * element.area;
+            nominalAxialStrength += material.stress(-0.003) * element.area;
         }
 
         for (const rebar of this.rebarObjects) {

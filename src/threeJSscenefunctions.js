@@ -1,7 +1,7 @@
 import { camera, renderer, scene, getSprite } from "./main.js"; 
 import * as THREE from 'three';
-import { rebarDia } from './rebarProperties.js';
-export { rebarDia } from './rebarProperties.js';
+import { rebarArea, rebarDia } from './rebarProperties.js';
+export { rebarArea, rebarDia } from './rebarProperties.js';
 import { SelectionBox } from 'three/examples/jsm/interactive/SelectionBox.js';
 import { SelectionHelper } from 'three/examples/jsm/interactive/SelectionHelper.js';
 import { defaultMaterials } from "./materials.js";
@@ -115,7 +115,7 @@ export function setupDragAndAnalyze() {
 
 export function addRebar(x, y, barSize, scene, sprite, options = {}) {
     const diameter = Number(options.diameter ?? rebarDia[barSize]);
-    const area = Number(options.area ?? ((Math.PI / 4) * diameter ** 2));
+    const area = Number(options.area ?? rebarArea[barSize] ?? ((Math.PI / 4) * diameter ** 2));
     if (!Number.isFinite(diameter) || diameter <= 0) {
         console.error("Invalid rebar size:", barSize);
         return null; // ✅ Return null if barSize is invalid
@@ -146,7 +146,9 @@ export function addRebar(x, y, barSize, scene, sprite, options = {}) {
     tempDot.isRebar = true; // ✅ Mark as rebar
     tempDot.rebarSize = Number(barSize); // ✅ Store rebar size
     tempDot.rebarDiameter = diameter;
-    tempDot.rebarArea = Number.isFinite(area) && area > 0 ? area : (Math.PI / 4) * diameter ** 2;
+    tempDot.rebarArea = Number.isFinite(area) && area > 0
+        ? area
+        : rebarArea[barSize] ?? (Math.PI / 4) * diameter ** 2;
     tempDot.materialData = materialObject; // ✅ Store material data
 
     // ✅ Add to the scene
