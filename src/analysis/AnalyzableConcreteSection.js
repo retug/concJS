@@ -12,6 +12,10 @@ import {
     responseGradientCSS
 } from './sectionResponseField.js';
 import { cameraInteractionForMode } from '../cameraView.js';
+import {
+    calculateRebarForce,
+    findRebarConcreteMaterial
+} from './rebarConcreteDisplacement.js';
 
 export class AnalyzableConcreteSection {
     constructor(material) {
@@ -36,11 +40,15 @@ export class AnalyzableConcreteSection {
         this.currentStrainProfile = null;
         this.currentResponseSelection = null;
         this.selectedMomentMomentPoint = null;
+        this.rebarConcreteMaterials = new Map();
+        this.rebarConcreteMaterialMesh = null;
     }
 
     initializeRebarObjects(allSelectedRebar) {
         this.resetAnalysisResults();
         this.rebarObjects = allSelectedRebar;
+        this.rebarConcreteMaterials.clear();
+        this.rebarConcreteMaterialMesh = null;
         this.totalRebarArea = this.rebarObjects.reduce((sum, rebar) => {
             return sum + getRebarArea(rebar);
         }, 0);
@@ -75,8 +83,7 @@ export class AnalyzableConcreteSection {
         for (const element of this.FEMmesh) {
             const material = element.userData?.material ?? element.userData?.concShape?.material ?? this.material;
             if (!material) continue;
-            const materialFactor = material.type === 'concrete' ? 0.85 : 1;
-            nominalAxialStrength += materialFactor * material.stress(-0.003) * element.area;
+            nominalAxialStrength += material.stress(-0.003) * element.area;
         }
 
         for (const rebar of this.rebarObjects) {
@@ -84,11 +91,32 @@ export class AnalyzableConcreteSection {
             if (!steelMaterial) continue;
 
             const area = getRebarArea(rebar);
-            nominalAxialStrength -= area * steelMaterial.stress(0.005);
+            const strain = -0.003;
+            const concreteMaterial = this.getRebarConcreteMaterial(rebar);
+            nominalAxialStrength += calculateRebarForce(
+                area,
+                steelMaterial,
+                concreteMaterial,
+                strain
+            );
         }
 
         this.Pnmax = 0.8 * nominalAxialStrength / 1000;
         return this.Pnmax;
+    }
+
+    getRebarConcreteMaterial(rebar) {
+        if (this.rebarConcreteMaterialMesh !== this.FEMmesh) {
+            this.rebarConcreteMaterials.clear();
+            this.rebarConcreteMaterialMesh = this.FEMmesh;
+        }
+        if (!this.rebarConcreteMaterials.has(rebar)) {
+            this.rebarConcreteMaterials.set(
+                rebar,
+                findRebarConcreteMaterial(rebar, this.FEMmesh)
+            );
+        }
+        return this.rebarConcreteMaterials.get(rebar);
     }
 
     transformCoordinatesAtAngle(angle, updateAnalysisSummary = true) {
@@ -557,7 +585,12 @@ export class AnalyzableConcreteSection {
                 strainProfile[1]
             );
             const area = getRebarArea(rebar);
-            const force = area * rebar.materialData.stress(strain);
+            const force = calculateRebarForce(
+                area,
+                rebar.materialData,
+                this.getRebarConcreteMaterial(rebar),
+                strain
+            );
             maxRebarStrain = Math.max(maxRebarStrain, strain);
             steelForce += force;
             steelMomentV += force * (centroidV - transformedRebar.v);

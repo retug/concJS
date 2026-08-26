@@ -19,6 +19,7 @@ function makeProject() {
         name: 'fc5ksi',
         type: 'concrete',
         strengthBasis: 'normal',
+        compressiveStrengthACI: 5000,
         stressStrain: [
           { strain: -0.003, stress: -5000 },
           { strain: 0, stress: 0 }
@@ -98,12 +99,23 @@ test('valid project round-trips all input groups', () => {
   assert.equal(validation.canImport, true);
   assert.deepEqual(validation.errors, []);
   assert.equal(validation.project.metadata.name, 'Bridge Pier P-2');
+  assert.equal(validation.project.materials[0].compressiveStrengthACI, 5000);
   assert.equal(validation.project.concreteShapes[0].geometry.openings.length, 1);
   assert.equal(validation.project.concreteShapes[0].priority, 4);
   assert.equal(validation.project.reinforcement[0].size.diameter, 1);
   assert.equal(validation.project.reinforcement[0].size.area, Math.PI / 4);
   assert.equal(validation.project.analysisConfiguration.momentMomentAxialLoad, -250);
   assert.equal('results' in validation.project, false);
+});
+
+test('concrete materials require compressiveStrengthACI', () => {
+  const source = makeProject();
+  delete source.materials[0].compressiveStrengthACI;
+
+  const validation = validateAndNormalizeProject(source);
+
+  assert.equal(validation.canImport, false);
+  assert.match(validation.errors.join(' '), /compressiveStrengthACI must be a positive number/i);
 });
 
 test('version 1 shapes migrate to material-based priorities', () => {

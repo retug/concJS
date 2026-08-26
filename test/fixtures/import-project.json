@@ -19,6 +19,7 @@
       "name": "Verification Concrete",
       "type": "concrete",
       "strengthBasis": "normal",
+      "compressiveStrengthACI": 5000,
       "stressStrain": [
         { "strain": -0.003, "stress": -5000 },
         { "strain": 0, "stress": 0 }

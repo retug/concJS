@@ -1115,22 +1115,58 @@ body {
   width: 16.667%;
   min-width: 16.667%;
   max-width: 16.667%;
+  height: 100vh;
+  min-height: 0;
+  box-sizing: border-box;
   padding: 10px;
   border-right: 1px solid #ccc;
   transition: width 0.3s ease-in-out;
   overflow: hidden;
+}
+#userResults {
+  display: flex;
+  flex: 0 0 16.667%;
+  flex-direction: column;
+}
+#userInput,
+#userBtns,
+#analysis {
+  flex: 0 0 auto;
+}
+#designInputScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+#userSelection,
+#analysisInput {
+  min-height: 0;
+}
+#analysis {
+  z-index: 2;
+  margin-top: auto;
+  border-top: 1px solid rgba(100, 116, 139, 0.55);
+  box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.1);
 }
 #materialsandShapes {
   border-left: 1px solid #ccc;
   border-right: none;
   flex: 0 0 16.667%;
   width: 16.667%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 #middleColumn {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   min-width: 0;
 }
@@ -1511,7 +1547,41 @@ body {
 #concGui, #results {
   width: 100%;
   overflow: hidden;
-  flex-grow: 1;
+  min-height: 0;
+}
+#concGui {
+  position: relative;
+  flex: 1 1 0;
+}
+#concGui > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#windowProps {
+  z-index: 11;
+  min-width: 13rem;
+}
+#materialsandShapesClosed {
+  z-index: 13;
+  pointer-events: auto;
+}
+#windowProps p {
+  margin: 0.1rem 0;
+}
+#userInputProps {
+  border: 1px solid rgba(148, 163, 184, 0.75);
+  border-radius: 0.45rem;
+  padding: 0.45rem;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+  -webkit-backdrop-filter: blur(3px);
+          backdrop-filter: blur(3px);
+}
+#results {
+  flex: 1 1 0;
 }
 .section-response-control {
   position: absolute;
@@ -1543,22 +1613,26 @@ body {
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
-.section-response-options {
+.section-response-options,
+.section-camera-options {
   display: grid;
   clear: both;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.3rem;
 }
-.section-response-options label {
+.section-response-options label,
+.section-camera-options label {
   cursor: pointer;
 }
-.section-response-options input {
+.section-response-options input,
+.section-camera-options input {
   position: absolute;
   inline-size: 1px;
   block-size: 1px;
   opacity: 0;
 }
-.section-response-options span {
+.section-response-options span,
+.section-camera-options span {
   display: block;
   border: 1px solid #cbd5e1;
   border-radius: 0.4rem;
@@ -1569,15 +1643,27 @@ body {
   font-weight: 700;
   text-align: center;
 }
-.section-response-options input:checked + span {
+.section-response-options input:checked + span,
+.section-camera-options input:checked + span {
   border-color: #0f4c81;
   background: #0f4c81;
   color: #fff;
   box-shadow: 0 0 0 1px rgba(15, 76, 129, 0.15);
 }
-.section-response-options input:focus-visible + span {
+.section-response-options input:focus-visible + span,
+.section-camera-options input:focus-visible + span {
   outline: 2px solid #38bdf8;
   outline-offset: 2px;
+}
+.section-camera-heading {
+  margin: 0.55rem 0 0.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .section-response-control small {
   display: block;

@@ -1,5 +1,5 @@
 export const PROJECT_FORMAT = "concretejs-project";
-export const PROJECT_SCHEMA_VERSION = 2;
+export const PROJECT_SCHEMA_VERSION = 3;
 
 export function createProjectDocument({
   metadata,
@@ -133,6 +133,7 @@ function normalizeMaterials(value, errors, warnings, isFutureVersion) {
     const name = stringOrBlank(material.name);
     const type = material.type;
     const strengthBasis = material.strengthBasis;
+    const compressiveStrengthACI = material.compressiveStrengthACI;
     const points = material.stressStrain;
 
     if (!name) errors.push(`${path}.name is required.`);
@@ -141,6 +142,12 @@ function normalizeMaterials(value, errors, warnings, isFutureVersion) {
     }
     if (!['normal', 'expected'].includes(strengthBasis)) {
       errors.push(`${path}.strengthBasis must be normal or expected.`);
+    }
+    if (
+      type === 'concrete'
+      && (!isFiniteNumber(compressiveStrengthACI) || compressiveStrengthACI <= 0)
+    ) {
+      errors.push(`${path}.compressiveStrengthACI must be a positive number in psi for concrete.`);
     }
     if (!Array.isArray(points) || points.length < 2) {
       errors.push(`${path}.stressStrain must contain at least two points.`);
@@ -166,7 +173,16 @@ function normalizeMaterials(value, errors, warnings, isFutureVersion) {
     seenIds.add(id);
     seenNames.add(name);
 
-    return [{ id, name, type, strengthBasis, stressStrain }];
+    return [{
+      id,
+      name,
+      type,
+      strengthBasis,
+      ...(type === 'concrete' && isFiniteNumber(compressiveStrengthACI)
+        ? { compressiveStrengthACI: Number(compressiveStrengthACI) }
+        : {}),
+      stressStrain
+    }];
   });
 }
 

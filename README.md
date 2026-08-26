@@ -13,8 +13,9 @@ Section polygons may overlap and each polygon has a numeric priority. The
 higher-priority polygon governs an overlap (concrete defaults to `0`, steel to
 `1`). Analysis resolves the polygons into disjoint FEM material regions,
 automatically tightens the mesh for thin shapes, and reports resolved area by
-material. Saved projects use schema version 2; version 1 projects remain
-importable and receive material-based default priorities.
+material. Saved projects use schema version 3. Concrete materials require a
+positive `compressiveStrengthACI` value in psi; projects created before this
+field was introduced are not migrated automatically.
 
 ## Deploy to the RETUG Django site
 

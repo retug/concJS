@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://concretejs.local/schema/concretejs-project-v2.json",
+  "$id": "https://concretejs.local/schema/concretejs-project-v3.json",
   "title": "ConcreteJS project",
   "type": "object",
   "required": [
@@ -123,6 +123,7 @@
         "name": { "type": "string", "minLength": 1 },
         "type": { "enum": ["concrete", "steel", "other"] },
         "strengthBasis": { "enum": ["normal", "expected"] },
+        "compressiveStrengthACI": { "type": "number", "exclusiveMinimum": 0 },
         "stressStrain": {
           "type": "array",
           "minItems": 2,
@@ -135,7 +136,16 @@
             }
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "concrete" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["compressiveStrengthACI"] }
+        }
+      ]
     },
     "concreteShape": {
       "type": "object",

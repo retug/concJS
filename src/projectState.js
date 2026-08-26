@@ -5,8 +5,8 @@ const EMPTY_METADATA = Object.freeze({
 });
 
 const DEFAULT_ANALYSIS_CONFIGURATION = Object.freeze({
-  edgeSpacing: 1,
-  interiorSpacing: 1,
+  edgeSpacing: 3,
+  interiorSpacing: 3,
   momentMomentAxialLoad: 0
 });
 
