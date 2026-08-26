@@ -1,0 +1,2328 @@
+{
+  "format": "concretejs-project",
+  "schemaVersion": 2,
+  "createdAt": "2026-08-23T23:04:51.995Z",
+  "metadata": {
+    "name": "SP Column - Sepcial Structural Wall Copmressive",
+    "description": "SP Column Verification",
+    "notes": "https://structurepoint.org/publication/html/DE-Special-Structural-Shear-Wall-Compressive-Stress-ACI-318-19-spColumn-v1010/index.html#t=DE-Special-Structural-Wall-Compressive%2F04%2F04.htm%231271290&rhtocid=_5"
+  },
+  "units": {
+    "length": "in",
+    "stress": "psi",
+    "force": "kip",
+    "moment": "kip-ft"
+  },
+  "materials": [
+    {
+      "id": "material-1",
+      "name": "fc4ksi",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -4000
+        },
+        {
+          "strain": -0.002,
+          "stress": -4000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-2",
+      "name": "fc5ksi",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -5000
+        },
+        {
+          "strain": -0.002,
+          "stress": -5000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-3",
+      "name": "fc6ksi",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -6000
+        },
+        {
+          "strain": -0.002,
+          "stress": -6000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-4",
+      "name": "fce4ksi",
+      "type": "concrete",
+      "strengthBasis": "expected",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -5000
+        },
+        {
+          "strain": -0.002,
+          "stress": -5000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-5",
+      "name": "fy60ksi",
+      "type": "steel",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -60000
+        },
+        {
+          "strain": -0.005,
+          "stress": -60000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -60000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 60000
+        },
+        {
+          "strain": 0.005,
+          "stress": 60000
+        },
+        {
+          "strain": 1,
+          "stress": 60000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    },
+    {
+      "id": "material-6",
+      "name": "fye75ksi",
+      "type": "steel",
+      "strengthBasis": "expected",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -75000
+        },
+        {
+          "strain": -0.005,
+          "stress": -75000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -60000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 60000
+        },
+        {
+          "strain": 0.005,
+          "stress": 75000
+        },
+        {
+          "strain": 1,
+          "stress": 75000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    },
+    {
+      "id": "material-7",
+      "name": "fy80ksi",
+      "type": "other",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -80000
+        },
+        {
+          "strain": -0.005,
+          "stress": -80000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -80000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 80000
+        },
+        {
+          "strain": 0.005,
+          "stress": 80000
+        },
+        {
+          "strain": 1,
+          "stress": 80000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    }
+  ],
+  "concreteShapes": [
+    {
+      "id": "shape-1",
+      "materialId": "material-3",
+      "priority": 0,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": -192,
+                "y": -108
+              },
+              "to": {
+                "x": -168,
+                "y": -108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": -168,
+                "y": -108
+              },
+              "to": {
+                "x": -168,
+                "y": 108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": -168,
+                "y": 108
+              },
+              "to": {
+                "x": -192,
+                "y": 108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": -192,
+                "y": 108
+              },
+              "to": {
+                "x": -192,
+                "y": -108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": -192,
+                "y": -108
+              },
+              "to": {
+                "x": -192,
+                "y": -108
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-2",
+      "materialId": "material-3",
+      "priority": 0,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 168,
+                "y": -108
+              },
+              "to": {
+                "x": 192,
+                "y": -108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 192,
+                "y": -108
+              },
+              "to": {
+                "x": 192,
+                "y": 108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 192,
+                "y": 108
+              },
+              "to": {
+                "x": 168,
+                "y": 108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 168,
+                "y": 108
+              },
+              "to": {
+                "x": 168,
+                "y": -108
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 168,
+                "y": -108
+              },
+              "to": {
+                "x": 168,
+                "y": -108
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-3",
+      "materialId": "material-3",
+      "priority": 0,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": -168,
+                "y": -12
+              },
+              "to": {
+                "x": 168,
+                "y": -12
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 168,
+                "y": -12
+              },
+              "to": {
+                "x": 168,
+                "y": 12
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 168,
+                "y": 12
+              },
+              "to": {
+                "x": -168,
+                "y": 12
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": -168,
+                "y": 12
+              },
+              "to": {
+                "x": -168,
+                "y": -12
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": -168,
+                "y": -12
+              },
+              "to": {
+                "x": -168,
+                "y": -12
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    }
+  ],
+  "reinforcement": [
+    {
+      "id": "rebar-1",
+      "x": -190.5,
+      "y": -106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-2",
+      "x": -180,
+      "y": -106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-3",
+      "x": -169.5,
+      "y": -106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-4",
+      "x": -169.5,
+      "y": -95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-5",
+      "x": -169.5,
+      "y": -84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-6",
+      "x": -169.5,
+      "y": -72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-7",
+      "x": -169.5,
+      "y": -61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-8",
+      "x": -169.5,
+      "y": -50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-9",
+      "x": -169.5,
+      "y": -39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-10",
+      "x": -169.5,
+      "y": -28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-11",
+      "x": -169.5,
+      "y": -16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-12",
+      "x": -169.5,
+      "y": -5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-13",
+      "x": -169.5,
+      "y": 5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-14",
+      "x": -169.5,
+      "y": 16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-15",
+      "x": -169.5,
+      "y": 28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-16",
+      "x": -169.5,
+      "y": 39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-17",
+      "x": -169.5,
+      "y": 50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-18",
+      "x": -169.5,
+      "y": 61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-19",
+      "x": -169.5,
+      "y": 72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-20",
+      "x": -169.5,
+      "y": 84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-21",
+      "x": -169.5,
+      "y": 95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-22",
+      "x": -169.5,
+      "y": 106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-23",
+      "x": -180,
+      "y": 106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-24",
+      "x": -190.5,
+      "y": 106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-25",
+      "x": -190.5,
+      "y": 95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-26",
+      "x": -190.5,
+      "y": 84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-27",
+      "x": -190.5,
+      "y": 72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-28",
+      "x": -190.5,
+      "y": 61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-29",
+      "x": -190.5,
+      "y": 50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-30",
+      "x": -190.5,
+      "y": 39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-31",
+      "x": -190.5,
+      "y": 28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-32",
+      "x": -190.5,
+      "y": 16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-33",
+      "x": -190.5,
+      "y": 5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-34",
+      "x": -190.5,
+      "y": -5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-35",
+      "x": -190.5,
+      "y": -16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-36",
+      "x": -190.5,
+      "y": -28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-37",
+      "x": -190.5,
+      "y": -39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-38",
+      "x": -190.5,
+      "y": -50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-39",
+      "x": -190.5,
+      "y": -61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-40",
+      "x": -190.5,
+      "y": -72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-41",
+      "x": -190.5,
+      "y": -84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-42",
+      "x": -190.5,
+      "y": -95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-43",
+      "x": -180,
+      "y": 72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-44",
+      "x": -180,
+      "y": -72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-45",
+      "x": 169.5,
+      "y": -106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-46",
+      "x": 180,
+      "y": -106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-47",
+      "x": 190.5,
+      "y": -106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-48",
+      "x": 190.5,
+      "y": -95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-49",
+      "x": 190.5,
+      "y": -84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-50",
+      "x": 190.5,
+      "y": -72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-51",
+      "x": 190.5,
+      "y": -61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-52",
+      "x": 190.5,
+      "y": -50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-53",
+      "x": 190.5,
+      "y": -39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-54",
+      "x": 190.5,
+      "y": -28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-55",
+      "x": 190.5,
+      "y": -16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-56",
+      "x": 190.5,
+      "y": -5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-57",
+      "x": 190.5,
+      "y": 5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-58",
+      "x": 190.5,
+      "y": 16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-59",
+      "x": 190.5,
+      "y": 28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-60",
+      "x": 190.5,
+      "y": 39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-61",
+      "x": 190.5,
+      "y": 50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-62",
+      "x": 190.5,
+      "y": 61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-63",
+      "x": 190.5,
+      "y": 72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-64",
+      "x": 190.5,
+      "y": 84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-65",
+      "x": 190.5,
+      "y": 95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-66",
+      "x": 190.5,
+      "y": 106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-67",
+      "x": 180,
+      "y": 106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-68",
+      "x": 169.5,
+      "y": 106.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-69",
+      "x": 169.5,
+      "y": 95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-70",
+      "x": 169.5,
+      "y": 84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-71",
+      "x": 169.5,
+      "y": 72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-72",
+      "x": 169.5,
+      "y": 61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-73",
+      "x": 169.5,
+      "y": 50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-74",
+      "x": 169.5,
+      "y": 39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-75",
+      "x": 169.5,
+      "y": 28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-76",
+      "x": 169.5,
+      "y": 16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-77",
+      "x": 169.5,
+      "y": 5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-78",
+      "x": 169.5,
+      "y": -5.6052632331848145,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-79",
+      "x": 169.5,
+      "y": -16.8157901763916,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-80",
+      "x": 169.5,
+      "y": -28.026315689086914,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-81",
+      "x": 169.5,
+      "y": -39.23684310913086,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-82",
+      "x": 169.5,
+      "y": -50.44736862182617,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-83",
+      "x": 169.5,
+      "y": -61.657894134521484,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-84",
+      "x": 169.5,
+      "y": -72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-85",
+      "x": 169.5,
+      "y": -84.07894897460938,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-86",
+      "x": 169.5,
+      "y": -95.28947448730469,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-87",
+      "x": 180,
+      "y": 72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-88",
+      "x": 180,
+      "y": -72.86842346191406,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-89",
+      "x": -166.5,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-90",
+      "x": -156.40908813476562,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-91",
+      "x": -146.31817626953125,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-92",
+      "x": -136.22727966308594,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-93",
+      "x": -126.13636016845703,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-94",
+      "x": -116.04545593261719,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-95",
+      "x": -105.95454406738281,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-96",
+      "x": -95.86363983154297,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-97",
+      "x": -85.7727279663086,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-98",
+      "x": -75.68181610107422,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-99",
+      "x": -65.59091186523438,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-100",
+      "x": -55.5,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-101",
+      "x": -45.40909194946289,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-102",
+      "x": -35.318180084228516,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-103",
+      "x": -25.227272033691406,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-104",
+      "x": -15.136363983154297,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-105",
+      "x": -5.045454502105713,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-106",
+      "x": 5.045454502105713,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-107",
+      "x": 15.136363983154297,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-108",
+      "x": 25.227272033691406,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-109",
+      "x": 35.318180084228516,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-110",
+      "x": 45.40909194946289,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-111",
+      "x": 55.5,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-112",
+      "x": 65.59091186523438,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-113",
+      "x": 75.68181610107422,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-114",
+      "x": 85.7727279663086,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-115",
+      "x": 95.86363983154297,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-116",
+      "x": 105.95454406738281,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-117",
+      "x": 116.04545593261719,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-118",
+      "x": 126.13636016845703,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-119",
+      "x": 136.22727966308594,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-120",
+      "x": 146.31817626953125,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-121",
+      "x": 156.40908813476562,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-122",
+      "x": 166.5,
+      "y": -10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-123",
+      "x": 166.5,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-124",
+      "x": 156.40908813476562,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-125",
+      "x": 146.31817626953125,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-126",
+      "x": 136.22727966308594,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-127",
+      "x": 126.13636016845703,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-128",
+      "x": 116.04545593261719,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-129",
+      "x": 105.95454406738281,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-130",
+      "x": 95.86363983154297,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-131",
+      "x": 85.7727279663086,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-132",
+      "x": 75.68181610107422,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-133",
+      "x": 65.59091186523438,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-134",
+      "x": 55.5,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-135",
+      "x": 45.40909194946289,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-136",
+      "x": 35.318180084228516,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-137",
+      "x": 25.227272033691406,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-138",
+      "x": 15.136363983154297,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-139",
+      "x": 5.045454502105713,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-140",
+      "x": -5.045454502105713,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-141",
+      "x": -15.136363983154297,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-142",
+      "x": -25.227272033691406,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-143",
+      "x": -35.318180084228516,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-144",
+      "x": -45.40909194946289,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-145",
+      "x": -55.5,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-146",
+      "x": -65.59091186523438,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-147",
+      "x": -75.68181610107422,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-148",
+      "x": -85.7727279663086,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-149",
+      "x": -95.86363983154297,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-150",
+      "x": -105.95454406738281,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-151",
+      "x": -116.04545593261719,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-152",
+      "x": -126.13636016845703,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-153",
+      "x": -136.22727966308594,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-154",
+      "x": -146.31817626953125,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-155",
+      "x": -156.40908813476562,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    },
+    {
+      "id": "rebar-156",
+      "x": -166.5,
+      "y": 10.5,
+      "materialId": "material-7",
+      "size": {
+        "designation": "#8",
+        "barNumber": 8,
+        "diameter": 1,
+        "area": 0.7853981633974483
+      }
+    }
+  ],
+  "analysisConfiguration": {
+    "edgeSpacing": 1,
+    "interiorSpacing": 1,
+    "momentMomentAxialLoad": -2000
+  }
+}

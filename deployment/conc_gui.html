@@ -71,6 +71,7 @@
     
           </div>
         </div>
+        <div id="designInputScroll">
         <div id="userSelection" class="bg-gray-400 p-3 py-2">
           <div class="border-b-2 text-lg">Current Selection </div>
           <div class="grid grid-cols-4 gap-0 grid-flow-row pt-2 pb-0">
@@ -148,6 +149,7 @@
             </div>
           </div>
         </div>
+        </div>
         <div id="analysis" class="bg-gray-400 p-3 py-2">
           <div class="border-b-2 text-lg"> Analysis </div>
           <div class="grid grid-cols-1 gap-1 py-2 p-1">
@@ -185,6 +187,18 @@
               </label>
             </div>
             <small id="sectionResponseHint">Element stress</small>
+            <div class="section-camera-heading">Camera</div>
+            <div class="section-camera-options" role="radiogroup" aria-label="Choose the 3D section camera">
+              <label>
+                <input type="radio" name="sectionCameraMode" value="perspective">
+                <span>Perspective</span>
+              </label>
+              <label>
+                <input type="radio" name="sectionCameraMode" value="top" checked>
+                <span>Top View</span>
+              </label>
+            </div>
+            <small id="sectionCameraHint">Orthographic top view · zoom only</small>
           </fieldset>
           <div id="windowProps" class="absolute bottom-0 text-black p-2">
             <div id="userInputProps">
