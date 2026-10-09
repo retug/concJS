@@ -1,5 +1,13 @@
 const MIN_VIEW_SIZE = 1e-6;
 
+export function rebarPointSize(diameter, camera, viewportHeight) {
+  // Three.js only attenuates PointsMaterial sizes for perspective cameras.
+  // Orthographic views need the bar diameter converted from model units to pixels.
+  return camera.isOrthographicCamera
+    ? diameter * viewportHeight * camera.zoom / (camera.top - camera.bottom)
+    : diameter;
+}
+
 export function perspectiveFitDistance(size, verticalFovRadians, aspect, padding = 1.18) {
   const safeAspect = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
   const safeVerticalFov = Number.isFinite(verticalFovRadians) && verticalFovRadians > 0

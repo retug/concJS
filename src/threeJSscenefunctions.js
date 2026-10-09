@@ -9,7 +9,7 @@ import { ConcShape } from './concShape.js';
 import { updateStressStrainChart, plotSelectedPoint } from "./materialsPlotting.js";
 import { defaultPriorityForMaterial, getShapePriority } from './sectionMeshing.js';
 import { getAnalysisRaycastTargets } from './analysisScene.js';
-import { orthographicFitHeight } from './cameraView.js';
+import { orthographicFitHeight, rebarPointSize } from './cameraView.js';
 
 
 
@@ -138,11 +138,20 @@ export function addRebar(x, y, barSize, scene, sprite, options = {}) {
         size: diameter,
         map: sprite,
         transparent: true,
+        depthWrite: false,
         color: 0x334155
     });
 
     // ✅ Create Three.js Points object
     const tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
+    const viewportSize = new THREE.Vector2();
+    tempDot.renderOrder = 1;
+    tempDot.onBeforeRender = (activeRenderer, activeScene, activeCamera) => {
+        activeRenderer.getSize(viewportSize);
+        selectedDotMaterial.size = rebarPointSize(diameter, activeCamera, viewportSize.y);
+        // Top-view circles must stay legible over the section response surface.
+        selectedDotMaterial.depthTest = !activeCamera.isOrthographicCamera;
+    };
     tempDot.isRebar = true; // ✅ Mark as rebar
     tempDot.rebarSize = Number(barSize); // ✅ Store rebar size
     tempDot.rebarDiameter = diameter;

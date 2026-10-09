@@ -1425,6 +1425,7 @@ export class AnalyzableConcreteSection {
         const strainProfile = this.currentStrainProfile;
         const responseDepth = 4;
         const concreteMat = this.material;
+        const responseVertexColor = new THREE.Color();
         const sectionValuesByElement = new Map();
         let sectionMin = Infinity;
         let sectionMax = -Infinity;
@@ -1489,9 +1490,8 @@ export class AnalyzableConcreteSection {
                 const arrayIndex = vertexIndex * 3;
                 const [red, green, blue] = responseColor(value, sectionMin, sectionMax);
                 positionAttribute.array[arrayIndex + 2] = value / sectionScale * responseDepth;
-                colorAttribute.array[arrayIndex] = red / 255;
-                colorAttribute.array[arrayIndex + 1] = green / 255;
-                colorAttribute.array[arrayIndex + 2] = blue / 255;
+                responseVertexColor.setRGB(red / 255, green / 255, blue / 255, THREE.SRGBColorSpace);
+                colorAttribute.setXYZ(vertexIndex, responseVertexColor.r, responseVertexColor.g, responseVertexColor.b);
             }
             positionAttribute.needsUpdate = true;
             colorAttribute.needsUpdate = true;
@@ -1537,9 +1537,9 @@ export class AnalyzableConcreteSection {
             const colorMin = mode === 'strain' ? sectionMin : minRebarStress;
             const colorMax = mode === 'strain' ? sectionMax : maxRebarStress;
             const [red, green, blue] = responseColor(colorValue, colorMin, colorMax);
-            object.material.color.setRGB(red / 255, green / 255, blue / 255);
+            object.material.color.setRGB(red / 255, green / 255, blue / 255, THREE.SRGBColorSpace);
             object.material.transparent = true;
-            object.material.opacity = mode === 'strain' ? 0.9 : 0.78;
+            object.material.opacity = 1;
             object.material.needsUpdate = true;
 
             if (mode === 'stress') {

@@ -23,22 +23,23 @@ function interpolateColor(left, right, ratio) {
 }
 
 export function responseColor(value, min, max) {
-  const finiteMin = Number.isFinite(min) ? min : 0;
-  const finiteMax = Number.isFinite(max) ? max : finiteMin;
-  if (Math.abs(finiteMax - finiteMin) < Number.EPSILON) {
+  if (!Number.isFinite(value) || value === 0) {
     return [...RESPONSE_COLORS.neutral];
   }
 
-  if (finiteMin < 0 && finiteMax > 0) {
-    return value <= 0
-      ? interpolateColor(RESPONSE_COLORS.negative, RESPONSE_COLORS.neutral, 1 - value / finiteMin)
-      : interpolateColor(RESPONSE_COLORS.neutral, RESPONSE_COLORS.positive, value / finiteMax);
-  }
-
-  const ratio = (value - finiteMin) / (finiteMax - finiteMin);
-  return finiteMax <= 0
-    ? interpolateColor(RESPONSE_COLORS.negative, RESPONSE_COLORS.neutral, ratio)
-    : interpolateColor(RESPONSE_COLORS.neutral, RESPONSE_COLORS.positive, ratio);
+  const finiteMin = Number.isFinite(min) ? min : 0;
+  const finiteMax = Number.isFinite(max) ? max : finiteMin;
+  const isCompression = value < 0;
+  // Zero is always neutral, even when the displayed field is entirely one sign
+  // or uniform (including the pure-compression strain profile).
+  const magnitude = isCompression
+    ? Math.max(0, -finiteMin, -finiteMax)
+    : Math.max(0, finiteMin, finiteMax);
+  return interpolateColor(
+    RESPONSE_COLORS.neutral,
+    isCompression ? RESPONSE_COLORS.negative : RESPONSE_COLORS.positive,
+    magnitude > 0 ? Math.abs(value) / magnitude : 1
+  );
 }
 
 export function responseColorCSS(value, min, max) {
