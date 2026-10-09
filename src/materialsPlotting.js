@@ -1,11 +1,17 @@
 import {
   DEFAULT_PLATED_CORE_STEEL_NAME,
-  StructuralMaterial,
   defaultMaterials,
   getACICompressiveStressGuide
 } from "./materials.js";
 import Chart from 'chart.js/auto';
 import { resolveSectionResultPoint } from './analysis/resultSelection.js';
+import {
+  initializeMaterialEditor,
+  openMaterialEditor,
+  addMaterialEditorRow,
+  saveMaterialEditor,
+  updateMaterialCopyAction
+} from './materialEditor.js';
 
 const STRESS_CURVE_DATASET_ID = 'stress-curve';
 const ACI_GUIDE_DATASET_ID = 'aci-compression-guide';
@@ -13,6 +19,7 @@ const SELECTED_POINT_DATASET_ID = 'selected-point';
 
 export function populateMaterialDropdown() {
   const materialDropdown = document.getElementById("materialDropdown");
+  const previousSelection = materialDropdown.value;
   materialDropdown.innerHTML = '<option disabled selected>Select a material</option>';
 
   defaultMaterials.forEach(material => {
@@ -22,16 +29,26 @@ export function populateMaterialDropdown() {
     materialDropdown.appendChild(option);
   });
 
-  const customOption = document.createElement("option");
-  customOption.value = "Custom Material";
-  customOption.textContent = "Custom Material";
-  materialDropdown.appendChild(customOption);
+  if (defaultMaterials.some(material => material.name === previousSelection)) {
+    materialDropdown.value = previousSelection;
+  }
+  initializeMaterialEditor(material => {
+    defaultMaterials.push(material);
+    populateMaterialDropdown();
+    populateRebarDropdown();
+    materialDropdown.value = material.name;
+    updateChartAndTable({ target: materialDropdown });
+  });
+  updateMaterialCopyAction();
 }
 
 export function populateRebarDropdown() {
   const rebarDropdown = document.getElementById("rebar_mat");
   const concDropdown = document.getElementById("concrete_mat");
   const plateDropdown = document.getElementById("plate_mat");
+  const previousRebar = rebarDropdown.value;
+  const previousConcrete = concDropdown.value;
+  const previousPlate = plateDropdown?.value;
 
   rebarDropdown.innerHTML = "";
   concDropdown.innerHTML = "";
@@ -61,10 +78,12 @@ export function populateRebarDropdown() {
     concDropdown.appendChild(concOption);
   });
 
-  if (defaultMaterials.some(material => material.name === 'fc5ksi')) {
-    concDropdown.value = 'fc5ksi';
-  }
-  if (
+  const hasMaterial = name => defaultMaterials.some(material => material.name === name);
+  if (hasMaterial(previousRebar)) rebarDropdown.value = previousRebar;
+  if (hasMaterial(previousConcrete)) concDropdown.value = previousConcrete;
+  else if (hasMaterial('fc5ksi')) concDropdown.value = 'fc5ksi';
+  if (plateDropdown && hasMaterial(previousPlate)) plateDropdown.value = previousPlate;
+  else if (
     plateDropdown
     && defaultMaterials.some(material => material.name === DEFAULT_PLATED_CORE_STEEL_NAME)
   ) {
@@ -101,6 +120,10 @@ function createACIGuideDataset(material) {
 }
 
 function setChartMaterial(material) {
+  const chartMaterialLabel = document.getElementById("chartMaterialLabel");
+  if (chartMaterialLabel) {
+    chartMaterialLabel.textContent = material?.name ?? "Select a material or element";
+  }
   stressStrainChart.data.labels = material?.strainData ?? [];
   const guideDataset = createACIGuideDataset(material);
   stressStrainChart.data.datasets = [
@@ -139,15 +162,11 @@ export function updateChartAndTable(event) {
   const selectedMaterial = defaultMaterials.find(
     material => material.name === selectedMaterialName
   );
-  const userDefinedInputs = document.getElementById("userDefinedInputs");
-
   if (selectedMaterialName === "Custom Material") {
-    userDefinedInputs.style.display = "block";
-    updateCustomConcreteStrengthVisibility();
+    openMaterialEditor();
     return;
   }
-
-  userDefinedInputs.style.display = "none";
+  updateMaterialCopyAction();
   if (!selectedMaterial) return;
 
   setChartMaterial(selectedMaterial);
@@ -175,84 +194,11 @@ export function updateCustomConcreteStrengthVisibility() {
 }
 
 export function addUserDefinedRow() {
-  const newRow = document.createElement("tr");
-  newRow.innerHTML = `
-    <td><input type="number" step="0.0001" class="strainInput" /></td>
-    <td><input type="number" step="0.01" class="stressInput" /></td>
-    <td><button class="removeRow">Remove</button></td>
-  `;
-  newRow.querySelector(".removeRow").addEventListener("click", () => newRow.remove());
-  document.getElementById("userStressStrainTable").querySelector("tbody").appendChild(newRow);
+  addMaterialEditorRow();
 }
 
 export function saveUserDefinedMaterial() {
-  const materialName = document.getElementById("materialName").value.trim();
-  const materialType = document.getElementById("materialType").value;
-  const expectedStrength = document.getElementById("expectedStrength").checked
-    ? "expected"
-    : "normal";
-  const strainData = Array.from(document.querySelectorAll(".strainInput"))
-    .map(input => parseFloat(input.value));
-  const stressData = Array.from(document.querySelectorAll(".stressInput"))
-    .map(input => parseFloat(input.value));
-  const compressiveStrengthInput = document.getElementById("compressiveStrengthACI").value.trim();
-  const compressiveStrengthACI = materialType === "concrete"
-    ? Number(compressiveStrengthInput)
-    : null;
-
-  if (
-    !materialName
-    || strainData.length === 0
-    || stressData.length === 0
-    || strainData.some(value => !Number.isFinite(value))
-    || stressData.some(value => !Number.isFinite(value))
-  ) {
-    alert("Please fill in all fields and add at least one row of data.");
-    return;
-  }
-
-  if (
-    materialType === "concrete"
-    && (!compressiveStrengthInput || !Number.isFinite(compressiveStrengthACI) || compressiveStrengthACI <= 0)
-  ) {
-    alert("Please enter a positive f′c value in psi for concrete.");
-    return;
-  }
-
-  if (defaultMaterials.some(material => material.name === materialName)) {
-    alert(`Material "${materialName}" already exists. Please choose a different name.`);
-    return;
-  }
-
-  try {
-    const newMaterial = new StructuralMaterial(
-      materialName,
-      materialType,
-      expectedStrength,
-      stressData,
-      strainData,
-      compressiveStrengthACI
-    );
-    defaultMaterials.push(newMaterial);
-
-    const materialDropdown = document.getElementById("materialDropdown");
-    const customOption = materialDropdown.querySelector("option[value='Custom Material']");
-    const option = document.createElement("option");
-    option.value = newMaterial.name;
-    option.textContent = newMaterial.name;
-    materialDropdown.insertBefore(option, customOption);
-
-    alert(`New material "${materialName}" added successfully!`);
-
-    document.getElementById("materialName").value = "";
-    document.getElementById("materialType").value = "other";
-    document.getElementById("compressiveStrengthACI").value = "";
-    document.getElementById("userStressStrainTable").querySelector("tbody").innerHTML = "";
-    updateCustomConcreteStrengthVisibility();
-    populateRebarDropdown();
-  } catch (error) {
-    alert(`Could not save material: ${error.message}`);
-  }
+  saveMaterialEditor();
 }
 
 export function updateStressStrainChart(materialData) {
@@ -283,21 +229,11 @@ export function plotSelectedPoint(clickedObject) {
     return;
   }
 
-  let selectedColor = '#7c3aed';
+  const selectedColor = '#ff8c69';
   if (clickedObject.userData?.concShape) {
-    const colorAttribute = clickedObject.geometry.getAttribute("color");
-    if (colorAttribute) {
-      selectedColor = `rgb(
-        ${Math.round(colorAttribute.array[0] * 255)},
-        ${Math.round(colorAttribute.array[1] * 255)},
-        ${Math.round(colorAttribute.array[2] * 255)}
-      )`;
-    }
     updateMaterialDropdown(clickedObject);
   } else if (clickedObject.materialData) {
     updateMaterialDropdown(clickedObject);
-    const { r, g, b } = clickedObject.material.color;
-    selectedColor = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
   }
 
   removeSelectedPoint();
@@ -336,9 +272,11 @@ function updateMaterialDropdown(clickedObject) {
   for (const option of materialDropdown.options) {
     if (option.value === selectedMaterial.name) {
       option.selected = true;
+      updateChartAndTable({ target: materialDropdown });
       return;
     }
   }
 
-  materialDropdown.value = "Custom Material";
+  materialDropdown.selectedIndex = 0;
+  updateMaterialCopyAction();
 }

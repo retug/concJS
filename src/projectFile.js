@@ -1,3 +1,5 @@
+import { copyDemandCases, copyDcrMethod, normalizeDemandCases, normalizeDcrMethod } from './projectDemandInputs.js';
+
 export const PROJECT_FORMAT = "concretejs-project";
 export const PROJECT_SCHEMA_VERSION = 3;
 
@@ -30,7 +32,9 @@ export function createProjectDocument({
     analysisConfiguration: {
       edgeSpacing: analysisConfiguration.edgeSpacing,
       interiorSpacing: analysisConfiguration.interiorSpacing,
-      momentMomentAxialLoad: analysisConfiguration.momentMomentAxialLoad
+      momentMomentAxialLoad: analysisConfiguration.momentMomentAxialLoad,
+      demandCases: copyDemandCases(analysisConfiguration.demandCases),
+      dcrMethod: copyDcrMethod(analysisConfiguration.dcrMethod)
     }
   };
 }
@@ -81,6 +85,10 @@ export function validateAndNormalizeProject(raw) {
     isFutureVersion
   );
   const analysisConfiguration = normalizeAnalysisConfiguration(raw.analysisConfiguration, errors, warnings);
+  if (analysisConfiguration.demandCases.length > 0) {
+    if (raw.units?.force !== 'kip') errors.push('units.force must be "kip" for demand inputs. Unit conversion is not supported yet.');
+    if (raw.units?.moment !== 'kip-ft') errors.push('units.moment must be "kip-ft" for demand inputs. Unit conversion is not supported yet.');
+  }
 
   const project = {
     format: PROJECT_FORMAT,
@@ -324,7 +332,9 @@ function normalizeAnalysisConfiguration(value, errors, warnings) {
       value.momentMomentAxialLoad ?? 0,
       "analysisConfiguration.momentMomentAxialLoad",
       errors
-    ) ?? 0
+    ) ?? 0,
+    demandCases: normalizeDemandCases(value.demandCases, errors),
+    dcrMethod: normalizeDcrMethod(value.dcrMethod, errors)
   };
 }
 

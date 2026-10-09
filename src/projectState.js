@@ -1,3 +1,5 @@
+import { copyDemandCases, copyDcrMethod, DEFAULT_DCR_METHOD } from './projectDemandInputs.js';
+
 const EMPTY_METADATA = Object.freeze({
   name: "",
   description: "",
@@ -7,7 +9,9 @@ const EMPTY_METADATA = Object.freeze({
 const DEFAULT_ANALYSIS_CONFIGURATION = Object.freeze({
   edgeSpacing: 3,
   interiorSpacing: 3,
-  momentMomentAxialLoad: 0
+  momentMomentAxialLoad: 0,
+  demandCases: Object.freeze([]),
+  dcrMethod: DEFAULT_DCR_METHOD
 });
 
 let projectMetadata = { ...EMPTY_METADATA };
@@ -27,7 +31,7 @@ export function setProjectMetadata(metadata = {}) {
 }
 
 export function getAnalysisConfiguration() {
-  return { ...analysisConfiguration };
+  return { ...analysisConfiguration, demandCases: copyDemandCases(analysisConfiguration.demandCases) };
 }
 
 export function setAnalysisConfiguration(configuration = {}) {
@@ -37,7 +41,9 @@ export function setAnalysisConfiguration(configuration = {}) {
     momentMomentAxialLoad: finiteOrDefault(
       configuration.momentMomentAxialLoad,
       DEFAULT_ANALYSIS_CONFIGURATION.momentMomentAxialLoad
-    )
+    ),
+    demandCases: copyDemandCases(configuration.demandCases),
+    dcrMethod: copyDcrMethod(configuration.dcrMethod)
   };
   return getAnalysisConfiguration();
 }

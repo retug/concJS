@@ -8,8 +8,12 @@ import {
   addUserDefinedRow,
   saveUserDefinedMaterial,
   populateRebarDropdown,
-  updateCustomConcreteStrengthVisibility
+  updateCustomConcreteStrengthVisibility,
+  stressStrainChart
 } from './materialsPlotting.js';
+import { initializeWorkspaceLayout, setWorkspaceMode } from './workspaceLayout.js';
+import './workspace.css';
+import './selectionPolish.css';
 import * as SceneFunctions from './threeJSscenefunctions.js';
 import { setupReplicateShortcut, setupMoveShortcut } from './CADfunctions.js';
 import { CompositeConcShape } from './compositeShapeAnalysis.js';
@@ -22,6 +26,7 @@ import {
 } from './projectPersistence.js';
 import { initializeProjectCache } from './projectCache.js';
 import { removeEditablePolygonMeshes } from './analysisScene.js';
+import { disposeResultPlots } from './analysis/plotUpdates.js';
 import {
   cameraInteractionForMode,
   perspectiveFitDistance,
@@ -110,7 +115,6 @@ function captureDesignWorkspace() {
 }
 
 function showAnalysisWorkspace(statusText = "Analysis results") {
-  const userResults = document.getElementById("userResults");
   const concGui = document.getElementById("concGui");
   const results = document.getElementById("results");
   const dragBar = document.getElementById("drag-bar");
@@ -118,16 +122,15 @@ function showAnalysisWorkspace(statusText = "Analysis results") {
   const analysisResults = document.getElementById("analysisResults");
   const responseControl = document.getElementById("sectionResponseControl");
 
-  if (userResults) userResults.style.display = "none";
   if (userInputProps) userInputProps.hidden = true;
   if (analysisResults) analysisResults.hidden = false;
   if (responseControl) responseControl.hidden = false;
-  if (results) {
+  if (results && !document.body.dataset.workspaceReady) {
     results.style.display = "block";
     results.style.flex = "1";
   }
-  if (dragBar) dragBar.style.display = "block";
-  if (concGui) concGui.style.flex = "1";
+  if (dragBar && !document.body.dataset.workspaceReady) dragBar.style.display = "block";
+  if (concGui && !document.body.dataset.workspaceReady) concGui.style.flex = "1";
 
   setDesignGridVisible(false);
   setSceneCameraMode('top');
@@ -138,6 +141,7 @@ function showAnalysisWorkspace(statusText = "Analysis results") {
   removeEditablePolygonMeshes(scene);
 
   setWorkflowMode("analysis", statusText);
+  if (document.body.dataset.workspaceReady) setWorkspaceMode("analysis");
   requestAnimationFrame(SceneFunctions.resizeThreeJsScene);
 }
 
@@ -218,6 +222,7 @@ function returnToDesignWorkspace() {
 
   if (userResults) userResults.style.display = snapshot.userResultsDisplay;
   if (results) {
+    disposeResultPlots(results);
     results.replaceChildren(Object.assign(document.createElement("h3"), { textContent: "Results" }));
     results.style.display = "none";
   }
@@ -250,6 +255,7 @@ function returnToDesignWorkspace() {
 
   designWorkspaceSnapshot = null;
   setWorkflowMode("design", "Editing section — generate PM to analyze");
+  if (document.body.dataset.workspaceReady) setWorkspaceMode("design");
   requestAnimationFrame(SceneFunctions.resizeThreeJsScene);
 }
 
@@ -390,6 +396,7 @@ function prepareForProjectImport() {
     document.getElementById("analysisResultsTable")?.remove();
     const results = document.getElementById("results");
     if (results) {
+      disposeResultPlots(results);
       results.replaceChildren(Object.assign(document.createElement("h3"), { textContent: "Results" }));
       results.style.display = "none";
     }
@@ -452,6 +459,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const sceneReady = initScene(); // Cache restoration waits for the rebar texture.
   window.toggleMaterialsAndShapes = toggleMaterialsAndShapesDiv;
   window.addEventListener('resize', SceneFunctions.resizeThreeJsScene);
+  initializeWorkspaceLayout({
+    onResizeMaterialChart: () => stressStrainChart?.resize?.()
+  });
   SceneFunctions.setupDragAndAnalyze();
   toggleShapeButtons();
   populateMaterialDropdown();
@@ -586,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const threeJSDiv = document.getElementById("concGui");
 
           if (mouseTrackingHandler) {
-            threeJSDiv.removeEventListener("mousemove", mouseTrackingHandler);
+            mouseTrackingHandler.cleanup?.();
             console.log("✅ Mouse tracking disabled.");
             mouseTrackingHandler = null; // Prevents multiple removals
           } else {
@@ -742,7 +752,7 @@ const orthographicCamera = new THREE.OrthographicCamera(-10 * initialAspect, 10 
 let camera = perspectiveCamera;
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
-  canvas: document.querySelector('canvas')
+  canvas: document.getElementById('sectionCanvas')
 })
 
 scene.background = new THREE.Color( 0xffffff );
@@ -891,7 +901,7 @@ const topDiv = document.querySelector('#concGui');
 
 // Create the intersection point marker
 const intersectionPointGeometry = new THREE.SphereGeometry(0.3, 16, 16);
-const intersectionPointMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const intersectionPointMaterial = new THREE.MeshBasicMaterial({ color: 0xff8c69 });
 const intersectionPoint = new THREE.Mesh(intersectionPointGeometry, intersectionPointMaterial);
 intersectionPoint.visible = false;
 scene.add(intersectionPoint);

@@ -187,6 +187,7 @@ export function serializeCurrentProject({ concreteShapes, reinforcement }) {
   const interiorSpacing = Number(document.getElementById('intSpa')?.value);
   const axialInput = Number(document.getElementById('mmAxialLoad')?.value);
   const analysisConfiguration = setAnalysisConfiguration({
+    ...currentAnalysis,
     edgeSpacing: Number.isFinite(edgeSpacing) ? edgeSpacing : currentAnalysis.edgeSpacing,
     interiorSpacing: Number.isFinite(interiorSpacing) ? interiorSpacing : currentAnalysis.interiorSpacing,
     momentMomentAxialLoad: Number.isFinite(axialInput) ? axialInput : currentAnalysis.momentMomentAxialLoad

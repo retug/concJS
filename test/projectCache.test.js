@@ -49,6 +49,8 @@ function createTimerStub() {
 
 test('restores the latest valid cached project automatically', async () => {
   const cachedProject = await loadFixture();
+  cachedProject.analysisConfiguration.dcrMethod = 'origin';
+  cachedProject.analysisConfiguration.demandCases = [{ id: 'd1', name: 'Restored demand', P: -320, M2: 0, M3: 45, dcr: 0.6 }];
   const storage = new MemoryStorage({ [PROJECT_CACHE_KEY]: JSON.stringify(cachedProject) });
   const timer = createTimerStub();
   let currentProject = null;
@@ -67,6 +69,10 @@ test('restores the latest valid cached project automatically', async () => {
 
   assert.equal(await cache.restoration, true);
   assert.equal(currentProject.metadata.name, 'Import Verification');
+  assert.deepEqual(currentProject.analysisConfiguration, {
+    ...cachedProject.analysisConfiguration,
+    demandCases: [{ id: 'd1', name: 'Restored demand', P: -320, M2: 0, M3: 45 }]
+  });
   assert.match(notices[0], /Restored “Import Verification”/);
   cache.dispose();
 });
@@ -74,6 +80,10 @@ test('restores the latest valid cached project automatically', async () => {
 test('autosave keeps input data and strips analysis results', async () => {
   let currentProject = await loadFixture();
   currentProject.results = { PMM: [1, 2, 3] };
+  currentProject.analysisConfiguration.dcrMethod = 'origin';
+  currentProject.analysisConfiguration.demandCases = [{
+    id: 'demand-1', name: 'Base of column', P: -400, M2: 0, M3: -50, dcr: 0.8
+  }];
   const storage = new MemoryStorage();
   const timer = createTimerStub();
 
@@ -97,6 +107,10 @@ test('autosave keeps input data and strips analysis results', async () => {
   const saved = JSON.parse(storage.getItem(PROJECT_CACHE_KEY));
   assert.equal(saved.metadata.notes, 'Edited after startup');
   assert.equal('results' in saved, false);
+  assert.equal(saved.analysisConfiguration.dcrMethod, 'origin');
+  assert.deepEqual(saved.analysisConfiguration.demandCases, [{
+    id: 'demand-1', name: 'Base of column', P: -400, M2: 0, M3: -50
+  }]);
   cache.dispose();
 });
 
@@ -128,4 +142,25 @@ test('cache signatures ignore save timestamps', async () => {
   const project = await loadFixture();
   const later = { ...project, createdAt: '2030-01-01T00:00:00.000Z' };
   assert.equal(projectContentSignature(project), projectContentSignature(later));
+});
+
+test('legacy cached inputs restore with fixed-P checks by default', async () => {
+  const cachedProject = await loadFixture();
+  delete cachedProject.analysisConfiguration.dcrMethod;
+  const storage = new MemoryStorage({ [PROJECT_CACHE_KEY]: JSON.stringify(cachedProject) });
+  let restoredProject;
+  const cache = initializeProjectCache({
+    storage,
+    pageTarget: new EventTargetStub(),
+    setIntervalFn: () => 1,
+    clearIntervalFn: () => {},
+    serializeProject: () => restoredProject ?? cachedProject,
+    replaceProject: project => { restoredProject = project; },
+    showNotice: () => {},
+    showDiagnostics: () => assert.fail('A missing optional DCR method is valid.')
+  });
+
+  assert.equal(await cache.restoration, true);
+  assert.equal(restoredProject.analysisConfiguration.dcrMethod, 'constant-p');
+  cache.dispose();
 });

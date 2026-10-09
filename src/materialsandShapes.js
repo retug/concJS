@@ -11,8 +11,14 @@ import { addRebar, rebarDia } from './threeJSscenefunctions.js';
 
 
 export function toggleMaterialsAndShapesDiv() {
+    // The workspace inspector owns this control after initialization. Keep the
+    // legacy export safe for integrations that still call it directly.
+    if (document.body.dataset.workspaceReady === 'true') {
+        window.dispatchEvent(new Event('workspace:show-materials'));
+        return;
+    }
     const materialsAndShapes = document.getElementById('materialsandShapes');
-    console.log(materialsAndShapes)
+    if (!materialsAndShapes) return;
     const userResults = document.getElementById('userResults');
     const middleColumn = document.getElementById('middleColumn');
     const shapeContent = document.getElementById('shapeContent');
@@ -69,6 +75,7 @@ export function toggleShapeButtons() {
     const activate = activeButton => {
       for (const button of [rectangleButton, barbellButton, platedCoreButton]) {
         button?.classList.toggle("active", button === activeButton);
+        button?.setAttribute('aria-pressed', String(button === activeButton));
       }
       const platedOptions = document.getElementById('platedCoreOptions');
       const rebarOptions = document.getElementById('prebuiltRebarOptions');
