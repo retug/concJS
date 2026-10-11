@@ -2,6 +2,7 @@ import Plotly from 'plotly.js-dist-min';
 import { createDemandChecksPanel } from './DemandChecksPanel.js';
 import { buildPMMCapacitySurface, checkDemand } from './demandCapacity.js';
 import { getAnalysisConfiguration, updateAnalysisConfiguration } from '../projectState.js';
+import { getPlotUpdateCoordinator } from './plotUpdateCoordinator.js';
 
 import { demandPlotTraces } from './demandPlotTraces.js';
 export { demandPlotTraces };
@@ -14,11 +15,11 @@ export function initializeDemandChecks(section, host, plot) {
   let selectedId = cases[0]?.id ?? null;
   let surface;
   let disposed = false;
-  let plotQueue = Promise.resolve();
+  const updates = getPlotUpdateCoordinator(plot);
   const refreshPlot = () => {
     // Capture the latest arrays when the queued operation starts; editing and
     // selections can happen while Plotly is completing a prior update.
-    plotQueue = plotQueue.catch(() => {}).then(async () => {
+    return updates.enqueue('demand-markers', async () => {
       if (disposed || !plot.isConnected || !plot.data) return;
       const traces = demandPlotTraces(cases, results, selectedId, method);
       const indices = traces.map(trace => plot.data.findIndex(item => item.meta?.isDemandCheck && item.meta.kind === trace.meta.kind));
@@ -32,7 +33,6 @@ export function initializeDemandChecks(section, host, plot) {
         marker: traces.map(trace => trace.marker ?? {})
       }, indices);
     });
-    return plotQueue;
   };
   const schedulePlotRefresh = () => { void refreshPlot().catch(error => console.warn('Demand plot could not refresh:', error)); };
   const selectedDemand = () => cases.find(item => item.id === selectedId) ?? null;
@@ -62,7 +62,7 @@ export function initializeDemandChecks(section, host, plot) {
         surface ??= buildPMMCapacitySurface(section.PMMXYresults);
       } catch (error) {
         results = nextCases.map(item => ({ id: item.id, method, status: 'unresolved', dcr: null, capacity: null, message: error.message }));
-        await refreshPlot();
+        schedulePlotRefresh();
         return results;
       }
       const checked = [];
@@ -72,14 +72,16 @@ export function initializeDemandChecks(section, host, plot) {
         if (index % 10 === 9) await new Promise(resolve => setTimeout(resolve, 0));
       }
       results = checked;
-      await refreshPlot();
+      // A hidden PMM plot waits in the coordinator until its tab is shown.
+      // Demand results and form controls must be ready before that redraw.
+      schedulePlotRefresh();
       return results;
     },
     onSelect(id) {
       if (selectedId === id) return;
       selectedId = id;
       syncMMSlice();
-      return refreshPlot();
+      schedulePlotRefresh();
     }
   });
   schedulePlotRefresh();

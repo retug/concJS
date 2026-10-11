@@ -1,0 +1,18 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<meta name="description" content="Review concreteJS verification problems, inspect the saved models, and follow comparisons with published reference results.">
+<link rel="stylesheet" href="{% static 'concgui/verification/verification.css' %}">
+{% block verification_head %}{% endblock %}
+{% endblock extra_head %}
+
+{% block page_content %}
+<main id="verification-content" class="verification-page">
+    {% block verification_content %}{% endblock %}
+    <footer class="verification-footer verification-shell">
+        <a href="{% url 'conc_gui' %}">Return to Concrete Design</a>
+        <span>Re-Tug &middot; concreteJS</span>
+    </footer>
+</main>
+{% endblock page_content %}

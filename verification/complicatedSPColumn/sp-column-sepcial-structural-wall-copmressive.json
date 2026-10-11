@@ -2327,6 +2327,121 @@
   "analysisConfiguration": {
     "edgeSpacing": 3,
     "interiorSpacing": 3,
-    "momentMomentAxialLoad": -2000
+    "momentMomentAxialLoad": -2000,
+    "dcrMethod": "constant-p",
+    "demandCases": [
+      {
+        "id": "spcolumn-y-compression",
+        "name": "Y: Max. compression",
+        "P": -67102,
+        "M2": 0,
+        "M3": 0
+      },
+      {
+        "id": "spcolumn-y-allowable",
+        "name": "Y: Allowable compression",
+        "P": -53681.6,
+        "M2": 0,
+        "M3": 195926.19
+      },
+      {
+        "id": "spcolumn-y-zero-steel",
+        "name": "Y: fs = 0",
+        "P": -41195.7,
+        "M2": 0,
+        "M3": 352228.28
+      },
+      {
+        "id": "spcolumn-y-half-yield",
+        "name": "Y: fs = 0.5 fy",
+        "P": -32476.9,
+        "M2": 0,
+        "M3": 397760.22
+      },
+      {
+        "id": "spcolumn-y-balanced",
+        "name": "Y: Balanced point",
+        "P": -27151.3,
+        "M2": 0,
+        "M3": 407624.5
+      },
+      {
+        "id": "spcolumn-y-tension-control",
+        "name": "Y: Tension control",
+        "P": -30250.3,
+        "M2": 0,
+        "M3": 535871.94
+      },
+      {
+        "id": "spcolumn-y-pure-bending",
+        "name": "Y: Pure bending",
+        "P": 0,
+        "M2": 0,
+        "M3": 139631.3
+      },
+      {
+        "id": "spcolumn-y-tension",
+        "name": "Y: Max. tension",
+        "P": 8873.3,
+        "M2": 0,
+        "M3": 0
+      },
+      {
+        "id": "spcolumn-minus-y-compression",
+        "name": "−Y: Max. compression",
+        "P": -67102,
+        "M2": 0,
+        "M3": 0
+      },
+      {
+        "id": "spcolumn-minus-y-allowable",
+        "name": "−Y: Allowable compression",
+        "P": -53681.6,
+        "M2": 0,
+        "M3": -195926.33
+      },
+      {
+        "id": "spcolumn-minus-y-zero-steel",
+        "name": "−Y: fs = 0",
+        "P": -41195.7,
+        "M2": 0,
+        "M3": -352228.28
+      },
+      {
+        "id": "spcolumn-minus-y-half-yield",
+        "name": "−Y: fs = 0.5 fy",
+        "P": -32476.9,
+        "M2": 0,
+        "M3": -397760.22
+      },
+      {
+        "id": "spcolumn-minus-y-balanced",
+        "name": "−Y: Balanced point",
+        "P": -27151.3,
+        "M2": 0,
+        "M3": -407624.44
+      },
+      {
+        "id": "spcolumn-minus-y-tension-control",
+        "name": "−Y: Tension control",
+        "P": -30250.3,
+        "M2": 0,
+        "M3": -535871.94
+      },
+      {
+        "id": "spcolumn-minus-y-pure-bending",
+        "name": "−Y: Pure bending",
+        "P": 0,
+        "M2": 0,
+        "M3": -139630.8
+      },
+      {
+        "id": "spcolumn-minus-y-tension",
+        "name": "−Y: Max. tension",
+        "P": 8873.3,
+        "M2": 0,
+        "M3": 0
+      }
+    ]
   }
 }

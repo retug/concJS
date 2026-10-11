@@ -67,7 +67,7 @@ Run the complete production build, Django-template conversion, and changed-file 
 npm run deploy:retug
 ```
 
-The deploy script copies only files whose SHA-256 hash changed. It publishes the Webpack bundle, Tailwind CSS, `disc.png`, and the generated `conc_gui.html` template to `C:\Users\16142\Desktop\re-tug_site`.
+The deploy script copies only files whose SHA-256 hash changed. It copies the Webpack bundle, Tailwind CSS, `disc.png`, the generated `conc_gui.html`, and the verification pages and models to the local Django checkout at `C:\Users\16142\Desktop\re-tug_site`. It also installs the verification URL include once. This is a local copy, not a production deployment.
 
 To preview what would change without copying anything:
 
@@ -76,3 +76,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-retug.ps1 -Dr
 ```
 
 The Django template is generated from `index.html` by `scripts/generate-django-template.mjs`. Edit `index.html`, not `deployment/conc_gui.html`; the generator preserves the production Django static paths, Google Analytics setup, cookie consent, and disclaimer link, and fails if development-only asset paths remain.
+
+## Verification pages
+
+The About popup links to `/concretedesign/verification/`. The first case is at
+`/concretedesign/verification/problem1/`, with a section screenshot, overlaid
+interaction curves, a factored control-point comparison, and a bundled-model
+import containing 16 demand cases. Add future cases through `verification/catalog.json`
+and reuse the same Django templates. See [the verification workflow](verification/README.md)
+for build commands, adding cases, matching control states, and demand storage.
+Run `npm run test:verification` to rerun the wall compression and 100-profile
+interaction baselines. The app and verification runner share the numerical
+engine; builds fail on changed results without rewriting the expected answers.

@@ -15,5 +15,9 @@ test('Django deployment template keeps production integrations and current app U
   assert.match(template, /cookieconsent\.popupsmart\.com/);
   assert.match(template, /id="saveProjectModal"/);
   assert.match(template, /id="importProjectModal"/);
+  assert.match(template, /id="aboutModal"[^>]+role="dialog"/);
+  assert.match(template, /v1\.0\.0/);
+  assert.match(template, /class="project-modal-card about-modal-card"/);
+  assert.doesNotMatch(template, /V0\.0\.0/);
   assert.doesNotMatch(template, /\/src\/main\.js|\/vite\.svg/);
 });

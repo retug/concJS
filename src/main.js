@@ -25,6 +25,7 @@ import {
   showProjectNotice
 } from './projectPersistence.js';
 import { initializeProjectCache } from './projectCache.js';
+import { initializeVerificationProject } from './verificationProject.js';
 import { removeEditablePolygonMeshes } from './analysisScene.js';
 import { disposeResultPlots } from './analysis/plotUpdates.js';
 import {
@@ -446,6 +447,7 @@ async function initScene() {
       // addRebar(5, 10, '18', scene, sprite); // Now, sprite is guaranteed to be available
   } catch (error) {
       console.error("Failed to load texture:", error);
+      throw error;
   }
 }
 
@@ -479,12 +481,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }));
     }
   };
-  initializeProjectPersistence(projectPersistenceContext);
-  initializeProjectCache({
+  const projectPersistence = initializeProjectPersistence(projectPersistenceContext);
+  const projectCache = initializeProjectCache({
     ready: sceneReady,
     serializeProject: () => serializeCurrentProject(getDesignModel()),
     replaceProject: project => replaceCurrentProject(project, projectPersistenceContext),
     showNotice: showProjectNotice,
+    showDiagnostics: showProjectDiagnostics
+  });
+  initializeVerificationProject({
+    ready: Promise.all([sceneReady, projectCache.restoration]),
+    requestImport: projectPersistence.requestImport,
     showDiagnostics: showProjectDiagnostics
   });
   document.getElementById("designModeTab")?.addEventListener("click", returnToDesignWorkspace);

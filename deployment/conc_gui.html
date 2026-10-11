@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="shortcut icon" type="image/png" href="{% static 'logo/favicon.ico' %}">
-    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}?v=1.0.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Generate axial-moment (PMM) interaction diagrams for custom concrete shapes using ACI 318-19 or 318-25. Ideal for structural engineers.">
     <meta name="keywords" content="structural engineering, concrete calculator, pmm diagram, aci 318-19, aci 318-25, axial moment interaction">
@@ -233,7 +233,7 @@
                   <button id="replicateBtn" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded hover:bg-gray-900 py-2 px-4 hover:text-white">Copy</button>
                 </div>
                 <div id="modalAbout" class="pt-1">
-                  <button  onclick="document.getElementById('aboutModal').classList.remove('hidden')" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">About</button>
+                  <button type="button" onclick="document.getElementById('aboutModal').classList.remove('hidden'); document.getElementById('aboutModal').setAttribute('aria-hidden', 'false')" class="w-full block uppercase border-2 tracking-wide text-gray-700 text-xs font-bold bg-white rounded py-2 hover:bg-gray-900 hover:text-white">About</button>
                 </div>
               </div>
             </div>
@@ -261,76 +261,52 @@
       </div>
     </div>
 
-    <!-- Modal -->
-    <div id="aboutModal" class="fixed inset-0 bg-gray-200 bg-opacity-75 flex items-center justify-center z-50 hidden">
-      <div class="bg-gray-400 rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
-        <!-- Close Button -->
-        <button onclick="document.getElementById('aboutModal').classList.add('hidden')" class="absolute top-3 right-4 text-gray-700 hover:text-red-600 text-xl font-bold">&times;</button>
-
-        <!-- Modal Header -->
-        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-4 text-center text-2xl">RETUG Concrete Design Tool </label>
-        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-4 text-center text-2xl">V0.0.0 </label>
-
-        <!-- Sections -->
-        <div class="space-y-6">
-          <!-- How to Use -->
+    <div id="aboutModal" class="project-modal modal hidden about-modal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle" aria-describedby="aboutModalIntro" aria-hidden="true">
+      <div class="project-modal-card about-modal-card">
+        <header class="about-modal-header">
           <div>
-            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">How to Use</label>
-            <p class="text-sm text-gray-800">Add prebuilt shapes to screen or create custom geometry using points and selection tools.</p>
-            <a href="https://www.youtube.com/watch?v=your_future_video_link" target="_blank" class="text-blue-700 underline text-sm mt-1 inline-block">Watch tutorial on YouTube</a>
+            <p class="about-modal-kicker">RETUG · CONCRETE DESIGN</p>
+            <h2 id="aboutModalTitle">Concrete Design Tool</h2>
+            <p id="aboutModalIntro" class="project-modal-intro">Section analysis, verification examples, and practical design exploration.</p>
           </div>
+          <span class="about-modal-version">v1.0.0</span>
+          <button class="project-modal-close" type="button" aria-label="Close About dialog" onclick="document.getElementById('aboutModal').classList.add('hidden'); document.getElementById('aboutModal').setAttribute('aria-hidden', 'true')">&times;</button>
+        </header>
 
-          <!-- Selection -->
-          <div>
-            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Selection</label>
-            <p class="text-sm text-gray-800 flex items-center gap-2">
-              <span class="inline-flex items-center gap-1 bg-gray-300 px-2 py-0.5 rounded">
-                Ctrl
-              </span>
-              Hold <strong>Ctrl</strong> to add to current selection.
-            </p>
-          </div>
+        <div class="about-modal-grid">
+          <section class="about-modal-section about-modal-feature">
+            <p class="about-modal-section-label"><span>01</span> Verification</p>
+            <h3>Build confidence from reference problems</h3>
+            <p>Explore reference problems and open their saved models in the application. Each page identifies its comparison status and published source.</p>
+            <a href="/concretedesign/verification/" target="_blank" rel="noopener noreferrer" class="about-modal-link">Browse verification problems <span aria-hidden="true">↗</span></a>
+          </section>
 
-          <!-- CAD Functions -->
-          <div>
-            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">CAD Functions</label>
-            <ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
-              <li>
-                <span class="font-medium">Move</span> ➡️ — Shortcut: 
-                <kbd class="bg-gray-300 px-2 py-1 rounded">M</kbd> + 
-                <kbd class="bg-gray-300 px-2 py-1 rounded">V</kbd>
-              </li>
-              <li>
-                <span class="font-medium">Replicate</span> 🔁 — Shortcut: 
-                <kbd class="bg-gray-300 px-2 py-1 rounded">C</kbd> + 
-                <kbd class="bg-gray-300 px-2 py-1 rounded">C</kbd>
-              </li>
+          <section class="about-modal-section">
+            <p class="about-modal-section-label"><span>02</span> How to use</p>
+            <p>Add prebuilt shapes to the screen or create custom geometry with points and selection tools.</p>
+            <a href="https://www.youtube.com/watch?v=your_future_video_link" target="_blank" rel="noopener noreferrer" class="about-modal-link">Watch tutorial on YouTube <span aria-hidden="true">↗</span></a>
+          </section>
+
+          <section class="about-modal-section">
+            <p class="about-modal-section-label"><span>03</span> Selection &amp; CAD</p>
+            <p><kbd>Ctrl</kbd> adds to the current selection.</p>
+            <ul class="about-modal-shortcuts">
+              <li><strong>Move</strong><span><kbd>M</kbd> + <kbd>V</kbd></span></li>
+              <li><strong>Replicate</strong><span><kbd>C</kbd> + <kbd>C</kbd></span></li>
             </ul>
-          </div>
+          </section>
 
-          <!-- Results -->
-          <div>
-            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Results</label>
-            <p class="text-sm text-gray-800">
-              Review results by changing the bending axis angle drop-down and strain profile. The 3D scene is updated to plot the stress profile of the selected results. Select either concrete mesh or rebar to review the stress-strain curve. A table is populated on the right that can be copied and pasted into Excel.
-            </p>
-            <li>
-              <span class="font-medium text-gray-800">Rotate</span> 🌀
-              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">Shift</kbd> +
-              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">🖱️ Middle</kbd>
-            </li>
-            <li>
-              <span class="font-medium text-gray-800">Pan</span> 
-              <kbd class="bg-gray-300 px-2 py-1 rounded text-gray-800">🖱️ Middle</kbd>
-            </li>
-          </div>
-
-          <!-- Issues / Requests -->
-          <div>
-            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Issues / Requests</label>
-            <a href="https://github.com/retug/concJS" target="_blank" class="text-blue-700 underline text-sm">Visit GitHub to report issues or request features</a>
-          </div>
+          <section class="about-modal-section">
+            <p class="about-modal-section-label"><span>04</span> Results</p>
+            <p>Change the bending axis and strain profile to update the 3D stress view. Select concrete mesh or rebar to inspect its stress–strain curve. Tables can be copied into Excel.</p>
+            <div class="about-modal-gestures"><span><strong>Rotate</strong> <kbd>Shift</kbd> + <kbd>Middle mouse</kbd></span><span><strong>Pan</strong> <kbd>Middle mouse</kbd></span></div>
+          </section>
         </div>
+
+        <footer class="about-modal-footer">
+          <span>Have an idea or found an issue?</span>
+          <a href="https://github.com/retug/concJS" target="_blank" rel="noopener noreferrer" class="about-modal-link">Visit GitHub <span aria-hidden="true">↗</span></a>
+        </footer>
       </div>
     </div>
 

@@ -1,0 +1,57 @@
+{% extends "blog/verification/base.html" %}
+{% load static %}
+
+{% block verification_head %}
+<link rel="canonical" href="https://re-tug.com/concretedesign/verification/">
+{% endblock %}
+
+{% block verification_content %}
+<header class="verification-hero">
+    <div class="verification-shell">
+        <p class="verification-eyebrow">Concrete Design &middot; Verification</p>
+        <h1>Check the model.<br>Trace the results.</h1>
+        <p class="verification-lead">A collection of reference problems for checking concreteJS against published concrete section analyses.</p>
+        <p class="verification-intro">Each problem brings together the source, section assumptions, and a saved model you can open in the application.</p>
+    </div>
+</header>
+
+<section class="verification-shell verification-section" aria-labelledby="verification-cases-heading">
+    <div class="verification-section-heading">
+        <div>
+            <p class="verification-eyebrow">Reference library</p>
+            <h2 id="verification-cases-heading">Verification problems</h2>
+        </div>
+        <span class="verification-count">{{ cases|length }} problem{{ cases|length|pluralize }}</span>
+    </div>
+    <div class="verification-case-list">
+        {% for case in cases %}
+        <article class="verification-case-card">
+            {% if case.preview_static_path %}
+            <a class="verification-case-preview" href="{% url 'concrete_verification:problem' case.id %}" tabindex="-1" aria-hidden="true"><img src="{% static case.preview_static_path %}" alt="" width="160" height="130" loading="lazy"></a>
+            {% else %}<div class="verification-case-number" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</div>{% endif %}
+            <div class="verification-case-copy">
+                <p class="verification-status"><span aria-hidden="true"></span>{% if case.status == 'comparison-ready' %}Comparison available{% else %}Comparison pending{% endif %}</p>
+                <h3><a href="{% url 'concrete_verification:problem' case.id %}">{{ case.title }}</a></h3>
+                <p>{{ case.summary }}</p>
+                {% if case.source.title %}<p class="verification-source-line">Reference: {{ case.source.title }}</p>{% endif %}
+                <a class="verification-text-link" href="{% url 'concrete_verification:problem' case.id %}">View problem <span aria-hidden="true">&rarr;</span></a>
+            </div>
+        </article>
+        {% empty %}
+        <p class="verification-empty">Verification problems will appear here as they are added to the library.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="verification-shell verification-section verification-method" aria-labelledby="verification-method-heading">
+    <div>
+        <p class="verification-eyebrow">How to use this library</p>
+        <h2 id="verification-method-heading">From reference to model</h2>
+    </div>
+    <ol class="verification-steps">
+        <li><strong>Review the source</strong><p>Check the problem description and the assumptions recorded for the saved model.</p></li>
+        <li><strong>Open the problem</strong><p>Load the model in Concrete Design to inspect the geometry, reinforcement, and analysis settings.</p></li>
+        <li><strong>Review the comparison</strong><p>Overlay the results, compare control points, and read the notes describing the assumptions and differences.</p></li>
+    </ol>
+</section>
+{% endblock %}

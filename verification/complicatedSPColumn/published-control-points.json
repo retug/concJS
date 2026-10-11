@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "title": "StructurePoint spColumn v10.10, special structural shear wall",
+    "url": "https://structurepoint.org/publication/pdf/DE-Special-Structural-Shear-Wall-Compressive-Stress-ACI-318-19-spColumn-v1010.pdf#page=36",
+    "reportPage": 6,
+    "pdfPage": 36,
+    "reportDate": "2023-10-12",
+    "note": "Control-point values supplied by the user and checked against the report. Published residual moments smaller than 0.1 kip-ft are represented as zero for this uniaxial comparison and its demand inputs."
+  },
+  "conventions": {
+    "P": "Positive compression for display; negate P when saving RETUG demand inputs.",
+    "M2": "RETUG Mx; published X-moment (nominally zero).",
+    "M3": "RETUG My; published Y-moment; saved model long dimension is global x."
+  },
+  "points": [
+    {
+      "id": "y-compression",
+      "name": "Y: Max. compression",
+      "kind": "compression",
+      "direction": 1,
+      "P": 67102,
+      "M2": 0,
+      "M3": 0,
+      "phi": 0.65
+    },
+    {
+      "id": "y-allowable",
+      "name": "Y: Allowable compression",
+      "kind": "allowable",
+      "direction": 1,
+      "P": 53681.6,
+      "M2": 0,
+      "M3": 195926.19,
+      "phi": 0.65
+    },
+    {
+      "id": "y-zero-steel",
+      "name": "Y: fs = 0",
+      "kind": "zero-steel",
+      "direction": 1,
+      "P": 41195.7,
+      "M2": 0,
+      "M3": 352228.28,
+      "phi": 0.65
+    },
+    {
+      "id": "y-half-yield",
+      "name": "Y: fs = 0.5 fy",
+      "kind": "half-yield",
+      "direction": 1,
+      "P": 32476.9,
+      "M2": 0,
+      "M3": 397760.22,
+      "phi": 0.65
+    },
+    {
+      "id": "y-balanced",
+      "name": "Y: Balanced point",
+      "kind": "balanced",
+      "direction": 1,
+      "P": 27151.3,
+      "M2": 0,
+      "M3": 407624.5,
+      "phi": 0.65
+    },
+    {
+      "id": "y-tension-control",
+      "name": "Y: Tension control",
+      "kind": "tension-control",
+      "direction": 1,
+      "P": 30250.3,
+      "M2": 0,
+      "M3": 535871.94,
+      "phi": 0.9
+    },
+    {
+      "id": "y-pure-bending",
+      "name": "Y: Pure bending",
+      "kind": "pure-bending",
+      "direction": 1,
+      "P": 0,
+      "M2": 0,
+      "M3": 139631.3,
+      "phi": 0.9
+    },
+    {
+      "id": "y-tension",
+      "name": "Y: Max. tension",
+      "kind": "tension",
+      "direction": 1,
+      "P": -8873.3,
+      "M2": 0,
+      "M3": 0,
+      "phi": 0.9
+    },
+    {
+      "id": "minus-y-compression",
+      "name": "−Y: Max. compression",
+      "kind": "compression",
+      "direction": -1,
+      "P": 67102,
+      "M2": 0,
+      "M3": 0,
+      "phi": 0.65
+    },
+    {
+      "id": "minus-y-allowable",
+      "name": "−Y: Allowable compression",
+      "kind": "allowable",
+      "direction": -1,
+      "P": 53681.6,
+      "M2": 0,
+      "M3": -195926.33,
+      "phi": 0.65
+    },
+    {
+      "id": "minus-y-zero-steel",
+      "name": "−Y: fs = 0",
+      "kind": "zero-steel",
+      "direction": -1,
+      "P": 41195.7,
+      "M2": 0,
+      "M3": -352228.28,
+      "phi": 0.65
+    },
+    {
+      "id": "minus-y-half-yield",
+      "name": "−Y: fs = 0.5 fy",
+      "kind": "half-yield",
+      "direction": -1,
+      "P": 32476.9,
+      "M2": 0,
+      "M3": -397760.22,
+      "phi": 0.65
+    },
+    {
+      "id": "minus-y-balanced",
+      "name": "−Y: Balanced point",
+      "kind": "balanced",
+      "direction": -1,
+      "P": 27151.3,
+      "M2": 0,
+      "M3": -407624.44,
+      "phi": 0.65
+    },
+    {
+      "id": "minus-y-tension-control",
+      "name": "−Y: Tension control",
+      "kind": "tension-control",
+      "direction": -1,
+      "P": 30250.3,
+      "M2": 0,
+      "M3": -535871.94,
+      "phi": 0.9
+    },
+    {
+      "id": "minus-y-pure-bending",
+      "name": "−Y: Pure bending",
+      "kind": "pure-bending",
+      "direction": -1,
+      "P": 0,
+      "M2": 0,
+      "M3": -139630.8,
+      "phi": 0.9
+    },
+    {
+      "id": "minus-y-tension",
+      "name": "−Y: Max. tension",
+      "kind": "tension",
+      "direction": -1,
+      "P": -8873.3,
+      "M2": 0,
+      "M3": 0,
+      "phi": 0.9
+    }
+  ]
+}

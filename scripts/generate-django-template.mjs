@@ -13,8 +13,8 @@ export function convertIndexToDjangoTemplate(source) {
     `\n    <link rel="shortcut icon" type="image/png" href="{% static 'logo/favicon.ico' %}">`
   );
   html = html.replace(
-    /href="\/static\/css\/tailwind\.css"/,
-    `href="{% static 'css/tailwind.css' %}"`
+    /href="\/static\/css\/tailwind\.css(?:\?[^\"]*)?"/,
+    `href="{% static 'css/tailwind.css' %}?v=1.0.0"`
   );
   html = html.replace(
     /gtag\(\s*['"]config['"]\s*,\s*['"]G-QHHKT2DQKV['"]\s*(?:,\s*\{[\s\S]*?\})?\s*\);/,
