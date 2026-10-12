@@ -33,8 +33,8 @@
         {% if case.description %}<p>{{ case.description }}</p>{% endif %}
         {% if case.preview_static_path %}
         <figure class="verification-model-preview">
-            <a href="{% static case.preview_static_path %}" target="_blank" rel="noopener"><img src="{% static case.preview_static_path %}" alt="RETUG model of the I-shaped wall, with two end flanges, a connecting web, and distributed reinforcement" width="1280" height="720"></a>
-            <figcaption>The saved wall in RETUG concreteJS. Its long dimension is along x; this comparison uses 90° bending about y (M3).</figcaption>
+            <a href="{% static case.preview_static_path %}" target="_blank" rel="noopener"><img src="{% static case.preview_static_path %}" alt="{{ case.previewAlt|default:'RETUG verification problem preview' }}" width="1280" height="720"></a>
+            <figcaption>{{ case.previewCaption|default:'Preview of the saved verification problem in RETUG concreteJS.' }}</figcaption>
         </figure>
         {% endif %}
         {% if case.details %}
@@ -61,21 +61,40 @@
             <p class="verification-eyebrow">Results</p>
             <h2 id="verification-results-heading">Published vs. computed</h2>
         </div>
-        <p class="verification-status"><span aria-hidden="true"></span>{% if comparison %}100 RETUG profiles · 16 published controls{% else %}Comparison pending{% endif %}</p>
+        <p class="verification-status"><span aria-hidden="true"></span>{% if comparison %}{{ comparison.statusLabel|default:'Comparison available' }}{% else %}Comparison pending{% endif %}</p>
     </div>
     {% if comparison %}
+    {% if comparison.kind == 'fixed-mm' %}
+    <p class="verification-comparison-intro">The supplied RETUG fixed-P result is compared in <strong>Mx–My</strong> space with the published AISC plastic-moment point. The plotted nominal curve keeps the weak-axis My component visible.</p>
+    {% else %}
     <p class="verification-comparison-intro">Factored control points are compared below. Compression is positive on this page; the application uses negative P for compression. Published Y-moment maps to <strong>M3 = My</strong> for this saved model.</p>
+    {% endif %}
     <div class="verification-chart" data-comparison-chart>
         <div class="verification-legend" aria-label="Toggle plot series">
             <button type="button" data-toggle-series="factored" aria-pressed="true"><span class="verification-key verification-key-retug"></span>RETUG factored</button>
-            <button type="button" data-toggle-series="published" aria-pressed="true"><span class="verification-key verification-key-published"></span>spColumn factored controls</button>
+            <button type="button" data-toggle-series="published" aria-pressed="true"><span class="verification-key verification-key-published"></span>{% if comparison.kind == 'fixed-mm' %}AISC published point{% else %}spColumn factored controls{% endif %}</button>
             <button type="button" data-toggle-series="nominal" aria-pressed="true"><span class="verification-key verification-key-nominal"></span>RETUG nominal</button>
         </div>
         <div class="verification-chart-scroll" tabindex="0" role="region" aria-label="Interaction diagram">{{ comparison.chartSvg|safe }}</div>
-        <p class="verification-chart-help">Hover over a point for its values. Use the legend to show or hide a series. The teal line connects published control points as a visual guide.</p>
+        <p class="verification-chart-help">Hover over a point for its values. Use the legend to show or hide a series.</p>
     </div>
     <div class="verification-data-links"><a href="{% static case.comparison_static_path %}" download>Download comparison data</a><a href="{% static case.chart_static_path %}" download>Download plot (SVG)</a></div>
     <p class="verification-comparison-method"><strong>How points are matched.</strong> {{ comparison.method }}</p>
+    {% if comparison.kind == 'fixed-mm' %}
+    <div class="verification-table-scroll" tabindex="0" role="region" aria-label="Published versus computed fixed-P moments">
+        <table class="verification-comparison-table">
+            <caption>AISC published and RETUG fixed-P M–M values (moments in kip-ft).</caption>
+            <thead>
+                <tr><th scope="col">Point</th><th scope="col">Published Mx</th><th scope="col">RETUG Mx</th><th scope="col">Ratio</th><th scope="col">Δ Mx</th><th scope="col">Difference</th><th scope="col">Published My</th><th scope="col">RETUG My</th><th scope="col">Δ My</th></tr>
+            </thead>
+            <tbody>
+                {% for row in comparison.rows %}
+                <tr><th scope="row">{{ row.name }}<small>{{ row.match }}</small></th><td>{{ row.published_display.Mx }}</td><td>{{ row.computed_display.Mx }}</td><td>{{ row.ratio_display.Mx }}</td><td>{{ row.delta_display.Mx }}</td><td>{{ row.difference_display.Mx }}%</td><td>{{ row.published_display.My }}</td><td>{{ row.computed_display.My }}</td><td>{{ row.delta_display.My }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
     <div class="verification-table-scroll" tabindex="0" role="region" aria-label="Published versus computed control points">
         <table class="verification-comparison-table">
             <caption>spColumn published factored values and RETUG factored values (P in kip; M3 in kip-ft).</caption>
@@ -95,6 +114,7 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
     <p class="verification-percentage-note">{{ comparison.differenceDefinition }} Small differences may round to 0.0%.</p>
     <div class="verification-comparison-notes">
         <h3>Comparison notes</h3>

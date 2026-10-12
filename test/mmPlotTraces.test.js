@@ -44,3 +44,14 @@ test('2D MM overlays label each axial-load band and keep nominal/design styling 
   assert.equal(traces[0].meta.axialLoad, -250);
   assert.equal(createMM2DTraces({ axialLoad: 100, points: [] }).length, 0);
 });
+
+test('MM plots preserve M2/M3 aliases when a saved result uses demand-axis names', () => {
+  const aliased = { axialLoad: 0, points: [
+    { angle: 0, nominal: { P: 0, M2: 12, M3: -8 }, phi: { P: 0, M2: 9, M3: -6 } }
+  ] };
+  const traces = createMM2DTraces(aliased);
+  assert.deepEqual([traces[0].x[0], traces[0].y[0]], [12, -8]);
+  assert.deepEqual([traces[1].x[0], traces[1].y[0]], [9, -6]);
+  const slice = createMM3DTraces(aliased);
+  assert.deepEqual([slice[0].x[0], slice[0].y[0]], [12, -8]);
+});

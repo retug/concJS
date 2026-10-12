@@ -1,4 +1,5 @@
 import { buildPMMSurfaceMesh } from './demandCapacity.js';
+import { momentArray } from './momentCoordinates.js';
 
 const ORANGE = '#ff8c69';
 // Each sampled bending axis keeps one color on both sides of the surface.
@@ -45,7 +46,11 @@ function surfaceTrace(results, mode) {
 }
 
 function axisTrace(results, selectedAngle, mode, selected = true) {
-  const arrays = mode.columns.map(column => results[selectedAngle]?.[column]?.flat());
+  const arrays = mode.columns.map(column => column.endsWith('Mx') || column === 'Mx'
+    ? momentArray(results[selectedAngle], column)
+    : column.endsWith('My') || column === 'My'
+      ? momentArray(results[selectedAngle], column)
+      : results[selectedAngle]?.[column]?.flat());
   if (arrays.some(array => array?.length !== 100 || !array.every(Number.isFinite))) {
     throw new Error(`PMM results at ${selectedAngle}° are incomplete. Regenerate PMM before plotting.`);
   }

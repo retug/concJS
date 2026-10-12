@@ -1,7 +1,8 @@
 # Verification cases
 
 The framework serves read-only Django pages at
-`/concretedesign/verification/` and `/concretedesign/verification/problem1/`.
+`/concretedesign/verification/`, `/concretedesign/verification/problem1/`, and
+`/concretedesign/verification/problem2/`.
 It does not run structural analysis on the web server. Problem 1 includes an
 actual application screenshot, the supplied 100-profile RETUG curve, the 16
 published spColumn control points, and a table of factored differences.
@@ -66,6 +67,10 @@ inputs are excluded from the numerical model fingerprint.
 Both the Django table and SVG plot are generated from the same comparison
 artifact. To add another completed comparison, register `comparisonSource` and
 `resultsSource` alongside the model entry and set `status` to `comparison-ready`.
+The `fixed-mm` comparison type used by Problem 2 consumes a saved fixed-P M–M
+result export and a single published Mx/My point. Its approved 0° result and
+point count are checked during every verification build so a changed answer
+cannot silently become the new page baseline.
 Use `model-ready` for cases whose reference results are still pending. Register
 `previewSource` and a PNG `previewFile` to show a case screenshot. Extend the
 control matching/runner explicitly when a future case needs a different axis or

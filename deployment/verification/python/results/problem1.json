@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "title": "Published vs. computed",
+  "statusLabel": "100 RETUG profiles · 16 published controls",
   "angle": 90,
   "source": {
     "title": "StructurePoint spColumn v10.10, special structural shear wall",

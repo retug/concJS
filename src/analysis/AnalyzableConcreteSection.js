@@ -5,6 +5,7 @@ import { renderMMTable, markMMTableSelection } from './mmTable.js';
 import { createMMDemandOverlay } from './mmDemandOverlay.js';
 import { createMM2DTraces, createMM3DTraces, getMMLoadColor } from './mmPlotTraces.js';
 import { createPMMPlotTraces, createPMMAxisTraces } from './pmmPlotTraces.js';
+import { momentArray, momentX, momentY } from './momentCoordinates.js';
 import { demandPlotTraces, initializeDemandChecks } from './DemandChecks.js';
 import { getPlotUpdateCoordinator } from './plotUpdateCoordinator.js';
 import { resizeResultPlot } from './plotUpdates.js';
@@ -650,8 +651,8 @@ export class AnalyzableConcreteSection extends SectionAnalysis {
         const selectedSolution = selectedPoint?.[selected?.mode];
         if (selectedSolution) {
             traces.push({
-                x: [selectedSolution.Mx],
-                y: [selectedSolution.My],
+                x: [momentX(selectedSolution)],
+                y: [momentY(selectedSolution)],
                 customdata: [[selectedPoint.angle, selected.pointIndex]],
                 mode: 'markers',
                 type: 'scatter',
@@ -875,8 +876,8 @@ export class AnalyzableConcreteSection extends SectionAnalysis {
             return;
         }
 
-        let Mx_selected = selectedData.Mx.flat()[index];
-        let My_selected = selectedData.My.flat()[index];
+        let Mx_selected = momentArray(selectedData, 'Mx')?.[index];
+        let My_selected = momentArray(selectedData, 'My')?.[index];
         let P_selected = selectedData.P.flat()[index];
 
         this.updatePMMPointHighlight([Mx_selected], [My_selected], [P_selected]);

@@ -1,0 +1,1228 @@
+{
+  "format": "concretejs-project",
+  "schemaVersion": 3,
+  "createdAt": "2026-10-11T21:53:52.656Z",
+  "metadata": {
+    "name": "AISC Example 3-2",
+    "description": "Plated Shearwall Example",
+    "notes": ""
+  },
+  "units": {
+    "length": "in",
+    "stress": "psi",
+    "force": "kip",
+    "moment": "kip-ft"
+  },
+  "materials": [
+    {
+      "id": "material-1",
+      "name": "fc4ksi",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "compressiveStrengthACI": 4000,
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -4000
+        },
+        {
+          "strain": -0.002,
+          "stress": -4000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-2",
+      "name": "fc5ksi",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "compressiveStrengthACI": 5000,
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -5000
+        },
+        {
+          "strain": -0.002,
+          "stress": -5000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-3",
+      "name": "fc6ksi",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "compressiveStrengthACI": 6000,
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -6000
+        },
+        {
+          "strain": -0.002,
+          "stress": -6000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-4",
+      "name": "fce4ksi",
+      "type": "concrete",
+      "strengthBasis": "expected",
+      "compressiveStrengthACI": 4000,
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -5000
+        },
+        {
+          "strain": -0.002,
+          "stress": -5000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-5",
+      "name": "fy60ksi",
+      "type": "steel",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -60000
+        },
+        {
+          "strain": -0.005,
+          "stress": -60000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -60000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 60000
+        },
+        {
+          "strain": 0.005,
+          "stress": 60000
+        },
+        {
+          "strain": 1,
+          "stress": 60000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    },
+    {
+      "id": "material-6",
+      "name": "fye75ksi",
+      "type": "steel",
+      "strengthBasis": "expected",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -75000
+        },
+        {
+          "strain": -0.005,
+          "stress": -75000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -60000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 60000
+        },
+        {
+          "strain": 0.005,
+          "stress": 75000
+        },
+        {
+          "strain": 1,
+          "stress": 75000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    },
+    {
+      "id": "material-7",
+      "name": "fy80ksi",
+      "type": "other",
+      "strengthBasis": "normal",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -80000
+        },
+        {
+          "strain": -0.005,
+          "stress": -80000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -80000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 80000
+        },
+        {
+          "strain": 0.005,
+          "stress": 80000
+        },
+        {
+          "strain": 1,
+          "stress": 80000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    },
+    {
+      "id": "material-8",
+      "name": "50ksi",
+      "type": "steel",
+      "strengthBasis": "expected",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -50000
+        },
+        {
+          "strain": -0.005,
+          "stress": -50000
+        },
+        {
+          "strain": -0.00207,
+          "stress": -50000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.00207,
+          "stress": 50000
+        },
+        {
+          "strain": 0.005,
+          "stress": 50000
+        },
+        {
+          "strain": 1,
+          "stress": 50000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    },
+    {
+      "id": "material-9",
+      "name": "fc6ksi plastic",
+      "type": "concrete",
+      "strengthBasis": "normal",
+      "compressiveStrengthACI": 6000,
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": 0
+        },
+        {
+          "strain": -1,
+          "stress": -6000
+        },
+        {
+          "strain": -0.000001,
+          "stress": -6000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        }
+      ]
+    },
+    {
+      "id": "material-10",
+      "name": "50ksi plastic",
+      "type": "steel",
+      "strengthBasis": "expected",
+      "stressStrain": [
+        {
+          "strain": -2,
+          "stress": -10
+        },
+        {
+          "strain": -1,
+          "stress": -50000
+        },
+        {
+          "strain": -0.005,
+          "stress": -50000
+        },
+        {
+          "strain": -1e-7,
+          "stress": -50000
+        },
+        {
+          "strain": 0,
+          "stress": 0
+        },
+        {
+          "strain": 0.000001,
+          "stress": 50000
+        },
+        {
+          "strain": 0.005,
+          "stress": 50000
+        },
+        {
+          "strain": 1,
+          "stress": 50000
+        },
+        {
+          "strain": 2,
+          "stress": 10
+        }
+      ]
+    }
+  ],
+  "concreteShapes": [
+    {
+      "id": "shape-1",
+      "materialId": "material-9",
+      "priority": 0,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -240
+              },
+              "to": {
+                "x": 18,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": -240
+              },
+              "to": {
+                "x": 18,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-2",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -240
+              },
+              "to": {
+                "x": 0.5,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0.5,
+                "y": -240
+              },
+              "to": {
+                "x": 0.5,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0.5,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-3",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 17.5,
+                "y": -240
+              },
+              "to": {
+                "x": 18,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": -240
+              },
+              "to": {
+                "x": 18,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": 240
+              },
+              "to": {
+                "x": 17.5,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 17.5,
+                "y": 240
+              },
+              "to": {
+                "x": 17.5,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-4",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -240
+              },
+              "to": {
+                "x": 18,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": -240
+              },
+              "to": {
+                "x": 18,
+                "y": -239.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": -239.5
+              },
+              "to": {
+                "x": 0,
+                "y": -239.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -239.5
+              },
+              "to": {
+                "x": 0,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-5",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 239.5
+              },
+              "to": {
+                "x": 18,
+                "y": 239.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": 239.5
+              },
+              "to": {
+                "x": 18,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 18,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 239.5
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-6",
+      "materialId": "material-9",
+      "priority": 0,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 222
+              },
+              "to": {
+                "x": 120,
+                "y": 222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 222
+              },
+              "to": {
+                "x": 120,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 222
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-7",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 222
+              },
+              "to": {
+                "x": 0.5,
+                "y": 222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0.5,
+                "y": 222
+              },
+              "to": {
+                "x": 0.5,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0.5,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 222
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-8",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 119.5,
+                "y": 222
+              },
+              "to": {
+                "x": 120,
+                "y": 222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 222
+              },
+              "to": {
+                "x": 120,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 240
+              },
+              "to": {
+                "x": 119.5,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 119.5,
+                "y": 240
+              },
+              "to": {
+                "x": 119.5,
+                "y": 222
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-9",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 222
+              },
+              "to": {
+                "x": 120,
+                "y": 222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 222
+              },
+              "to": {
+                "x": 120,
+                "y": 222.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 222.5
+              },
+              "to": {
+                "x": 0,
+                "y": 222.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 222.5
+              },
+              "to": {
+                "x": 0,
+                "y": 222
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-10",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 239.5
+              },
+              "to": {
+                "x": 120,
+                "y": 239.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 239.5
+              },
+              "to": {
+                "x": 120,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": 240
+              },
+              "to": {
+                "x": 0,
+                "y": 239.5
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-11",
+      "materialId": "material-9",
+      "priority": 0,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -240
+              },
+              "to": {
+                "x": 120,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -240
+              },
+              "to": {
+                "x": 120,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -222
+              },
+              "to": {
+                "x": 0,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -222
+              },
+              "to": {
+                "x": 0,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-12",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -240
+              },
+              "to": {
+                "x": 0.5,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0.5,
+                "y": -240
+              },
+              "to": {
+                "x": 0.5,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0.5,
+                "y": -222
+              },
+              "to": {
+                "x": 0,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -222
+              },
+              "to": {
+                "x": 0,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-13",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 119.5,
+                "y": -240
+              },
+              "to": {
+                "x": 120,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -240
+              },
+              "to": {
+                "x": 120,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -222
+              },
+              "to": {
+                "x": 119.5,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 119.5,
+                "y": -222
+              },
+              "to": {
+                "x": 119.5,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-14",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -240
+              },
+              "to": {
+                "x": 120,
+                "y": -240
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -240
+              },
+              "to": {
+                "x": 120,
+                "y": -239.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -239.5
+              },
+              "to": {
+                "x": 0,
+                "y": -239.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -239.5
+              },
+              "to": {
+                "x": 0,
+                "y": -240
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    },
+    {
+      "id": "shape-15",
+      "materialId": "material-10",
+      "priority": 1,
+      "geometry": {
+        "exterior": {
+          "segments": [
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -222.5
+              },
+              "to": {
+                "x": 120,
+                "y": -222.5
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -222.5
+              },
+              "to": {
+                "x": 120,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 120,
+                "y": -222
+              },
+              "to": {
+                "x": 0,
+                "y": -222
+              }
+            },
+            {
+              "type": "line",
+              "from": {
+                "x": 0,
+                "y": -222
+              },
+              "to": {
+                "x": 0,
+                "y": -222.5
+              }
+            }
+          ]
+        },
+        "openings": []
+      }
+    }
+  ],
+  "reinforcement": [],
+  "analysisConfiguration": {
+    "edgeSpacing": 6,
+    "interiorSpacing": 6,
+    "momentMomentAxialLoad": -3770,
+    "demandCases": [
+      {
+        "id": "9b3ae6c5-b0df-4409-8aba-370a74a05b00",
+        "name": "Plastic Moment",
+        "P": 0,
+        "M2": 734166.67,
+        "M3": 0
+      },
+      {
+        "id": "00c44b2e-f9a0-480b-b185-9cab64586af8",
+        "name": "Plastic Moment 2",
+        "P": -3770,
+        "M2": 734166.67,
+        "M3": 0
+      }
+    ],
+    "dcrMethod": "constant-p"
+  }
+}

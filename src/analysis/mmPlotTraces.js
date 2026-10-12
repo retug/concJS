@@ -1,4 +1,6 @@
 /** Colors used to distinguish concurrent axial-load bands in the 2D M–M chart. */
+import { momentX, momentY } from './momentCoordinates.js';
+
 export const MM_LOAD_COLORS = [
   '#2563eb',
   '#d97706',
@@ -15,7 +17,7 @@ export function getMMLoadColor(index = 0) {
 }
 
 function isValidSolution(solution) {
-  return solution && Number.isFinite(solution.Mx) && Number.isFinite(solution.My);
+  return solution && momentX(solution) !== null && momentY(solution) !== null;
 }
 
 /** Build the nominal and design traces for one M–M axial-load band. */
@@ -33,8 +35,8 @@ export function createMM2DTraces(result, { loadIndex = 0 } = {}) {
     if (!result.points.some(point => isValidSolution(point[mode]))) return [];
     const design = mode === 'phi';
     return [{
-      x: result.points.map(point => isValidSolution(point[mode]) ? point[mode].Mx : null),
-      y: result.points.map(point => isValidSolution(point[mode]) ? point[mode].My : null),
+      x: result.points.map(point => isValidSolution(point[mode]) ? momentX(point[mode]) : null),
+      y: result.points.map(point => isValidSolution(point[mode]) ? momentY(point[mode]) : null),
       customdata: pointMetadata,
       mode: 'lines+markers',
       type: 'scatter',
@@ -65,8 +67,8 @@ export function createMM3DTraces(result, selected = null) {
     const name = mode === 'phi' ? 'Design MM slice (φ)' : 'Nominal MM slice';
     const color = mode === 'phi' ? '#d66a36' : '#0f4c81';
     return [{
-      x: result.points.map(point => valid(point[mode]) ? point[mode].Mx : null),
-      y: result.points.map(point => valid(point[mode]) ? point[mode].My : null),
+      x: result.points.map(point => valid(point[mode]) ? momentX(point[mode]) : null),
+      y: result.points.map(point => valid(point[mode]) ? momentY(point[mode]) : null),
       z: result.points.map(point => valid(point[mode]) ? result.axialLoad : null),
       customdata: result.points.map((point, pointIndex) => [point.angle, pointIndex]),
       mode: 'lines+markers', type: 'scatter3d', connectgaps: false,
@@ -82,7 +84,7 @@ export function createMM3DTraces(result, selected = null) {
   const point = selected ? result.points[selected.pointIndex] : null;
   const solution = point?.[selected?.mode];
   if (valid(solution)) traces.push({
-    x: [solution.Mx], y: [solution.My], z: [result.axialLoad],
+    x: [momentX(solution)], y: [momentY(solution)], z: [result.axialLoad],
     customdata: [[point.angle, selected.pointIndex]],
     mode: 'markers', type: 'scatter3d', name: 'Selected MM point',
     marker: { color: '#ff8c69', size: 10, symbol: 'diamond', line: { color: '#263747', width: 2 } },

@@ -10,6 +10,17 @@ const dot = (a, b) => a.reduce((sum, value, i) => sum + value * b[i], 0);
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm = a => Math.hypot(...a);
 const normalize = a => a.map(value => value / norm(a));
+const responseArray = (data, key) => {
+  if (key === 'Mx' || key === 'phiMx') {
+    const prefix = key.startsWith('phi') ? 'phi' : '';
+    return data?.[`${prefix}Mx`]?.flat() ?? data?.[`${prefix}M2`]?.flat();
+  }
+  if (key === 'My' || key === 'phiMy') {
+    const prefix = key.startsWith('phi') ? 'phi' : '';
+    return data?.[`${prefix}My`]?.flat() ?? data?.[`${prefix}M3`]?.flat();
+  }
+  return data?.[key]?.flat();
+};
 
 function intersection(origin, direction, triangle) {
   const [a, b, c] = triangle;
@@ -93,7 +104,7 @@ export function buildPMMSurfaceMesh(results, mode = 'design') {
   const angles = Array.from({ length: 13 }, (_, i) => i * 15);
   const loops = angles.map(angle => {
     const data = results?.[angle];
-    const arrays = columns.map(key => data?.[key]?.flat());
+    const arrays = columns.map(key => responseArray(data, key));
     if (arrays.some(array => array?.length !== 100 || !array.every(Number.isFinite))) {
       throw new Error(`PMM results at ${angle}° are incomplete. Regenerate PMM before checking demands.`);
     }

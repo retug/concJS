@@ -73,10 +73,17 @@ def problem(request, case_id):
             raise ImproperlyConfigured("The concrete verification comparison could not be read.") from error
         # Formatting stays separate from the unrounded downloadable calculations.
         for row in comparison["rows"]:
-            for group in ("published", "computed", "difference"):
+            for group in ("published", "computed", "difference", "delta", "ratio"):
+                if group not in row:
+                    continue
                 row[group + "_display"] = {
                     key: "—" if value is None else format(0 if abs(value) < 0.05 else value, ",.1f")
                     for key, value in row[group].items()
+                }
+            if comparison.get("kind") == "fixed-mm":
+                row["ratio_display"] = {
+                    key: "—" if value is None else format(value * 100, ",.1f") + "%"
+                    for key, value in row.get("ratio", {}).items()
                 }
     return render(request, "blog/verification/problem.html", {
         "title": "{} | Concrete Design Verification | Re-Tug".format(case["title"]),

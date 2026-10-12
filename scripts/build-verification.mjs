@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateAndNormalizeProject } from '../src/projectFile.js';
 import { buildComparison } from './lib/verification-comparison.mjs';
+import { buildFixedMMComparison } from './lib/fixed-mm-comparison.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
@@ -68,18 +69,33 @@ export async function buildVerification() {
     const project = JSON.parse(bytes.toString('utf8'));
     const validation = validateAndNormalizeProject(project);
     if (!validation.canImport) throw new Error(`${entry.id}: ${validation.errors.join('; ')}`);
-    const comparison = entry.status === 'comparison-ready' ? buildComparison(project,
-      JSON.parse(await fs.readFile(path.join(root, entry.resultsSource), 'utf8')),
-      JSON.parse(await fs.readFile(path.join(root, entry.comparisonSource), 'utf8'))) : null;
-    if (comparison) {
-      for (const row of comparison.rows) {
-        const demand = validation.project.analysisConfiguration.demandCases.find(item => item.id === `spcolumn-${row.id}`);
-        if (!demand || demand.P !== -row.published.P || demand.M2 !== row.published.M2 || demand.M3 !== row.published.M3) {
-          throw new Error(`${entry.id}: saved demand ${row.id} does not match the published control point.`);
+    const comparison = entry.status === 'comparison-ready' ? (() => {
+      return Promise.all([
+        fs.readFile(path.join(root, entry.resultsSource), 'utf8'),
+        fs.readFile(path.join(root, entry.comparisonSource), 'utf8')
+      ]).then(([resultsText, referenceText]) => {
+        const results = JSON.parse(resultsText);
+        const reference = JSON.parse(referenceText);
+        return entry.comparisonType === 'fixed-mm'
+          ? buildFixedMMComparison(project, results, reference)
+          : buildComparison(project, results, reference);
+      });
+    })() : null;
+    const resolvedComparison = await comparison;
+    if (resolvedComparison) {
+      if (resolvedComparison.kind === 'fixed-mm') {
+        const demand = validation.project.analysisConfiguration.demandCases.find(item => item.P === -3770 && item.M2 === 734166.67 && item.M3 === 0);
+        if (!demand) throw new Error(`${entry.id}: saved fixed-P demand does not match the published plastic-moment load case.`);
+      } else {
+        for (const row of resolvedComparison.rows) {
+          const demand = validation.project.analysisConfiguration.demandCases.find(item => item.id === `spcolumn-${row.id}`);
+          if (!demand || demand.P !== -row.published.P || demand.M2 !== row.published.M2 || demand.M3 !== row.published.M3) {
+            throw new Error(`${entry.id}: saved demand ${row.id} does not match the published control point.`);
+          }
         }
       }
     }
-    return { entry, bytes, comparison };
+    return { entry, bytes, comparison: resolvedComparison };
   }));
   const staticRoot = path.join(root, 'public/static/concgui/verification');
   const deploymentRoot = path.join(root, 'deployment/verification');

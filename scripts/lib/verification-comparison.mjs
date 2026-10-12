@@ -103,7 +103,7 @@ export function buildComparison(project, baseline, reference) {
   const yieldStrain = Math.min(...material.stressStrain.filter(point => point.stress === fy && point.strain > 0).map(point => point.strain));
   if (!Number.isFinite(yieldStrain)) throw new Error('Could not identify the saved steel yield strain.');
   const rows = reference.points.map(point => compareControl(point, baseline, yieldStrain));
-  const comparison = { schemaVersion: 1, title: 'Published vs. computed', angle: baseline.angle,
+  const comparison = { schemaVersion: 1, title: 'Published vs. computed', statusLabel: '100 RETUG profiles · 16 published controls', angle: baseline.angle,
     source: reference.source, resultSource: baseline.source, modelSha256: baseline.modelSha256,
     conventions: reference.conventions, yieldStrain,
     method: 'Named steel-control states; linear interpolation between supplied profiles where needed. Pure bending uses φP = 0; allowable compression uses the published φP and the end of the capped branch. Uniform compression retains the application’s 0.80 axial cap.',

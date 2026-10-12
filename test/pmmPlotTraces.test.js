@@ -174,3 +174,19 @@ test('incomplete PMM data or an unavailable selected angle is rejected before pl
   delete results[75];
   assert.throws(() => createPMMPlotTraces(results, 0), /75°.*incomplete/);
 });
+
+test('PMM axis traces preserve M2/M3 aliases from imported response data', () => {
+  const results = {};
+  for (let angle = 0; angle <= 180; angle += 15) {
+    const values = Array.from({ length: 100 }, (_, index) => index);
+    results[angle] = {
+      P: [values], M2: [values.map(value => value + angle)], M3: [values.map(value => -value)],
+      phiP: [values], phiM2: [values.map(value => value + angle / 2)], phiM3: [values.map(value => -value / 2)]
+    };
+  }
+  const traces = createPMMAxisTraces(results, 75);
+  assert.equal(traces[0].x[1], 76);
+  assert.equal(traces[0].y[1], -1);
+  assert.equal(traces[1].x[1], 38.5);
+  assert.equal(traces[1].y[1], -0.5);
+});
