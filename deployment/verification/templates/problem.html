@@ -1,0 +1,134 @@
+{% extends "blog/verification/base.html" %}
+{% load static %}
+
+{% block verification_head %}
+<link rel="canonical" href="https://re-tug.com/concretedesign/verification/{{ case.id }}/">
+{% if comparison %}<script defer src="{% static 'concgui/verification/verification.js' %}"></script>{% endif %}
+{% endblock %}
+
+{% block verification_content %}
+<header class="verification-hero verification-problem-hero">
+    <div class="verification-shell">
+        <nav class="verification-breadcrumb" aria-label="Breadcrumb">
+            <a href="{% url 'concrete_verification:index' %}">Verification</a>
+            <span aria-hidden="true">/</span>
+            <span>{{ case.id }}</span>
+        </nav>
+        <p class="verification-eyebrow">Concrete Design &middot; Reference problem</p>
+        <h1>{{ case.title }}</h1>
+        <p class="verification-lead">{{ case.summary }}</p>
+        <div class="verification-actions">
+            {% if case.model_static_path %}
+            <a class="verification-button verification-button-primary" href="{% url 'conc_gui' %}?verification={{ case.id|urlencode }}">Open problem in application <span aria-hidden="true">&nearr;</span></a>
+            <a class="verification-button verification-button-secondary" href="{% static case.model_static_path %}" download>Download model JSON</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<div class="verification-shell verification-problem-body">
+    <section class="verification-description" aria-labelledby="verification-model-heading">
+        <p class="verification-eyebrow">Saved model</p>
+        <h2 id="verification-model-heading">Problem overview</h2>
+        {% if case.description %}<p>{{ case.description }}</p>{% endif %}
+        {% if case.preview_static_path %}
+        <figure class="verification-model-preview">
+            <a href="{% static case.preview_static_path %}" target="_blank" rel="noopener"><img src="{% static case.preview_static_path %}" alt="{{ case.previewAlt|default:'RETUG verification problem preview' }}" width="1280" height="720"></a>
+            <figcaption>{{ case.previewCaption|default:'Preview of the saved verification problem in RETUG concreteJS.' }}</figcaption>
+        </figure>
+        {% endif %}
+        {% if case.details %}
+        <dl class="verification-details">
+            {% for detail in case.details %}
+            <div><dt>{{ detail.label }}</dt><dd>{{ detail.value }}</dd></div>
+            {% endfor %}
+        </dl>
+        {% endif %}
+    </section>
+    <aside class="verification-reference" aria-labelledby="verification-reference-heading">
+        <p class="verification-eyebrow">Published reference</p>
+        <h2 id="verification-reference-heading">Source</h2>
+        {% if case.source.title %}<p class="verification-reference-title">{{ case.source.title }}</p>{% endif %}
+        {% if case.source.report %}<p>{{ case.source.report }}</p>{% endif %}
+        {% if case.source.page %}<p>Reference page: {{ case.source.page }}</p>{% endif %}
+        {% if case.source.url %}<a class="verification-text-link" href="{{ case.source.url }}" target="_blank" rel="noopener noreferrer">Read published reference <span aria-hidden="true">&nearr;</span></a>{% endif %}
+    </aside>
+</div>
+
+<section class="verification-shell verification-section" aria-labelledby="verification-results-heading">
+    <div class="verification-section-heading">
+        <div>
+            <p class="verification-eyebrow">Results</p>
+            <h2 id="verification-results-heading">Published vs. computed</h2>
+        </div>
+        <p class="verification-status"><span aria-hidden="true"></span>{% if comparison %}{{ comparison.statusLabel|default:'Comparison available' }}{% else %}Comparison pending{% endif %}</p>
+    </div>
+    {% if comparison %}
+    {% if comparison.kind == 'fixed-mm' %}
+    <p class="verification-comparison-intro">The supplied RETUG fixed-P result is compared in <strong>Mx–My</strong> space with the published AISC plastic-moment point. The plotted nominal curve keeps the weak-axis My component visible.</p>
+    {% else %}
+    <p class="verification-comparison-intro">Factored control points are compared below. Compression is positive on this page; the application uses negative P for compression. Published Y-moment maps to <strong>M3 = My</strong> for this saved model.</p>
+    {% endif %}
+    <div class="verification-chart" data-comparison-chart>
+        <div class="verification-legend" aria-label="Toggle plot series">
+            <button type="button" data-toggle-series="factored" aria-pressed="true"><span class="verification-key verification-key-retug"></span>RETUG factored</button>
+            <button type="button" data-toggle-series="published" aria-pressed="true"><span class="verification-key verification-key-published"></span>{% if comparison.kind == 'fixed-mm' %}AISC published point{% else %}spColumn factored controls{% endif %}</button>
+            <button type="button" data-toggle-series="nominal" aria-pressed="true"><span class="verification-key verification-key-nominal"></span>RETUG nominal</button>
+        </div>
+        <div class="verification-chart-scroll" tabindex="0" role="region" aria-label="Interaction diagram">{{ comparison.chartSvg|safe }}</div>
+        <p class="verification-chart-help">Hover over a point for its values. Use the legend to show or hide a series.</p>
+    </div>
+    <div class="verification-data-links"><a href="{% static case.comparison_static_path %}" download>Download comparison data</a><a href="{% static case.chart_static_path %}" download>Download plot (SVG)</a></div>
+    <p class="verification-comparison-method"><strong>How points are matched.</strong> {{ comparison.method }}</p>
+    {% if comparison.kind == 'fixed-mm' %}
+    <div class="verification-table-scroll" tabindex="0" role="region" aria-label="Published versus computed fixed-P moments">
+        <table class="verification-comparison-table">
+            <caption>AISC published and RETUG fixed-P M–M values (moments in kip-ft).</caption>
+            <thead>
+                <tr><th scope="col">Point</th><th scope="col">Published Mx</th><th scope="col">RETUG Mx</th><th scope="col">Ratio</th><th scope="col">Δ Mx</th><th scope="col">Difference</th><th scope="col">Published My</th><th scope="col">RETUG My</th><th scope="col">Δ My</th></tr>
+            </thead>
+            <tbody>
+                {% for row in comparison.rows %}
+                <tr><th scope="row">{{ row.name }}<small>{{ row.match }}</small></th><td>{{ row.published_display.Mx }}</td><td>{{ row.computed_display.Mx }}</td><td>{{ row.ratio_display.Mx }}</td><td>{{ row.delta_display.Mx }}</td><td>{{ row.difference_display.Mx }}%</td><td>{{ row.published_display.My }}</td><td>{{ row.computed_display.My }}</td><td>{{ row.delta_display.My }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="verification-table-scroll" tabindex="0" role="region" aria-label="Published versus computed control points">
+        <table class="verification-comparison-table">
+            <caption>spColumn published factored values and RETUG factored values (P in kip; M3 in kip-ft).</caption>
+            <thead>
+                <tr><th rowspan="2" scope="col">Point</th><th colspan="2" scope="colgroup">Published · spColumn</th><th colspan="2" scope="colgroup">Computed · RETUG</th><th colspan="2" scope="colgroup">Difference (%)</th></tr>
+                <tr><th scope="col">P<br><small>kip</small></th><th scope="col">M3<br><small>kip-ft</small></th><th scope="col">P<br><small>kip</small></th><th scope="col">M3<br><small>kip-ft</small></th><th scope="col">P</th><th scope="col">M3</th></tr>
+            </thead>
+            <tbody>
+                {% for row in comparison.rows %}
+                <tr{% if row.kind == 'compression' %} class="verification-cap-row"{% endif %}>
+                    <th scope="row">{{ row.name }}<small>{{ row.match }}</small></th>
+                    <td>{{ row.published_display.P }}</td><td>{{ row.published_display.M3 }}</td>
+                    <td>{{ row.computed_display.P }}</td><td>{{ row.computed_display.M3 }}</td>
+                    <td>{{ row.difference_display.P }}</td><td>{{ row.difference_display.M3 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    <p class="verification-percentage-note">{{ comparison.differenceDefinition }} Small differences may round to 0.0%.</p>
+    <div class="verification-comparison-notes">
+        <h3>Comparison notes</h3>
+        <ul>{% for note in comparison.notes %}<li>{{ note }}</li>{% endfor %}</ul>
+    </div>
+    {% else %}
+    <div class="verification-pending">
+        <div class="verification-pending-mark" aria-hidden="true">&hellip;</div>
+        <div>
+            <h3>The model is ready to explore.</h3>
+            <p>The reference data and computed comparison have not been added yet. This section will contain the interaction plot, control-point table, and notes explaining any differences.</p>
+            <p class="verification-pending-note">No numerical agreement or regression pass is claimed at this stage.</p>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

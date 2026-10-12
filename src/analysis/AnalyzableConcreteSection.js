@@ -1,5 +1,14 @@
 import * as THREE from 'three';
 import Plotly from 'plotly.js-dist-min';
+import { renderPMMTable, markPMMTableSelection } from './pmmTable.js';
+import { renderMMTable, markMMTableSelection } from './mmTable.js';
+import { createMMDemandOverlay } from './mmDemandOverlay.js';
+import { createMM2DTraces, createMM3DTraces, getMMLoadColor } from './mmPlotTraces.js';
+import { createPMMPlotTraces, createPMMAxisTraces } from './pmmPlotTraces.js';
+import { momentArray, momentX, momentY } from './momentCoordinates.js';
+import { demandPlotTraces, initializeDemandChecks } from './DemandChecks.js';
+import { getPlotUpdateCoordinator } from './plotUpdateCoordinator.js';
+import { resizeResultPlot } from './plotUpdates.js';
 import { scene, controls, camera, renderer } from '../main.js';
 import { setupRaycastingForResults } from '../threeJSscenefunctions.js';
 import { getRebarArea } from '../rebarProperties.js';
@@ -17,631 +26,9 @@ import {
     findRebarConcreteMaterial
 } from './rebarConcreteDisplacement.js';
 
-export class AnalyzableConcreteSection {
-    constructor(material) {
-        this.material = material;
-        this.FEMmesh = [];
-        this.PMMXYresults = {};
-        this.PMMUVresults = {};
-        this.transformedFEMcentroids = {};
-        this.FEMarea = 0;
-        this.totalRebarArea = 0;
-        this.centroidX = 0;
-        this.centroidY = 0;
-        this.strainProfiles = {};
-        this.strainProfileResponses = {};
-        this.Pnmax = 0;
-        this.rebarObjects = [];
-        this.momentMomentAnalysis = null;
-        this.currentMomentMomentResult = null;
-        this.materialSummary = [];
-        this.sectionResponseMode = 'stress';
-        this.currentResponseAngle = null;
-        this.currentStrainProfile = null;
-        this.currentResponseSelection = null;
-        this.selectedMomentMomentPoint = null;
-        this.rebarConcreteMaterials = new Map();
-        this.rebarConcreteMaterialMesh = null;
-    }
+import { SectionAnalysis } from './SectionAnalysis.js';
 
-    initializeRebarObjects(allSelectedRebar) {
-        this.resetAnalysisResults();
-        this.rebarObjects = allSelectedRebar;
-        this.rebarConcreteMaterials.clear();
-        this.rebarConcreteMaterialMesh = null;
-        this.totalRebarArea = this.rebarObjects.reduce((sum, rebar) => {
-            return sum + getRebarArea(rebar);
-        }, 0);
-    }
-
-    resetAnalysisResults() {
-        this.PMMXYresults = {};
-        this.PMMUVresults = {};
-        this.transformedFEMcentroids = {};
-        this.strainProfiles = {};
-        this.strainProfileResponses = {};
-        this.Pnmax = 0;
-        this.momentMomentAnalysis = null;
-        this.currentMomentMomentResult = null;
-        this.currentResponseAngle = null;
-        this.currentStrainProfile = null;
-        this.currentResponseSelection = null;
-        this.selectedMomentMomentPoint = null;
-    }
-
-    CalcPnmax(type) {
-        if (type !== "other") {
-            console.warn(`Unsupported type "${type}" passed to CalcPnmax. No calculation performed.`);
-            return;
-        }
-
-        if (!this.FEMmesh.length) {
-            throw new Error("A resolved section mesh is required before calculating Pnmax.");
-        }
-
-        let nominalAxialStrength = 0;
-        for (const element of this.FEMmesh) {
-            const material = element.userData?.material ?? element.userData?.concShape?.material ?? this.material;
-            if (!material) continue;
-            nominalAxialStrength += material.stress(-0.003) * element.area;
-        }
-
-        for (const rebar of this.rebarObjects) {
-            const steelMaterial = rebar.materialData;
-            if (!steelMaterial) continue;
-
-            const area = getRebarArea(rebar);
-            const strain = -0.003;
-            const concreteMaterial = this.getRebarConcreteMaterial(rebar);
-            nominalAxialStrength += calculateRebarForce(
-                area,
-                steelMaterial,
-                concreteMaterial,
-                strain
-            );
-        }
-
-        this.Pnmax = 0.8 * nominalAxialStrength / 1000;
-        return this.Pnmax;
-    }
-
-    getRebarConcreteMaterial(rebar) {
-        if (this.rebarConcreteMaterialMesh !== this.FEMmesh) {
-            this.rebarConcreteMaterials.clear();
-            this.rebarConcreteMaterialMesh = this.FEMmesh;
-        }
-        if (!this.rebarConcreteMaterials.has(rebar)) {
-            this.rebarConcreteMaterials.set(
-                rebar,
-                findRebarConcreteMaterial(rebar, this.FEMmesh)
-            );
-        }
-        return this.rebarConcreteMaterials.get(rebar);
-    }
-
-    transformCoordinatesAtAngle(angle, updateAnalysisSummary = true) {
-        if (!this.FEMmesh || this.FEMmesh.length === 0) {
-            console.error("❌ FEM mesh is empty, cannot transform coordinates.");
-            return;
-        }
-
-        if (!this.transformedFEMcentroids) {
-            this.transformedFEMcentroids = {};
-        }
-
-        const radians = (Math.PI / 180) * angle; // Convert degrees to radians
-        const cosTheta = Math.cos(radians);
-        const sinTheta = Math.sin(radians);
-
-        // ✅ Transform Concrete Centroids
-        let transformedConcrete = this.FEMmesh.map(mesh => {
-            let u = cosTheta * (mesh.centroid.x - this.centroidX) + sinTheta * (mesh.centroid.y - this.centroidY);
-            let v = -sinTheta * (mesh.centroid.x - this.centroidX) + cosTheta * (mesh.centroid.y - this.centroidY);
-            // ✅ Store transformed coordinates inside the rebar object
-            if (!mesh.transformedCentroid) mesh.transformedCentroid = {}; // Ensure dictionary exists
-            mesh.transformedCentroid[angle] = {u, v}
-            return { u, v };
-        });
-
-        // ✅ Transform Rebar Centroids (Stored in `rebarObjects`)
-        let transformedRebar = this.rebarObjects.map(rebar => {
-            let rebarX = rebar.geometry.attributes.position.array[0]
-            let rebarY = rebar.geometry.attributes.position.array[1]
- 
-            let u = cosTheta * (rebarX - this.centroidX) + sinTheta * (rebarY - this.centroidY);
-            let v = -sinTheta * (rebarX - this.centroidX) + cosTheta * (rebarY - this.centroidY);
-            
-            // ✅ Store transformed coordinates inside the rebar object
-            if (!rebar.transformedCentroid) rebar.transformedCentroid = {}; // Ensure dictionary exists
-            rebar.transformedCentroid[angle] = { u, v };
-
-            return { u, v };
-        });
-
-        // ✅ Transform Centroid Coordinates
-        let transformedCentroid = {
-            u: cosTheta * (this.centroidX - this.centroidX) + sinTheta * (this.centroidY - this.centroidY),
-            v: -sinTheta * (this.centroidX - this.centroidX) + cosTheta * (this.centroidY - this.centroidY)
-        };
-
-        // ✅ Store transformed data in the dictionary
-        this.transformedFEMcentroids[angle] = {
-            angle: angle,
-            conc: transformedConcrete,         // ✅ Store concrete mesh UV data
-            // rebar: this.rebarObjects,          // ✅ Store rebar objects with UV data
-            centroidCoordinates: transformedCentroid  // ✅ Store transformed centroid
-        };
-
-        if (updateAnalysisSummary) this.populateAnalysisResults();
-        
-
-    }
-
-    generateStrains(angle) {
-        if (!this.transformedFEMcentroids[angle]) {
-            console.error(`❌ No transformed FEM centroids found for angle ${angle}`);
-            return;
-        }
-
-        const concLocations = this.transformedFEMcentroids[angle].conc.map(point => point.v);
-        const rebarLocations = this.rebarObjects
-            .map(rebar => rebar.transformedCentroid[angle]?.v)
-            .filter(value => value !== undefined);
-
-        const plateSteelLocations = this.FEMmesh
-            .filter(element => (element.userData?.material ?? element.userData?.concShape?.material)?.type === 'steel')
-            .map(element => element.transformedCentroid?.[angle]?.v)
-            .filter(value => value !== undefined);
-        const tensionControlLocations = rebarLocations.length
-            ? [...rebarLocations, ...plateSteelLocations]
-            : plateSteelLocations.length
-                ? plateSteelLocations
-                : concLocations;
-
-        if (!concLocations.length) {
-            console.error("❌ Section element locations are empty. Cannot generate strain profiles.");
-            return;
-        }
-
-        const { min: concreteMin, max: concreteMax } = this._getConcreteVBounds(angle);
-        const rebarMin = Math.min(...tensionControlLocations);
-        const rebarMax = Math.max(...tensionControlLocations);
-
-        const positiveBranch = this._generateAdaptiveStrainBranch(angle, {
-            compressionV: concreteMax,
-            tensionV: rebarMin,
-            concreteCentroids: concLocations,
-            rebarLocations: tensionControlLocations,
-            targetCount: 51
-        });
-
-        const negativeBranch = this._generateAdaptiveStrainBranch(angle, {
-            compressionV: concreteMin,
-            tensionV: rebarMax,
-            concreteCentroids: concLocations,
-            rebarLocations: tensionControlLocations,
-            targetCount: 51
-        });
-
-        // Follow one branch from compression to tension and return on the other.
-        // Pure tension and pure compression are shared endpoints, so the duplicate
-        // endpoints from the return branch are removed. The final count is 100.
-        const selectedNodes = [
-            ...positiveBranch,
-            ...negativeBranch.slice().reverse().slice(1, -1)
-        ];
-        const profiles = selectedNodes.map(node => node.profile);
-
-        if (profiles.length !== 100) {
-            throw new Error(`Expected 100 strain profiles at angle ${angle}, received ${profiles.length}.`);
-        }
-
-        this.strainProfiles[angle] = profiles;
-        this.strainProfileResponses[angle] = selectedNodes.map(node => node.response);
-        return profiles;
-    }
-
-    _getConcreteVBounds(angle) {
-        const radians = (Math.PI / 180) * angle;
-        const cosTheta = Math.cos(radians);
-        const sinTheta = Math.sin(radians);
-        let min = Infinity;
-        let max = -Infinity;
-
-        for (const mesh of this.FEMmesh) {
-            const positions = mesh.geometry.attributes.position.array;
-            for (let index = 0; index < positions.length; index += 3) {
-                const x = positions[index] - this.centroidX;
-                const y = positions[index + 1] - this.centroidY;
-                const v = -sinTheta * x + cosTheta * y;
-                min = Math.min(min, v);
-                max = Math.max(max, v);
-            }
-        }
-
-        if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) {
-            throw new Error(`Unable to determine concrete depth at angle ${angle}.`);
-        }
-
-        return { min, max };
-    }
-
-    _generateAdaptiveStrainBranch(angle, options) {
-        const {
-            compressionV,
-            tensionV,
-            concreteCentroids,
-            rebarLocations,
-            targetCount
-        } = options;
-        const compressionStrain = -0.003;
-        const pureTensionStrain = 0.00507;
-        const tensionDistance = Math.abs(tensionV - compressionV);
-
-        if (tensionDistance <= Number.EPSILON) {
-            throw new Error("Compression and tension control points must be separated.");
-        }
-
-        const concreteDistances = concreteCentroids
-            .map(value => Math.abs(value - compressionV))
-            .filter(value => value > 1e-9);
-        const rebarDistances = rebarLocations
-            .map(value => Math.abs(value - compressionV))
-            .filter(value => value > 1e-9);
-
-        const nearestConcrete = Math.min(...concreteDistances);
-        const nearestRebar = Math.min(...rebarDistances);
-        const curvatureForZeroConcrete = 1.01 * Math.abs(compressionStrain) / nearestConcrete;
-        const curvatureForYieldedSteel = 1.01 * (pureTensionStrain - compressionStrain) / nearestRebar;
-        const terminalCurvature = Math.max(curvatureForZeroConcrete, curvatureForYieldedSteel);
-        const terminalTensionStrain = Math.min(
-            0.5,
-            Math.max(0.025, compressionStrain + terminalCurvature * tensionDistance)
-        );
-
-        const controlTensionStrains = [
-            -0.003,
-            -0.0025,
-            -0.002,
-            -0.0015,
-            -0.001,
-            -0.0005,
-            0,
-            0.001,
-            0.00207,
-            0.003,
-            0.004,
-            0.00507,
-            0.0075,
-            0.01,
-            0.015,
-            0.025
-        ].filter(value => value < terminalTensionStrain);
-
-        controlTensionStrains.push(terminalTensionStrain);
-        const pureTensionParameter = terminalTensionStrain
-            + Math.max(0.001, 0.05 * (terminalTensionStrain - compressionStrain));
-        controlTensionStrains.push(pureTensionParameter);
-
-        const nodeCache = new Map();
-        const createNode = parameter => {
-            const key = parameter.toPrecision(15);
-            if (nodeCache.has(key)) return nodeCache.get(key);
-
-            const isPureTension = Math.abs(parameter - pureTensionParameter) < 1e-12;
-            const profile = isPureTension
-                ? [0, pureTensionStrain]
-                : this._createControlledStrainProfile(
-                    compressionV,
-                    tensionV,
-                    compressionStrain,
-                    parameter
-                );
-            const node = {
-                parameter,
-                profile,
-                response: this._calculateProfileResponse(angle, profile)
-            };
-            nodeCache.set(key, node);
-            return node;
-        };
-
-        let nodes = controlTensionStrains.map(createNode);
-        const scales = this._getResponseScales(nodes.map(node => node.response));
-        const uniqueNodes = [];
-        for (let index = 0; index < nodes.length; index += 1) {
-            const node = nodes[index];
-            const previous = uniqueNodes[uniqueNodes.length - 1];
-            const equivalent = previous
-                && this._responseDistance(node.response, previous.response, scales) < 1e-8;
-
-            if (!equivalent) {
-                uniqueNodes.push(node);
-            } else if (index === nodes.length - 1) {
-                // Prefer the exact uniform-tension state over an equivalent
-                // high-curvature approximation at the branch endpoint.
-                uniqueNodes[uniqueNodes.length - 1] = node;
-            }
-        }
-        nodes = uniqueNodes;
-
-        while (nodes.length < targetCount) {
-            let bestSegment = null;
-
-            for (let index = 0; index < nodes.length - 1; index += 1) {
-                const left = nodes[index];
-                const right = nodes[index + 1];
-                let lowerParameter = left.parameter;
-                let upperParameter = right.parameter;
-                let midpoint = null;
-
-                // If a midpoint lands on a material-response plateau, move toward
-                // the changing end of the segment instead of spending a PMM point
-                // on a duplicate response.
-                for (let attempt = 0; attempt < 12; attempt += 1) {
-                    const midpointParameter = (lowerParameter + upperParameter) / 2;
-                    if (midpointParameter === lowerParameter || midpointParameter === upperParameter) break;
-
-                    const candidate = createNode(midpointParameter);
-                    const distanceFromLeft = this._responseDistance(
-                        candidate.response,
-                        left.response,
-                        scales
-                    );
-                    const distanceFromRight = this._responseDistance(
-                        candidate.response,
-                        right.response,
-                        scales
-                    );
-
-                    if (distanceFromLeft < 1e-8 && distanceFromRight < 1e-8) break;
-                    if (distanceFromLeft < 1e-8) {
-                        lowerParameter = midpointParameter;
-                        continue;
-                    }
-                    if (distanceFromRight < 1e-8) {
-                        upperParameter = midpointParameter;
-                        continue;
-                    }
-
-                    midpoint = candidate;
-                    break;
-                }
-
-                if (!midpoint) continue;
-
-                const chordLength = this._responseDistance(left.response, right.response, scales);
-                const interpolationRatio = (midpoint.parameter - left.parameter)
-                    / (right.parameter - left.parameter);
-                const interpolatedResponse = this._interpolateResponses(
-                    left.response,
-                    right.response,
-                    interpolationRatio
-                );
-                const curvatureError = this._responseDistance(
-                    midpoint.response,
-                    interpolatedResponse,
-                    scales
-                );
-                const score = chordLength + 4 * curvatureError;
-
-                if (!bestSegment || score > bestSegment.score) {
-                    bestSegment = { index, midpoint, score };
-                }
-            }
-
-            if (!bestSegment) {
-                throw new Error(`Unable to refine strain profiles at angle ${angle}.`);
-            }
-
-            nodes.splice(bestSegment.index + 1, 0, bestSegment.midpoint);
-        }
-
-        return nodes;
-    }
-
-    _createControlledStrainProfile(compressionV, tensionV, compressionStrain, tensionStrain) {
-        const slope = (tensionStrain - compressionStrain) / (tensionV - compressionV);
-        const intercept = compressionStrain - slope * compressionV;
-        return [slope, intercept];
-    }
-
-    _getResponseScales(responses) {
-        return {
-            axial: Math.max(
-                Math.abs(this.Pnmax),
-                ...responses.map(response => Math.max(Math.abs(response.P), Math.abs(response.phiP))),
-                1
-            ),
-            moment: Math.max(
-                ...responses.map(response => Math.max(
-                    Math.hypot(response.Mx, response.My),
-                    Math.hypot(response.phiMx, response.phiMy)
-                )),
-                1
-            )
-        };
-    }
-
-    _responseDistance(left, right, scales) {
-        const components = [
-            (left.P - right.P) / scales.axial,
-            (left.Mx - right.Mx) / scales.moment,
-            (left.My - right.My) / scales.moment,
-            (left.phiP - right.phiP) / scales.axial,
-            (left.phiMx - right.phiMx) / scales.moment,
-            (left.phiMy - right.phiMy) / scales.moment
-        ];
-        return Math.hypot(...components);
-    }
-
-    _interpolateResponses(left, right, ratio) {
-        const interpolate = (start, end) => start + (end - start) * ratio;
-        return {
-            P: interpolate(left.P, right.P),
-            Mx: interpolate(left.Mx, right.Mx),
-            My: interpolate(left.My, right.My),
-            phiP: interpolate(left.phiP, right.phiP),
-            phiMx: interpolate(left.phiMx, right.phiMx),
-            phiMy: interpolate(left.phiMy, right.phiMy)
-        };
-    }
-
-    convertUVtoXY(angle, Mu, Mv) {
-        let radians = (Math.PI / 180) * angle;
-        const sinTheta = Math.sin(radians);
-        const cosTheta = Math.cos(radians);
-
-        // Coordinates are transformed as u = x cosθ + y sinθ and
-        // v = -x sinθ + y cosθ. Mu and Mv contain the corresponding force
-        // first moments, while the existing global convention is Mx = -ΣFy
-        // and My = ΣFx. Applying the inverse rotation gives these signs.
-        let Mx = -Mu * sinTheta - Mv * cosTheta;
-        let My = Mu * cosTheta - Mv * sinTheta;
-        return { Mx, My };
-    }
-
-    strainFunction(m, x, b) {
-        return m*x+b
-    }
-
-    generatePMM(angle) {
-        if (!this.transformedFEMcentroids[angle]) {
-            console.error(`❌ No transformed centroids found for angle ${angle}`);
-            return;
-        }
-
-        if (!this.strainProfiles[angle]) {
-            console.error(`❌ No strain profiles found for angle ${angle}`);
-            return;
-        }
-
-        const cachedResponses = this.strainProfileResponses[angle];
-        const responses = cachedResponses?.length === this.strainProfiles[angle].length
-            ? cachedResponses
-            : this.strainProfiles[angle].map(
-                profile => this._calculateProfileResponse(angle, profile)
-            );
-
-        this.PMMUVresults[angle] = {
-            P: [responses.map(response => response.P)],
-            Mu: [responses.map(response => response.Mu)],
-            Mv: [responses.map(response => response.Mv)]
-        };
-        this.PMMXYresults[angle] = {
-            P: [responses.map(response => response.P)],
-            Mx: [responses.map(response => response.Mx)],
-            My: [responses.map(response => response.My)],
-            MaxRebarStrain: [responses.map(response => response.maxRebarStrain)],
-            phiP: [responses.map(response => response.phiP)],
-            phiMx: [responses.map(response => response.phiMx)],
-            phiMy: [responses.map(response => response.phiMy)]
-        };
-
-        return this.PMMXYresults[angle];
-    }
-
-    _calculateProfileResponse(angle, strainProfile) {
-        const transformed = this.transformedFEMcentroids[angle];
-        const centroidU = transformed.centroidCoordinates.u;
-        const centroidV = transformed.centroidCoordinates.v;
-        let concreteForce = 0;
-        let concreteMomentU = 0;
-        let concreteMomentV = 0;
-        let steelForce = 0;
-        let steelMomentU = 0;
-        let steelMomentV = 0;
-        let maxRebarStrain = -Infinity;
-
-        for (let index = 0; index < this.FEMmesh.length; index += 1) {
-            const concreteElement = this.FEMmesh[index];
-            const transformedConcrete = transformed.conc[index];
-            if (!transformedConcrete) continue;
-
-            const strain = this.strainFunction(
-                strainProfile[0],
-                transformedConcrete.v,
-                strainProfile[1]
-            );
-            const elementMaterial = concreteElement.userData?.material
-                ?? concreteElement.userData?.concShape?.material
-                ?? this.material;
-            const force = elementMaterial.stress(strain) * concreteElement.area;
-            if (elementMaterial.type === 'steel') {
-                maxRebarStrain = Math.max(maxRebarStrain, strain);
-            }
-            concreteForce += force;
-            concreteMomentV += force * (centroidV - transformedConcrete.v);
-            concreteMomentU += force * (centroidU - transformedConcrete.u);
-        }
-
-        for (const rebar of this.rebarObjects) {
-            const transformedRebar = rebar.transformedCentroid[angle];
-            if (!transformedRebar || !rebar.materialData) continue;
-
-            const strain = this.strainFunction(
-                strainProfile[0],
-                transformedRebar.v,
-                strainProfile[1]
-            );
-            const area = getRebarArea(rebar);
-            const force = calculateRebarForce(
-                area,
-                rebar.materialData,
-                this.getRebarConcreteMaterial(rebar),
-                strain
-            );
-            maxRebarStrain = Math.max(maxRebarStrain, strain);
-            steelForce += force;
-            steelMomentV += force * (centroidV - transformedRebar.v);
-            steelMomentU += force * (centroidU - transformedRebar.u);
-        }
-
-        if (!Number.isFinite(maxRebarStrain)) {
-            maxRebarStrain = Math.max(...this.FEMmesh.map((element, index) => {
-                const transformedConcrete = transformed.conc[index];
-                return transformedConcrete
-                    ? this.strainFunction(strainProfile[0], transformedConcrete.v, strainProfile[1])
-                    : -Infinity;
-            }));
-        }
-
-        const P = (steelForce + concreteForce) / 1000;
-        const Mu = (-steelMomentU - concreteMomentU) / 12 / 1000;
-        const Mv = (-steelMomentV - concreteMomentV) / 12 / 1000;
-        const { Mx, My } = this.convertUVtoXY(angle, Mu, Mv);
-        const phi = this.calculatePhi("other", maxRebarStrain);
-        const phiP = phi * Math.max(P, this.Pnmax);
-
-        return {
-            P,
-            Mu,
-            Mv,
-            Mx,
-            My,
-            maxRebarStrain,
-            phi,
-            phiP,
-            phiMx: phi * Mx,
-            phiMy: phi * My
-        };
-    }
-
-    calculatePhi(type, maxRebarStrain) {
-        if (type === "spiral") return; // ✅ Do nothing if "spiral"
-    
-        let phi;
-        if (maxRebarStrain < 0.00207) {
-            phi = 0.65;
-        } else if (maxRebarStrain >= 0.00507) {
-            phi = 0.9;
-        } else {
-            phi = 0.65 + 0.25 * (maxRebarStrain - 0.00207) / 0.003;
-        }
-    
-        return phi;
-    }
-
+export class AnalyzableConcreteSection extends SectionAnalysis {
     plotPMMResults() {
         if (!this.PMMXYresults || Object.keys(this.PMMXYresults).length === 0) {
             console.error("❌ No PMM XY results available to plot.");
@@ -665,86 +52,70 @@ export class AnalyzableConcreteSection {
                                 <label for="angleSelection">Bending axis<select id="angleSelection"></select></label>
                                 <label for="indexSelection">Strain profile<select id="indexSelection"></select></label>
                             </div>
+                            <div class="result-view-tabs" role="tablist" aria-label="PMM display">
+                                <button id="pmmPlotTab" type="button" role="tab" aria-selected="true" aria-controls="pmmPlotPanel">3D PMM</button>
+                                <button id="pmmTableTab" type="button" role="tab" aria-selected="false" aria-controls="pmmTablePanel" tabindex="-1">Table</button>
+                                <button id="pmmDemandTab" type="button" role="tab" aria-selected="false" aria-controls="pmmDemandPanel" tabindex="-1">Demand checks</button>
+                            </div>
                         </div>
-                        <div id="pmPlot" class="analysis-plot"></div>
+                        <div id="pmmPlotPanel" role="tabpanel" aria-labelledby="pmmPlotTab"><div id="pmPlot" class="analysis-plot"></div></div>
+                        <div id="pmmTablePanel" role="tabpanel" aria-labelledby="pmmTableTab" hidden></div>
+                        <div id="pmmDemandPanel" role="tabpanel" aria-labelledby="pmmDemandTab" hidden></div>
                     </section>
 
                     <section class="analysis-plot-card">
                         <div class="analysis-plot-header">
                             <div><span class="analysis-eyebrow">Constant axial slice</span><h3>Moment–Moment Capacity</h3></div>
+                            <div class="result-view-tabs" role="tablist" aria-label="MM display">
+                                <button id="mmPlotTab" type="button" role="tab" aria-selected="true" aria-controls="mmPlotPanel">M–M plot</button>
+                                <button id="mmTableTab" type="button" role="tab" aria-selected="false" aria-controls="mmTablePanel" tabindex="-1">Table</button>
+                            </div>
                         </div>
                         <div class="plot-action-row">
                             <label for="mmAxialLoad">
                                 Axial load (kips)<input id="mmAxialLoad" type="number" step="1" value="0">
                             </label>
+                            <button id="addMMLoadButton" type="button">Add load</button>
                             <button id="generateMMButton" type="button">Generate MM</button>
+                            <button id="clearMMLoadsButton" type="button">Clear loads</button>
                             <button id="exportAnalysisExcelButton" class="export-plot-button" type="button">Export Excel</button>
                         </div>
+                        <div id="mmLoadSeries" class="mm-load-series" aria-label="Axial loads plotted on the M–M chart"></div>
                         <div id="mmAxialRange" class="plot-helper-text"></div>
+                        <div id="mmDemandContext" class="plot-helper-text"></div>
                         <div id="mmStatus" class="plot-status" role="status"></div>
                         <div id="excelExportStatus" class="plot-status" role="status"></div>
-                        <div id="mmPlot" class="analysis-plot"></div>
+                        <div id="mmPlotPanel" role="tabpanel" aria-labelledby="mmPlotTab"><div id="mmPlot" class="analysis-plot"></div></div>
+                        <div id="mmTablePanel" role="tabpanel" aria-labelledby="mmTableTab" hidden></div>
                     </section>
                 </div>
             `;
             this.populateAngleDropdown(uniqueAngles);
+            this.setupPMMViewTabs();
+            this.setupResultViewTabs(['mmPlotTab', 'mmTableTab']);
             
             angleDropdown = document.getElementById("angleSelection");
         }
     
         let selectedAngle = parseFloat(angleDropdown.value) || uniqueAngles[0];
         this.populateIndexDropdown(selectedAngle)
-    
-        let P_values = [], Mx_values = [], My_values = [];
-        let phiP_values = [], phiMx_values = [], phiMy_values = [];
-        let angles = [], strainProfileIndices = [];
-    
-        for (let angle in this.PMMXYresults) {
-            let numPoints = this.PMMXYresults[angle].P.flat().length;
-            P_values.push(...this.PMMXYresults[angle].P.flat());
-            Mx_values.push(...this.PMMXYresults[angle].Mx.flat());
-            My_values.push(...this.PMMXYresults[angle].My.flat());
-    
-            phiP_values.push(...this.PMMXYresults[angle].phiP.flat());
-            phiMx_values.push(...this.PMMXYresults[angle].phiMx.flat());
-            phiMy_values.push(...this.PMMXYresults[angle].phiMy.flat());
-    
-            angles.push(...Array(numPoints).fill(Number(angle)));
-            strainProfileIndices.push(...Array.from({ length: numPoints }, (_, i) => i));
-        }
-    
-        let nominalColors = angles.map(angle => angle === selectedAngle ? "#0f4c81" : "#b8c4d1");
-        let designColors = angles.map(angle => angle === selectedAngle ? "#0f766e" : "#a7d1cd");
-        let symbolTypes = angles.map(angle => angle === selectedAngle ? "circle" : "cross");
-    
-        let originalTrace = {
-            x: Mx_values, y: My_values, z: P_values,
-            mode: "markers", type: "scatter3d",
-            marker: { size: 5, color: nominalColors, opacity: 0.82, symbol: symbolTypes },
-            name: "Nominal capacity",
-            hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br> Index - %{customdata}",
-            customdata: strainProfileIndices
-        };
-    
-        let reducedTrace = {
-            x: phiMx_values, y: phiMy_values, z: phiP_values,
-            mode: "markers", type: "scatter3d",
-            marker: { size: 5, color: designColors, opacity: 0.82, symbol: symbolTypes },
-            name: "Design capacity (φ)",
-            hovertemplate: "φP - %{z:.1f} (k)<br> φMx - %{x:.1f} (kip*ft)<br> φMy - %{y:.1f} (kip*ft)<br> Index - %{customdata}",
-            customdata: strainProfileIndices
-        };
+        window.selectedAngle = selectedAngle;
+        window.selectedIndex = 0;
     
         let layout = {
             paper_bgcolor: "#ffffff",
             plot_bgcolor: "#ffffff",
             font: { family: "Inter, system-ui, sans-serif", color: "#334155", size: 11 },
+            uirevision: 'pmm-camera',
             scene: {
+                dragmode: 'orbit',
+                uirevision: 'pmm-camera',
                 bgcolor: "#ffffff",
-                xaxis: { title: "Mx (kip-ft)", gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
-                yaxis: { title: "My (kip-ft)", gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
-                zaxis: { title: "P (kips)", gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
-                aspectmode: "data",
+                xaxis: { title: { text: "M2 / Mx (kip-ft)" }, gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+                yaxis: { title: { text: "M3 / My (kip-ft)" }, gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+                zaxis: { title: { text: "P (kips)" }, gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+                aspectmode: "manual",
+                aspectratio: { x: 1, y: 1, z: 1.15 },
                 camera: { eye: { x: 1.45, y: 1.45, z: 1.05 } }
             },
             legend: { orientation: "h", x: 0, y: 1.04, bgcolor: "rgba(255,255,255,0.82)" },
@@ -752,34 +123,39 @@ export class AnalyzableConcreteSection {
         };
     
         let plotDiv = document.getElementById("pmPlot");
+        const updates = getPlotUpdateCoordinator(plotDiv);
+        this.pmmPlotUpdates = updates;
     
         // ✅ If the plot already exists, just update it instead of redrawing
         const pmmTraces = [
-            originalTrace,
-            reducedTrace,
-            ...this._createMomentMoment3DTraces(this.currentMomentMomentResult)
+            ...createPMMPlotTraces(this.PMMXYresults, selectedAngle),
+            ...this._createMomentMoment3DTraces(this.currentMomentMomentResult),
+            ...demandPlotTraces(getAnalysisConfiguration().demandCases, [], null, getAnalysisConfiguration().dcrMethod),
+            {
+                x: [], y: [], z: [], mode: 'markers', type: 'scatter3d',
+                marker: { size: 9, color: '#ff8c69', symbol: 'diamond', line: { color: '#263747', width: 2 } },
+                name: 'Selected Point', showlegend: false, meta: { isPMMHighlight: true },
+                hovertemplate: 'P: %{z:.1f} kips<br>Mx: %{x:.1f} kip-ft<br>My: %{y:.1f} kip-ft<extra>Selected point</extra>'
+            }
         ];
 
+        void updates.enqueue('render', async () => {
+        if (window.activeAnalysisSection !== this || !plotDiv.isConnected) return;
         if (plotDiv.data) {
-            Plotly.react("pmPlot", pmmTraces, layout, { responsive: true, displaylogo: false });
+            await Plotly.react(plotDiv, pmmTraces, layout, { responsive: false, displaylogo: false });
         } else {
-            Plotly.newPlot("pmPlot", pmmTraces, layout, { responsive: true, displaylogo: false });
+            await Plotly.newPlot(plotDiv, pmmTraces, layout, { responsive: false, displaylogo: false });
         }
+        if (updates.disposed || window.activeAnalysisSection !== this || !plotDiv.isConnected) return;
+        this.demandChecks?.dispose();
+        this.demandChecks = initializeDemandChecks(this, document.getElementById('pmmDemandPanel'), plotDiv);
     
         // ✅ Attach event listener only once
         if (!angleDropdown.dataset.listenerAdded) {
             angleDropdown.addEventListener("change", () => {
                 const section = window.activeAnalysisSection;
                 const newAngle = parseFloat(angleDropdown.value);
-                const selectedIndex = window.selectedIndex || 0;
-
-                window.selectedAngle = newAngle;
-                section.populateIndexDropdown(newAngle);
-                indexDropdown.value = selectedIndex;
-                section.updatePMMHighlight();
-                section.resetHighlightedPoint();
-                section.highlightSelectedPoint(selectedIndex, newAngle);
-                section.generate3dStressPlot(newAngle, section.strainProfiles[newAngle][selectedIndex]);
+                section.selectPMMProfile(window.selectedIndex || 0, newAngle);
             });
             angleDropdown.dataset.listenerAdded = true;
         }
@@ -793,28 +169,29 @@ export class AnalyzableConcreteSection {
             plotDiv.on('plotly_click', (data) => {
                 const section = window.activeAnalysisSection;
                 const clickedPoint = data.points[0];
-                // MM slice points are display-only; PMM points continue to
-                // drive the strain-profile and stress-result selection.
+                if (clickedPoint.data.meta?.isDemandCheck) {
+                    void updates.enqueue('selection', () => {
+                        if (window.activeAnalysisSection === section) section.demandChecks?.select(clickedPoint.customdata);
+                    }, { selection: true }).catch(error => console.warn('Demand selection failed:', error));
+                    return;
+                }
+                if (clickedPoint.data.meta?.isMomentMomentSlice) {
+                    const pointIndex = Number(clickedPoint.customdata?.[1]);
+                    const mode = clickedPoint.data.meta.mode;
+                    void updates.enqueue('selection', () => {
+                        if (window.activeAnalysisSection === section) section.selectMomentMomentPoint(pointIndex, mode);
+                    }, { selection: true }).catch(error => console.warn('MM selection failed:', error));
+                    return;
+                }
                 if (
-                    clickedPoint.data.meta?.isMomentMomentSlice
-                    || clickedPoint.data.meta?.isPMMHighlight
+                    clickedPoint.data.meta?.isPMMHighlight
+                    || clickedPoint.data.meta?.isPMMSurface
                 ) return;
 
-                const clickedIndex = clickedPoint.customdata;
-                const clickedAngle = parseFloat(angleDropdown.value);
-
-                window.selectedIndex = clickedIndex;
-                window.selectedAngle = clickedAngle;
-                indexDropdown.value = clickedIndex;
-
-                section.generate3dStressPlot(
-                    clickedAngle,
-                    section.strainProfiles[clickedAngle][clickedIndex]
-                );
-
-                setTimeout(() => {
-                    setupRaycastingForResults(scene, camera, renderer);
-                }, 100);
+                const [clickedAngle, clickedIndex] = clickedPoint.customdata ?? [];
+                void updates.enqueue('selection', () => {
+                    if (window.activeAnalysisSection === section) section.selectPMMProfile(clickedIndex, clickedAngle);
+                }, { selection: true }).catch(error => console.warn('PMM selection failed:', error));
             });
             plotDiv.dataset.listenerAdded = true;
         }
@@ -826,58 +203,95 @@ export class AnalyzableConcreteSection {
                 const selectedIndex = parseInt(indexDropdown.value, 10);
                 const selectedAngle = parseFloat(angleDropdown.value);
 
-                window.selectedIndex = selectedIndex;
-                window.selectedAngle = selectedAngle;
-
-                console.log(`📌 Strain Profile Index Changed: Angle ${selectedAngle}, Index ${selectedIndex}`);
-
-                // ✅ Generate 3D stress plot based on new index
-                section.generate3dStressPlot(
-                    selectedAngle,
-                    section.strainProfiles[selectedAngle][selectedIndex]
-                );
-                section.resetHighlightedPoint();
-                section.highlightSelectedPoint(selectedIndex, selectedAngle);
+                section.selectPMMProfile(selectedIndex, selectedAngle);
 
             });
             indexDropdown.dataset.listenerAdded = true;
         }
 
         this.setupMomentMomentControls();
+        }).catch(error => console.error('PMM plot could not render:', error));
+    }
+
+    setupPMMViewTabs() {
+        this.setupResultViewTabs(['pmmPlotTab', 'pmmTableTab', 'pmmDemandTab'], true);
+    }
+
+    setupResultViewTabs(ids, resetScroll = false) {
+        const tabs = ids.map(id => document.getElementById(id));
+        const activate = (active, focus = false) => {
+            for (const tab of tabs) {
+                const selected = tab === active;
+                tab.setAttribute('aria-selected', String(selected));
+                tab.tabIndex = selected ? 0 : -1;
+                document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+            }
+            if (focus) active.focus();
+            if (resetScroll) document.getElementById('results').scrollTop = 0;
+            requestAnimationFrame(() => {
+                for (const id of ['pmPlot', 'mmPlot']) {
+                    const plot = document.getElementById(id);
+                    if (plot?.data) void resizeResultPlot(plot);
+                }
+            });
+        };
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => activate(tab));
+            tab.addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+                    : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                activate(tabs[next], true);
+            });
+        });
+    }
+
+    selectPMMProfile(index, angle) {
+        if (!Number.isInteger(index) || !Number.isFinite(angle)) return;
+        const profiles = this.strainProfiles[angle];
+        if (!profiles?.length) return;
+        index = Math.max(0, Math.min(index, profiles.length - 1));
+        const changedAngle = window.selectedAngle !== angle;
+        window.selectedAngle = angle;
+        window.selectedIndex = index;
+        document.getElementById('angleSelection').value = angle;
+        if (changedAngle) this.populateIndexDropdown(angle);
+        document.getElementById('indexSelection').value = index;
+        if (changedAngle) this.updatePMMHighlight();
+        markPMMTableSelection(index);
+        this.resetHighlightedPoint();
+        this.highlightSelectedPoint(index, angle);
+        this.generate3dStressPlot(angle, profiles[index]);
+        setupRaycastingForResults(scene, camera, renderer);
     }
 
     setupMomentMomentControls() {
         const input = document.getElementById("mmAxialLoad");
         const button = document.getElementById("generateMMButton");
+        const addButton = document.getElementById("addMMLoadButton");
+        const clearButton = document.getElementById("clearMMLoadsButton");
         const exportButton = document.getElementById("exportAnalysisExcelButton");
         const plot = document.getElementById("mmPlot");
         if (!input || !button || !plot) return;
 
         this.momentMomentAnalysis ??= new MomentMomentAnalysis(this);
-        const limits = this.momentMomentAnalysis.getAxialLimits();
-        const savedAxialLoad = getAnalysisConfiguration().momentMomentAxialLoad;
-        if (!this.currentMomentMomentResult && Number.isFinite(savedAxialLoad)) {
-            input.value = String(savedAxialLoad);
+        this.activeDemand = this.demandChecks?.getSelectedDemand() ?? null;
+        if (!this.currentMomentMomentResult && !this.momentMomentResults.length) {
+            input.value = String(this.activeDemand?.P ?? 0);
         }
-        const currentValue = Number(input.value);
-
-        // A newly created analysis starts by displaying the zero-axial-load
-        // slice on both the 2D MM plot and the 3D PMM plot.
-        if (!Number.isFinite(currentValue) || currentValue < limits.compression || currentValue > limits.tension) {
-            input.value = limits.compression <= 0 && limits.tension >= 0
-                ? "0"
-                : ((limits.compression + limits.tension) / 2).toFixed(2);
-        }
+        updateAnalysisConfiguration({ momentMomentAxialLoad: Number(input.value) });
+        this.renderMMLoadSeries();
 
         this.validateMomentMomentInput();
 
-        if (this.currentMomentMomentResult) {
+        if (this.momentMomentResults.length) {
             this.renderMomentMomentCurve(this.currentMomentMomentResult);
         } else {
             const emptyLayout = {
-                title: "Calculating the P = 0 MM curve…",
-                xaxis: { title: "Mx (kip-ft)" },
-                yaxis: { title: "My (kip-ft)", scaleanchor: "x", scaleratio: 1 },
+                title: { text: `Calculating the P = ${input.value} MM curve…` },
+                xaxis: { title: { text: "M2 / Mx (kip-ft)" } },
+                yaxis: { title: { text: "M3 / My (kip-ft)" }, scaleanchor: "x", scaleratio: 1 },
                 margin: { l: 60, r: 20, b: 55, t: 50 }
             };
             if (plot.data) {
@@ -896,11 +310,25 @@ export class AnalyzableConcreteSection {
             input.dataset.listenerAdded = true;
         }
 
+        if (addButton && !addButton.dataset.listenerAdded) {
+            addButton.addEventListener("click", () => {
+                window.activeAnalysisSection?.addMomentMomentLoad();
+            });
+            addButton.dataset.listenerAdded = true;
+        }
+
         if (!button.dataset.listenerAdded) {
             button.addEventListener("click", () => {
                 window.activeAnalysisSection?.generateMomentMomentCurve();
             });
             button.dataset.listenerAdded = true;
+        }
+
+        if (clearButton && !clearButton.dataset.listenerAdded) {
+            clearButton.addEventListener("click", () => {
+                window.activeAnalysisSection?.clearMomentMomentLoads();
+            });
+            clearButton.dataset.listenerAdded = true;
         }
 
         if (exportButton && !exportButton.dataset.listenerAdded) {
@@ -912,9 +340,69 @@ export class AnalyzableConcreteSection {
 
         this.updateAnalysisExportButtonState();
 
-        if (!this.currentMomentMomentResult && !button.dataset.running) {
-            void this.generateMomentMomentCurve();
+        if (!this.currentMomentMomentResult && !this.momentMomentResults.length && !button.dataset.running) {
+            void this.generateMomentMomentCurve({ auto: true });
         }
+    }
+
+    renderMMLoadSeries() {
+        const container = document.getElementById('mmLoadSeries');
+        if (!container) return;
+        const targets = this.mmLoadTargets ?? [];
+        container.innerHTML = targets.length
+            ? targets.map((load, index) => `
+                <span class="mm-load-chip" style="--mm-load-color: ${this.getMMLoadColor(index)}">
+                    <span>P = ${Number(load).toFixed(2)} kips</span>
+                    <button type="button" data-mm-load-index="${index}" aria-label="Remove P = ${Number(load).toFixed(2)} kips">&times;</button>
+                </span>
+            `).join('')
+            : '<span class="mm-load-empty">Add axial loads to compare multiple M–M bands.</span>';
+        container.querySelectorAll('[data-mm-load-index]').forEach(button => {
+            button.addEventListener('click', () => {
+                const index = Number(button.dataset.mmLoadIndex);
+                this.removeMomentMomentLoad(index);
+            });
+        });
+        const clearButton = document.getElementById('clearMMLoadsButton');
+        if (clearButton) clearButton.disabled = targets.length === 0;
+    }
+
+    getMMLoadColor(index) {
+        return getMMLoadColor(index);
+    }
+
+    addMomentMomentLoad() {
+        const input = document.getElementById('mmAxialLoad');
+        const value = Number(input?.value);
+        const validation = this.validateMomentMomentInput();
+        if (!validation.valid || !Number.isFinite(value)) return;
+        this.mmLoadTargets ??= [];
+        if (!this.mmLoadTargets.some(load => Math.abs(load - value) <= 1e-6)) {
+            this.mmLoadTargets.push(value);
+            this.renderMMLoadSeries();
+        }
+        const status = document.getElementById('mmStatus');
+        if (status) status.textContent = `Added P = ${value.toFixed(2)} kips. Add another load or generate the overlay.`;
+    }
+
+    removeMomentMomentLoad(index) {
+        if (!Array.isArray(this.mmLoadTargets) || !Number.isInteger(index)) return;
+        this.mmLoadTargets.splice(index, 1);
+        const removedResult = this.momentMomentResults?.[index];
+        if (removedResult) {
+            this.momentMomentResults.splice(index, 1);
+            this.currentMomentMomentResult = this.momentMomentResults.at(-1) ?? null;
+            this.selectedMomentMomentPoint = null;
+            if (this.currentMomentMomentResult) this.renderMomentMomentCurve(this.currentMomentMomentResult);
+            else this.invalidateMomentMomentCurve('Add an axial load to generate an M–M band.');
+        }
+        this.renderMMLoadSeries();
+    }
+
+    clearMomentMomentLoads() {
+        this.mmLoadTargets = [];
+        this.invalidateMomentMomentCurve('Add axial loads to compare multiple M–M bands.');
+        this.renderMMLoadSeries();
     }
 
     validateMomentMomentInput() {
@@ -939,7 +427,7 @@ export class AnalyzableConcreteSection {
         input.style.color = valid ? "" : "#dc2626";
         input.style.borderColor = valid ? "#9ca3af" : "#dc2626";
         input.setAttribute("aria-invalid", String(!valid));
-        button.disabled = !valid;
+        button.disabled = !valid || Boolean(button.dataset.running);
         button.style.opacity = valid ? "1" : "0.55";
         button.style.cursor = valid ? "pointer" : "not-allowed";
 
@@ -956,45 +444,149 @@ export class AnalyzableConcreteSection {
         return { valid, value, limits };
     }
 
-    async generateMomentMomentCurve() {
-        const validation = this.validateMomentMomentInput();
-        if (!validation.valid) return;
+    setActiveDemand(demand) {
+        this.activeDemand = demand ? { ...demand } : null;
+        const input = document.getElementById('mmAxialLoad');
+        if (!input) return;
+        const target = this.activeDemand?.P ?? 0;
+        input.value = String(target);
+        updateAnalysisConfiguration({ momentMomentAxialLoad: target });
+        const matchingResult = this.momentMomentResults?.find(result => result.axialLoad === target);
+        if (matchingResult) {
+            this.currentMomentMomentResult = matchingResult;
+            this.renderMomentMomentCurve(matchingResult);
+        } else if (this.mmPendingLoad !== target) {
+            void this.generateMomentMomentCurve();
+        }
+    }
 
+    invalidateMomentMomentCurve(message = '') {
+        this.mmAbortController?.abort();
+        this.mmGeneration += 1;
+        this.mmPendingLoad = null;
+        this.currentMomentMomentResult = null;
+        this.momentMomentResults = [];
+        this.selectedMomentMomentPoint = null;
+        const button = document.getElementById('generateMMButton');
+        if (button) { delete button.dataset.running; button.textContent = 'Generate MM'; }
+        const input = document.getElementById('mmAxialLoad');
+        if (input) input.disabled = false;
+        const addButton = document.getElementById('addMMLoadButton');
+        if (addButton) addButton.disabled = false;
+        const clearButton = document.getElementById('clearMMLoadsButton');
+        if (clearButton) clearButton.disabled = !(this.mmLoadTargets?.length);
+        const status = document.getElementById('mmStatus');
+        if (status) { status.textContent = message; status.style.color = '#586979'; }
+        const context = document.getElementById('mmDemandContext');
+        if (context) context.textContent = this.activeDemand ? `Demand: ${this.activeDemand.name} · P = ${this.activeDemand.P} kips` : 'No demand selected · default axial load is 0 kips.';
+        const plot = document.getElementById('mmPlot');
+        if (plot?.data) void Plotly.react(plot, [], {
+            ...plot.layout, title: { text: 'M–M slice pending' }, annotations: []
+        }, { responsive: true, displaylogo: false });
+        renderMMTable(document.getElementById('mmTablePanel'), null, null, () => {});
+        void this.renderMomentMomentCurveOnPMM(null);
+        this.updateAnalysisExportButtonState(true);
+    }
+
+    getMomentMomentTargets() {
+        const inputValue = Number(document.getElementById('mmAxialLoad')?.value);
+        const targets = [];
+        for (const value of this.mmLoadTargets ?? []) {
+            if (Number.isFinite(value) && !targets.some(load => Math.abs(load - value) <= 1e-6)) {
+                targets.push(value);
+            }
+        }
+        if (Number.isFinite(inputValue) && !targets.some(load => Math.abs(load - inputValue) <= 1e-6)) {
+            targets.push(inputValue);
+        }
+        return targets;
+    }
+
+    async generateMomentMomentCurve({ auto = false } = {}) {
+        this.invalidateMomentMomentCurve();
         const button = document.getElementById("generateMMButton");
         const input = document.getElementById("mmAxialLoad");
         const status = document.getElementById("mmStatus");
+        const addButton = document.getElementById('addMMLoadButton');
+        const clearButton = document.getElementById('clearMMLoadsButton');
+        if (!button || !input || !status) return;
+        const targets = this.getMomentMomentTargets();
+        if (!targets.length) {
+            status.textContent = 'Enter an axial load before generating an M–M curve.';
+            return;
+        }
+        if (!auto) {
+            this.mmLoadTargets = [...targets];
+            this.renderMMLoadSeries();
+        }
+        const generation = this.mmGeneration;
+        const controller = new AbortController();
+        this.mmAbortController = controller;
+        this.mmPendingLoad = targets[0];
+        const isCurrent = () => generation === this.mmGeneration && !controller.signal.aborted
+            && window.activeAnalysisSection === this && input.isConnected;
         button.disabled = true;
         input.disabled = true;
+        if (addButton) addButton.disabled = true;
+        if (clearButton) clearButton.disabled = true;
         button.dataset.running = "true";
         button.textContent = "Calculating…";
         this.updateAnalysisExportButtonState(true);
         status.style.color = "#4b5563";
-        status.textContent = "Calculating initial MM points…";
+        status.textContent = `Calculating ${targets.length} M–M band${targets.length === 1 ? '' : 's'}…`;
 
         try {
-            const result = await this.momentMomentAnalysis.generate(validation.value, {
-                onProgress: progress => {
-                    if (progress.stage === "initial") {
-                        status.textContent = `Calculating MM points ${progress.completed}/${progress.total}…`;
-                    } else {
-                        status.textContent = `Refining MM curve (${progress.completed} points)…`;
-                    }
+            for (let targetIndex = 0; targetIndex < targets.length; targetIndex += 1) {
+                const target = targets[targetIndex];
+                const solver = new MomentMomentAnalysis(this);
+                this.momentMomentAnalysis = solver;
+                const limits = solver.getAxialLimits();
+                if (target < limits.compression || target > limits.tension) {
+                    throw new RangeError(
+                        `P = ${target.toFixed(2)} kips is outside the valid range `
+                        + `(${limits.compression.toFixed(2)} to ${limits.tension.toFixed(2)} kips).`
+                    );
                 }
-            });
-            this.currentMomentMomentResult = result;
+                this.mmPendingLoad = target;
+                const result = await solver.generate(target, {
+                    signal: controller.signal,
+                    onProgress: progress => {
+                        if (!isCurrent()) return;
+                        const prefix = `Band ${targetIndex + 1}/${targets.length} · `;
+                        if (progress.stage === "initial") {
+                            status.textContent = `${prefix}Calculating MM points ${progress.completed}/${progress.total}…`;
+                        } else {
+                            status.textContent = `${prefix}Refining MM curve (${progress.completed} points)…`;
+                        }
+                    }
+                });
+                if (!isCurrent()) return;
+                this.momentMomentResults.push(result);
+                this.currentMomentMomentResult = result;
+                this.selectedMomentMomentPoint = null;
+                this.renderMomentMomentCurve(result);
+            }
+            if (!isCurrent()) return;
             this.selectedMomentMomentPoint = null;
-            this.renderMomentMomentCurve(result);
-            await this.renderMomentMomentCurveOnPMM(result);
+            // PMM may be hidden behind its table/demand tab. Rendering waits
+            // until it is visible; completing the solve must not wait for it.
+            void this.renderMomentMomentCurveOnPMM(this.currentMomentMomentResult);
         } catch (error) {
+            if (!isCurrent() || error.name === 'AbortError') return;
             console.error("Failed to generate MM curve:", error);
             status.textContent = error.message;
             status.style.color = "#dc2626";
         } finally {
-            delete button.dataset.running;
-            input.disabled = false;
-            button.textContent = "Generate MM";
-            this.validateMomentMomentInput();
-            this.updateAnalysisExportButtonState();
+            if (isCurrent()) {
+                this.mmPendingLoad = null;
+                delete button.dataset.running;
+                input.disabled = false;
+                if (addButton) addButton.disabled = false;
+                button.textContent = "Generate MM";
+                this.validateMomentMomentInput();
+                this.renderMMLoadSeries();
+                this.updateAnalysisExportButtonState();
+            }
         }
     }
 
@@ -1030,7 +622,7 @@ export class AnalyzableConcreteSection {
             const filename = await exportSectionAnalysisWorkbook(this);
             if (status) {
                 status.textContent = `Downloaded ${filename}`;
-                status.style.color = "#166534";
+                status.style.color = "#263747";
             }
         } catch (error) {
             console.error("Failed to export analysis workbook:", error);
@@ -1045,53 +637,28 @@ export class AnalyzableConcreteSection {
         }
     }
 
-    renderMomentMomentCurve(result) {
+    renderMomentMomentCurve(result, { refreshTable = true } = {}) {
         const plot = document.getElementById("mmPlot");
         const status = document.getElementById("mmStatus");
         if (!plot || !status) return;
-
-        const pointMetadata = result.points.map((point, pointIndex) => [point.angle, pointIndex]);
-        const nominalTrace = {
-            x: result.points.map(point => point.nominal?.Mx ?? null),
-            y: result.points.map(point => point.nominal?.My ?? null),
-            customdata: pointMetadata,
-            mode: "lines+markers",
-            type: "scatter",
-            name: "Nominal MM",
-            connectgaps: false,
-            line: { color: "#0f4c81", width: 3 },
-            marker: { color: "#0f4c81", size: 4 },
-            meta: { isMomentMomentCurve: true, mode: 'nominal' },
-            hovertemplate: "Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<br>NA angle: %{customdata[0]:.2f}°<extra>Nominal</extra>"
-        };
-        const phiTrace = {
-            x: result.points.map(point => point.phi?.Mx ?? null),
-            y: result.points.map(point => point.phi?.My ?? null),
-            customdata: pointMetadata,
-            mode: "lines+markers",
-            type: "scatter",
-            name: "Design MM (φ)",
-            connectgaps: false,
-            line: { color: "#0f766e", width: 3 },
-            marker: { color: "#0f766e", size: 4 },
-            meta: { isMomentMomentCurve: true, mode: 'phi' },
-            hovertemplate: "φMx: %{x:.2f} kip-ft<br>φMy: %{y:.2f} kip-ft<br>NA angle: %{customdata[0]:.2f}°<extra>φMM</extra>"
-        };
-
-        const traces = [nominalTrace, phiTrace];
+        const demandOverlay = createMMDemandOverlay(result, this.activeDemand);
+        const results = (this.momentMomentResults?.length ? this.momentMomentResults : [result])
+            .filter(Boolean);
+        const traces = results.flatMap((loadResult, loadIndex) => createMM2DTraces(loadResult, { loadIndex }));
+        traces.push(...demandOverlay.traces);
         const selected = this.selectedMomentMomentPoint;
         const selectedPoint = selected ? result.points[selected.pointIndex] : null;
         const selectedSolution = selectedPoint?.[selected?.mode];
         if (selectedSolution) {
             traces.push({
-                x: [selectedSolution.Mx],
-                y: [selectedSolution.My],
+                x: [momentX(selectedSolution)],
+                y: [momentY(selectedSolution)],
                 customdata: [[selectedPoint.angle, selected.pointIndex]],
                 mode: 'markers',
                 type: 'scatter',
                 name: 'Selected MM point',
                 marker: {
-                    color: '#7c3aed',
+                    color: '#ff8c69',
                     size: 11,
                     symbol: 'diamond',
                     line: { color: '#ffffff', width: 1.5 }
@@ -1101,21 +668,33 @@ export class AnalyzableConcreteSection {
             });
         }
 
+        const loadCount = results.length;
+
         Plotly.react(plot, traces, {
-            title: { text: `P = ${result.axialLoad.toFixed(2)} kips`, font: { size: 14, color: "#334155" } },
+            title: {
+                text: `M–M capacity · ${loadCount} axial load${loadCount === 1 ? '' : 's'}`,
+                font: { size: 14, color: "#334155" }
+            },
             paper_bgcolor: "#ffffff",
             plot_bgcolor: "#ffffff",
             font: { family: "Inter, system-ui, sans-serif", color: "#334155", size: 11 },
-            xaxis: { title: "Mx (kip-ft)", zeroline: true, gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
+            xaxis: { title: { text: "M2 / Mx (kip-ft)" }, zeroline: true, gridcolor: "#e2e8f0", zerolinecolor: "#94a3b8" },
             yaxis: {
-                title: "My (kip-ft)",
+                title: { text: "M3 / My (kip-ft)" },
                 zeroline: true,
                 gridcolor: "#e2e8f0",
                 zerolinecolor: "#94a3b8",
                 scaleanchor: "x",
                 scaleratio: 1
             },
-            legend: { orientation: "h", x: 0, y: 1.08 },
+            legend: {
+                title: { text: "Axial load bands" },
+                orientation: "h",
+                x: 0,
+                y: 1.12,
+                entrywidthmode: "pixels",
+                entrywidth: 150
+            },
             margin: { l: 60, r: 20, b: 55, t: 55 }
         }, { responsive: true });
 
@@ -1124,9 +703,11 @@ export class AnalyzableConcreteSection {
                 const clicked = event.points?.[0];
                 if (!clicked?.data?.meta?.isMomentMomentCurve) return;
                 const pointIndex = Number(clicked.customdata?.[1] ?? clicked.pointIndex);
+                const axialLoad = Number(clicked.data.meta.axialLoad ?? clicked.customdata?.[2]);
                 window.activeAnalysisSection?.selectMomentMomentPoint?.(
                     pointIndex,
-                    clicked.data.meta.mode
+                    clicked.data.meta.mode,
+                    axialLoad
                 );
             });
             plot.dataset.responseSelectionListenerAdded = 'true';
@@ -1134,23 +715,42 @@ export class AnalyzableConcreteSection {
 
         const nominalCount = result.points.filter(point => point.nominal).length;
         const phiCount = result.points.filter(point => point.phi).length;
-        const generatedMessage = phiCount
-            ? `Generated ${nominalCount} nominal and ${phiCount} φ MM points.`
-            : `Generated ${nominalCount} nominal MM points. No φMM solutions exist at this axial load.`;
+        const generatedMessage = `${loadCount} axial load band${loadCount === 1 ? '' : 's'} · `
+            + (phiCount
+                ? `${nominalCount} nominal and ${phiCount} φ MM points.`
+                : `${nominalCount} nominal MM points. No φMM solutions exist at this axial load.`);
         const selectionMessage = selectedSolution
             ? ` Selected ${selected.mode === 'phi' ? 'design' : 'nominal'} point at ${selectedPoint.angle.toFixed(2)}°.`
             : '';
+        const demandContext = document.getElementById('mmDemandContext');
+        if (demandContext) {
+            demandContext.textContent = this.activeDemand
+                ? `${this.activeDemand.name} · P = ${this.activeDemand.P} kips${demandOverlay.message ? ` · ${demandOverlay.message}` : ''}`
+                : `No demand selected · default axial load is ${result.axialLoad.toFixed(2)} kips.`;
+        }
+        const tablePanel = document.getElementById('mmTablePanel');
+        if (refreshTable) {
+            renderMMTable(
+                tablePanel, result, this.selectedMomentMomentPoint,
+                (pointIndex, mode) => this.selectMomentMomentPoint(pointIndex, mode)
+            );
+        } else if (tablePanel) {
+            markMMTableSelection(this.selectedMomentMomentPoint, tablePanel);
+        }
         status.textContent = generatedMessage + selectionMessage;
-        status.style.color = phiCount ? "#166534" : "#92400e";
+        status.style.color = phiCount ? "#263747" : "#92400e";
     }
 
-    selectMomentMomentPoint(pointIndex, mode) {
-        const result = this.currentMomentMomentResult;
+    selectMomentMomentPoint(pointIndex, mode, axialLoad = this.currentMomentMomentResult?.axialLoad) {
+        const result = this.momentMomentResults?.find(candidate =>
+            Number.isFinite(axialLoad) && Math.abs(candidate.axialLoad - axialLoad) <= 1e-6
+        ) ?? this.currentMomentMomentResult;
         const point = result?.points?.[pointIndex];
         const solution = point?.[mode];
         if (!solution?.strainProfile) return;
 
         const normalizedAngle = ((point.angle % 360) + 360) % 360;
+        this.currentMomentMomentResult = result;
         this.selectedMomentMomentPoint = { pointIndex, mode };
         this.generate3dStressPlot(normalizedAngle, solution.strainProfile, {
             source: 'MM',
@@ -1163,82 +763,44 @@ export class AnalyzableConcreteSection {
                 My: solution.My
             }]
         });
-        this.renderMomentMomentCurve(result);
+        this.renderMomentMomentCurve(result, { refreshTable: false });
         void this.renderMomentMomentCurveOnPMM(result);
 
         setTimeout(() => setupRaycastingForResults(scene, camera, renderer), 100);
     }
 
     _createMomentMoment3DTraces(result) {
-        if (!result) return [];
-
-        const createTrace = (mode, name, color) => {
-            const hasSolutions = result.points.some(point => point[mode]);
-            if (!hasSolutions) return null;
-
-            return {
-                x: result.points.map(point => point[mode]?.Mx ?? null),
-                y: result.points.map(point => point[mode]?.My ?? null),
-                // Plot the solved curve as an exact horizontal slice at the
-                // axial load requested by the user.
-                z: result.points.map(point => point[mode] ? result.axialLoad : null),
-                customdata: result.points.map((point, pointIndex) => [point.angle, pointIndex]),
-                mode: "lines+markers",
-                type: "scatter3d",
-                connectgaps: false,
-                name,
-                legendgroup: mode,
-                line: { color, width: 7 },
-                marker: { color, size: 3, opacity: 1 },
-                meta: { isMomentMomentSlice: true, mode },
-                hovertemplate: `${mode === "phi" ? "φ" : ""}Mx: %{x:.2f} kip-ft<br>`
-                    + `${mode === "phi" ? "φ" : ""}My: %{y:.2f} kip-ft<br>`
-                    + `P: %{z:.2f} kips<br>NA angle: %{customdata[0]:.2f}°<extra>${name}</extra>`
-            };
-        };
-
-        const traces = [
-            createTrace("nominal", "Nominal MM slice", "#0f4c81"),
-            createTrace("phi", "Design MM slice (φ)", "#0f766e")
-        ].filter(Boolean);
-
-        const selected = this.selectedMomentMomentPoint;
-        const selectedPoint = selected ? result.points[selected.pointIndex] : null;
-        const selectedSolution = selectedPoint?.[selected?.mode];
-        if (selectedSolution) {
-            traces.push({
-                x: [selectedSolution.Mx],
-                y: [selectedSolution.My],
-                z: [result.axialLoad],
-                mode: 'markers',
-                type: 'scatter3d',
-                name: 'Selected MM point',
-                marker: {
-                    color: '#7c3aed',
-                    size: 8,
-                    symbol: 'diamond',
-                    line: { color: '#ffffff', width: 1 }
-                },
-                meta: { isMomentMomentSlice: true, isMomentMomentHighlight: true },
-                hovertemplate: 'Mx: %{x:.2f} kip-ft<br>My: %{y:.2f} kip-ft<br>P: %{z:.2f} kips<extra>Selected MM</extra>'
-            });
-        }
-        return traces;
+        return createMM3DTraces(result, this.selectedMomentMomentPoint);
     }
 
     async renderMomentMomentCurveOnPMM(result) {
         const plot = document.getElementById("pmPlot");
-        if (!plot?.data) return;
+        if (!plot) return;
+        const updates = getPlotUpdateCoordinator(plot);
+        const generation = this.mmGeneration;
+        const isCurrent = () => !updates.disposed && generation === this.mmGeneration
+            && window.activeAnalysisSection === this && plot.isConnected
+            && (!result || result === this.currentMomentMomentResult);
+        const apply = async () => {
+            if (!plot.data || !isCurrent()) return;
 
-        const existingSliceIndices = plot.data
-            .map((trace, index) => trace.meta?.isMomentMomentSlice ? index : -1)
-            .filter(index => index >= 0);
-        if (existingSliceIndices.length) {
-            await Plotly.deleteTraces(plot, existingSliceIndices);
-        }
+            const existingSliceIndices = plot.data
+                .map((trace, index) => trace.meta?.isMomentMomentSlice ? index : -1)
+                .filter(index => index >= 0);
+            if (existingSliceIndices.length) {
+                await Plotly.deleteTraces(plot, existingSliceIndices);
+            }
 
-        const traces = this._createMomentMoment3DTraces(result);
-        if (traces.length) await Plotly.addTraces(plot, traces);
+            if (!isCurrent()) return;
+            const traces = this._createMomentMoment3DTraces(result);
+            if (traces.length) await Plotly.addTraces(plot, traces);
+        };
+
+        // Use the same queue as surface/selection updates. Hidden plots wait
+        // until visible, and only the newest pending slice is retained.
+        return updates.enqueue('mm-slice', apply).catch(error => {
+            console.warn('Unable to update the PMM M–M slice:', error);
+        });
     }
 
     populateIndexDropdown(angle) {
@@ -1261,42 +823,31 @@ export class AnalyzableConcreteSection {
 
     updatePMMHighlight() {
         let selectedAngle = parseFloat(document.getElementById("angleSelection").value);
-        console.log("YOUR SELECTED ANGLE IS", selectedAngle);
-        this.generateTableResults(selectedAngle)
+        this.generateTableResults(selectedAngle);
     
         let plotDiv = document.getElementById("pmPlot");
         if (!plotDiv || !plotDiv.data) return;
     
-        // ✅ Extract all angles corresponding to each PMM data point
-        let allAngles = [];
-        for (let angle in this.PMMXYresults) {
-            let numPoints = this.PMMXYresults[angle].P.flat().length;
-            allAngles.push(...Array(numPoints).fill(Number(angle))); // Repeat angle for each data point
+        // The surface remains in place while the two clickable loops are
+        // replaced with the newly selected bending-axis angle. Restyling only
+        // the line would leave the old angle's coordinates on screen.
+        let axisTraces;
+        try {
+            axisTraces = createPMMAxisTraces(this.PMMXYresults, selectedAngle);
+        } catch (error) {
+            console.warn('Unable to update the selected PMM axis:', error);
+            return;
         }
-    
-        let originalColors = plotDiv.data[0].marker.color; // Get existing colors
-        let originalSymbols = plotDiv.data[0].marker.symbol; // Get existing symbols
-    
-        // ✅ Highlight all points belonging to the selected angle
-        let updatedNominalColors = originalColors.map((_, i) =>
-            allAngles[i] === selectedAngle ? "#0f4c81" : "#b8c4d1"
-        );
-        let updatedDesignColors = originalColors.map((_, i) =>
-            allAngles[i] === selectedAngle ? "#0f766e" : "#a7d1cd"
-        );
-    
-        let updatedSymbols = originalSymbols.map((_, i) =>
-            allAngles[i] === selectedAngle ? "circle" : "cross"
-        );
-    
-        Plotly.restyle("pmPlot", {
-            "marker.color": [updatedNominalColors],
-            "marker.symbol": [updatedSymbols]
-        }, [0]);
-        Plotly.restyle("pmPlot", {
-            "marker.color": [updatedDesignColors],
-            "marker.symbol": [updatedSymbols]
-        }, [1]);
+        void getPlotUpdateCoordinator(plotDiv).enqueue('pmm-axis', async () => {
+            if (window.activeAnalysisSection !== this || !plotDiv.isConnected) return;
+            const axisIndices = plotDiv.data.map((trace, index) => trace.meta?.isPMMAxis ? index : -1)
+                .filter(index => index >= 0);
+            if (axisIndices.length !== 2) return;
+            await Plotly.restyle(plotDiv, Object.fromEntries(
+                ['x', 'y', 'z', 'customdata', 'name', 'hovertemplate', 'line', 'showlegend', 'legendgroup']
+                    .map(key => [key, axisTraces.map(trace => trace[key])])
+            ), axisIndices);
+        }).catch(error => console.warn('Unable to update the selected PMM axis:', error));
     }
 
     populateAngleDropdown(angles) {
@@ -1314,19 +865,10 @@ export class AnalyzableConcreteSection {
     }
 
     resetHighlightedPoint() {
-        let plotDiv = document.getElementById("pmPlot");
-        if (!plotDiv?.data) return;
-
-        const highlightedTraceIndex = plotDiv.data.findIndex(
-            trace => trace.meta?.isPMMHighlight
-        );
-        if (highlightedTraceIndex >= 0) {
-            Plotly.deleteTraces(plotDiv, highlightedTraceIndex);
-        }
+        this.updatePMMPointHighlight([], [], []);
     }
 
     highlightSelectedPoint(index, selectedAngle) {
-        let plotDiv = document.getElementById("pmPlot");
         let selectedData = this.PMMXYresults[selectedAngle];
 
         if (!selectedData) {
@@ -1334,23 +876,21 @@ export class AnalyzableConcreteSection {
             return;
         }
 
-        let Mx_selected = selectedData.Mx.flat()[index];
-        let My_selected = selectedData.My.flat()[index];
+        let Mx_selected = momentArray(selectedData, 'Mx')?.[index];
+        let My_selected = momentArray(selectedData, 'My')?.[index];
         let P_selected = selectedData.P.flat()[index];
 
-        let newTrace = {
-            x: [Mx_selected],
-            y: [My_selected],
-            z: [P_selected],
-            mode: "markers",
-            type: "scatter3d",
-            marker: { size: 9, color: "#7c3aed", opacity: 1.0, symbol: "diamond", line: { color: "#ffffff", width: 1 } },
-            name: "Selected Point",
-            meta: { isPMMHighlight: true },
-            hovertemplate: "P - %{z:.1f} (k)<br> Mx - %{x:.1f} (kip*ft)<br> My - %{y:.1f} (kip*ft)<br>"
-        };
+        this.updatePMMPointHighlight([Mx_selected], [My_selected], [P_selected]);
+    }
 
-        Plotly.addTraces(plotDiv, newTrace);
+    updatePMMPointHighlight(x, y, z) {
+        const plot = document.getElementById('pmPlot');
+        if (!plot?.data) return;
+        void getPlotUpdateCoordinator(plot).enqueue('pmm-highlight', async () => {
+            if (window.activeAnalysisSection !== this || !plot.isConnected) return;
+            const index = plot.data.findIndex(trace => trace.meta?.isPMMHighlight);
+            if (index >= 0) await Plotly.restyle(plot, { x: [x], y: [y], z: [z] }, [index]);
+        }).catch(error => console.warn('Unable to update the selected PMM point:', error));
     }
 
     setupBendingAngles() {
@@ -1736,78 +1276,12 @@ export class AnalyzableConcreteSection {
     }
 
     generateTableResults(selectedAngle) {
-        // Retrieve the PMM results arrays (extracting the first element)
-        let P = this.PMMXYresults[selectedAngle]?.P?.[0] || [];
-        let Mx = this.PMMXYresults[selectedAngle]?.Mx?.[0] || [];
-        let My = this.PMMXYresults[selectedAngle]?.My?.[0] || [];
-        let phiP = this.PMMXYresults[selectedAngle]?.phiP?.[0] || [];
-        let phiMx = this.PMMXYresults[selectedAngle]?.phiMx?.[0] || [];
-        let phiMy = this.PMMXYresults[selectedAngle]?.phiMy?.[0] || [];
-    
-        // Determine the number of rows (assumes all arrays have the same length)
-        let rowCount = Math.max(P.length, Mx.length, My.length, phiP.length, phiMx.length, phiMy.length);
-    
-        // Construct table rows dynamically
-        let rowsHTML = "";
-        for (let i = 0; i < rowCount; i++) {
-            rowsHTML += `
-                <tr class="bg-white hover:bg-gray-50">
-                    <td class="py-1 px-2 border border-gray-300">${(P[i] ?? 0).toFixed(2)}</td>
-                    <td class="py-1 px-2 border border-gray-300">${(Mx[i] ?? 0).toFixed(2)}</td>
-                    <td class="py-1 px-2 border border-gray-300">${(My[i] ?? 0).toFixed(2)}</td>
-                    <td class="py-1 px-2 border border-gray-300">${(phiP[i] ?? 0).toFixed(2)}</td>
-                    <td class="py-1 px-2 border border-gray-300">${(phiMx[i] ?? 0).toFixed(2)}</td>
-                    <td class="py-1 px-2 border border-gray-300">${(phiMy[i] ?? 0).toFixed(2)}</td>
-                </tr>
-            `;
-        }
-    
-        // Construct the full results table
-        let tableHTML = `
-            <div id="analysisResultsTable" class="pmm-values p-3 bg-white shadow-md rounded-md mt-4">
-                <h3 class="text-sm font-semibold text-center mb-2">
-                    Analysis Results - Bending Angle = ${selectedAngle}
-                </h3>
-                <div class="max-h-64 overflow-y-auto overflow-x-auto border border-gray-500 w-full">
-                    <table class="w-auto mx-auto border border-gray-300 text-center text-xs rounded-md overflow-hidden">
-                        <thead class="bg-gray-100 text-gray-600">
-                            <tr>
-                                <th class="py-1 px-2 border border-gray-300">Axial (k)</th>
-                                <th class="py-1 px-2 border border-gray-300">Mx (k*ft)</th>
-                                <th class="py-1 px-2 border border-gray-300">My (k*ft)</th>
-                                <th class="py-1 px-2 border border-gray-300">ϕP (k)</th>
-                                <th class="py-1 px-2 border border-gray-300">ϕMx (k*ft)</th>
-                                <th class="py-1 px-2 border border-gray-300">ϕMy (k*ft)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHTML}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    
-        // Inject or replace the results table inside "materialsandShapes"
-        let materialsAndShapesDiv = document.getElementById("materialsandShapes");
-        let existingTable = document.getElementById("analysisResultsTable");
-
-
-    
-        if (existingTable) {
-            // Replace the existing table if it exists
-            existingTable.outerHTML = tableHTML;
-        } else {
-            let stressStrainChart = document.getElementById("stressStrainChart");
-            if (stressStrainChart) {
-                stressStrainChart.insertAdjacentHTML("afterend", tableHTML);
-            } else {
-                materialsAndShapesDiv.insertAdjacentHTML("beforeend", tableHTML);
-            }
-        }
-    
-        // Hide the ShapeButtons and square_rect_oval_shapes sections
-        document.getElementById("ShapeButtons").style.display = "none";
-        document.getElementById("square_rect_oval_shapes").style.display = "none";
+        const angle = Number.isFinite(selectedAngle)
+            ? selectedAngle : Number(document.getElementById('angleSelection')?.value ?? 0);
+        renderPMMTable(
+            document.getElementById('pmmTablePanel'), this.PMMXYresults, angle,
+            Number(window.selectedIndex ?? 0),
+            (index, selectedAngle) => window.activeAnalysisSection?.selectPMMProfile(index, selectedAngle)
+        );
     }
 }

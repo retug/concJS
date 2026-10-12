@@ -1,0 +1,1152 @@
+{
+  "schemaVersion": 1,
+  "kind": "fixed-mm",
+  "statusLabel": "119 RETUG M–M angles · 1 AISC point",
+  "title": "Published vs. computed · M–M at P = -3,770 kips",
+  "angle": "fixed axial load",
+  "source": {
+    "title": "AISC Design Guide 37 — SpeedCore Example 3-2",
+    "report": "Seismic Design of Uncoupled 18-Story SpeedCore Walls, Example 3-2 (plated composite concrete shear wall)",
+    "page": "Worked example pages 7–10",
+    "url": "https://purr.purdue.edu/publications/3753/2"
+  },
+  "resultSource": "RETUG concreteJS result export supplied for AISC Example 3-2",
+  "axialLoad": -3770.75,
+  "units": {
+    "force": "kip",
+    "moment": "kip-ft"
+  },
+  "published": {
+    "Mx": 731416.67,
+    "My": 0
+  },
+  "computed": {
+    "Mx": 713254.43,
+    "My": -38193.83
+  },
+  "difference": {
+    "Mx": 2.4831591546853846,
+    "My": null
+  },
+  "delta": {
+    "Mx": -18162.23999999999,
+    "My": -38193.83
+  },
+  "ratio": {
+    "Mx": 0.9751684084531461,
+    "My": null
+  },
+  "computedAngle": 0,
+  "rows": [
+    {
+      "id": "plastic-moment-minus-3770",
+      "name": "Plastic moment · P = -3,770 kips",
+      "match": "RETUG angle 0.00°",
+      "published": {
+        "P": -3770,
+        "Mx": 731416.67,
+        "My": 0
+      },
+      "computed": {
+        "P": -3770.75,
+        "Mx": 713254.43,
+        "My": -38193.83
+      },
+      "difference": {
+        "P": 0.01989389920424403,
+        "Mx": 2.4831591546853846,
+        "My": null
+      },
+      "delta": {
+        "Mx": -18162.23999999999,
+        "My": -38193.83
+      },
+      "ratio": {
+        "Mx": 0.9751684084531461,
+        "My": null
+      }
+    }
+  ],
+  "points": [
+    {
+      "angle": 0,
+      "P": -3770.75,
+      "Mx": 713254.43,
+      "My": -38193.83,
+      "phiP": -3775.72,
+      "phiMx": 646274.42,
+      "phiMy": -33806.88
+    },
+    {
+      "angle": 5,
+      "P": -3772.22,
+      "Mx": 713264.66,
+      "My": -38078.04,
+      "phiP": -3770.68,
+      "phiMx": 646217.17,
+      "phiMy": -33765.86
+    },
+    {
+      "angle": 10,
+      "P": -3778.15,
+      "Mx": 713332.09,
+      "My": -38064.93,
+      "phiP": -3778.08,
+      "phiMx": 646288.02,
+      "phiMy": -33667.79
+    },
+    {
+      "angle": 15,
+      "P": -3759.83,
+      "Mx": 713098.77,
+      "My": -37988.39,
+      "phiP": -3770.28,
+      "phiMx": 646178.24,
+      "phiMy": -33582.09
+    },
+    {
+      "angle": 20,
+      "P": -3775.98,
+      "Mx": 713274.15,
+      "My": -37934.74,
+      "phiP": -3774.47,
+      "phiMx": 646204.52,
+      "phiMy": -33502.01
+    },
+    {
+      "angle": 25,
+      "P": -3779.87,
+      "Mx": 713268.92,
+      "My": -37805.28,
+      "phiP": -3769.03,
+      "phiMx": 646128.92,
+      "phiMy": -33478.53
+    },
+    {
+      "angle": 30,
+      "P": -3780.75,
+      "Mx": 713255.54,
+      "My": -37757.54,
+      "phiP": -3769.24,
+      "phiMx": 646099.69,
+      "phiMy": -33417.24
+    },
+    {
+      "angle": 35,
+      "P": -3771.84,
+      "Mx": 713071.42,
+      "My": -37634.78,
+      "phiP": -3779.18,
+      "phiMx": 646119.94,
+      "phiMy": -33258.02
+    },
+    {
+      "angle": 40,
+      "P": -3767.18,
+      "Mx": 708275.54,
+      "My": -31721.48,
+      "phiP": -3766,
+      "phiMx": 642739.78,
+      "phiMy": -29305.95
+    },
+    {
+      "angle": 45,
+      "P": -3769.36,
+      "Mx": 696230.14,
+      "My": -18629.39,
+      "phiP": -3760.37,
+      "phiMx": 632081.35,
+      "phiMy": -17824.4
+    },
+    {
+      "angle": 50,
+      "P": -3779.25,
+      "Mx": 681015.9,
+      "My": -4608.41,
+      "phiP": -3768.33,
+      "phiMx": 618076.89,
+      "phiMy": -4926.91
+    },
+    {
+      "angle": 55,
+      "P": -3761.51,
+      "Mx": 662928.4,
+      "My": 9076.06,
+      "phiP": -3768.03,
+      "phiMx": 601734.84,
+      "phiMy": 7578.14
+    },
+    {
+      "angle": 60,
+      "P": -3762.63,
+      "Mx": 643753.6,
+      "My": 21249.35,
+      "phiP": -3774.61,
+      "phiMx": 583478.38,
+      "phiMy": 19163.28
+    },
+    {
+      "angle": 65,
+      "P": -3769.54,
+      "Mx": 621386.78,
+      "My": 32866.51,
+      "phiP": -3761.13,
+      "phiMx": 564230.23,
+      "phiMy": 29060.02
+    },
+    {
+      "angle": 70,
+      "P": -3770.28,
+      "Mx": 596464.56,
+      "My": 43133.4,
+      "phiP": -3772.69,
+      "phiMx": 540321.07,
+      "phiMy": 39001.98
+    },
+    {
+      "angle": 75,
+      "P": -3777.14,
+      "Mx": 566166.56,
+      "My": 52720.58,
+      "phiP": -3763.41,
+      "phiMx": 511946.28,
+      "phiMy": 47884.99
+    },
+    {
+      "angle": 80,
+      "P": -3769.01,
+      "Mx": 522603.7,
+      "My": 62246.69,
+      "phiP": -3772.45,
+      "phiMx": 473938.56,
+      "phiMy": 56250.28
+    },
+    {
+      "angle": 82.5,
+      "P": -3772.48,
+      "Mx": 492476.77,
+      "My": 66800.77,
+      "phiP": -3779.05,
+      "phiMx": 445312.02,
+      "phiMy": 60612.85
+    },
+    {
+      "angle": 83.75,
+      "P": -3779.81,
+      "Mx": 473437.08,
+      "My": 69102.86,
+      "phiP": -3769.71,
+      "phiMx": 428470.78,
+      "phiMy": 62622.83
+    },
+    {
+      "angle": 85,
+      "P": -3763.55,
+      "Mx": 440536.15,
+      "My": 72275.14,
+      "phiP": -3778.83,
+      "phiMx": 398647.33,
+      "phiMy": 65550.74
+    },
+    {
+      "angle": 85.63,
+      "P": -3775.4,
+      "Mx": 419208.92,
+      "My": 74036.95,
+      "phiP": -3761.66,
+      "phiMx": 378545.66,
+      "phiMy": 67163.57
+    },
+    {
+      "angle": 86.25,
+      "P": -3780.15,
+      "Mx": 389273.25,
+      "My": 76150.07,
+      "phiP": -3773.99,
+      "phiMx": 351918.86,
+      "phiMy": 69056.91
+    },
+    {
+      "angle": 86.56,
+      "P": -3773.77,
+      "Mx": 369466.37,
+      "My": 77385.11,
+      "phiP": -3762.32,
+      "phiMx": 333232.1,
+      "phiMy": 70211.81
+    },
+    {
+      "angle": 86.88,
+      "P": -3762.82,
+      "Mx": 339453.68,
+      "My": 79088.95,
+      "phiP": -3763.71,
+      "phiMx": 306843.32,
+      "phiMy": 71723.97
+    },
+    {
+      "angle": 87.19,
+      "P": -3767.9,
+      "Mx": 304484.54,
+      "My": 80910.33,
+      "phiP": -3769.89,
+      "phiMx": 274620.04,
+      "phiMy": 73404.28
+    },
+    {
+      "angle": 87.5,
+      "P": -3766.53,
+      "Mx": 258882.76,
+      "My": 83014.63,
+      "phiP": -3762.89,
+      "phiMx": 233789.72,
+      "phiMy": 75277.57
+    },
+    {
+      "angle": 88.13,
+      "P": -3764.41,
+      "Mx": 180332.31,
+      "My": 86008.05,
+      "phiP": -3762.49,
+      "phiMx": 159134.81,
+      "phiMy": 78125.03
+    },
+    {
+      "angle": 88.44,
+      "P": -3768.2,
+      "Mx": 133322.25,
+      "My": 87421.98,
+      "phiP": -3777.35,
+      "phiMx": 118318.96,
+      "phiMy": 79371.69
+    },
+    {
+      "angle": 88.75,
+      "P": -3778.93,
+      "Mx": 105144.17,
+      "My": 88130.55,
+      "phiP": -3762.26,
+      "phiMx": 95471.95,
+      "phiMy": 79900.95
+    },
+    {
+      "angle": 90,
+      "P": -3761.63,
+      "Mx": -3226.07,
+      "My": 89254.83,
+      "phiP": -3777.21,
+      "phiMx": -2743.97,
+      "phiMy": 80985.52
+    },
+    {
+      "angle": 91.25,
+      "P": -3761.39,
+      "Mx": -105518.21,
+      "My": 88096.75,
+      "phiP": -3766.21,
+      "phiMx": -94555.09,
+      "phiMy": 79932.23
+    },
+    {
+      "angle": 92.5,
+      "P": -3779.21,
+      "Mx": -259541.77,
+      "My": 83005.24,
+      "phiP": -3770.63,
+      "phiMx": -233336.14,
+      "phiMy": 75309.22
+    },
+    {
+      "angle": 92.81,
+      "P": -3776.11,
+      "Mx": -304130.08,
+      "My": 80940.78,
+      "phiP": -3766.64,
+      "phiMx": -274682.84,
+      "phiMy": 73396.03
+    },
+    {
+      "angle": 93.13,
+      "P": -3772.75,
+      "Mx": -338258.55,
+      "My": 79170.45,
+      "phiP": -3761.55,
+      "phiMx": -306768.59,
+      "phiMy": 71724.76
+    },
+    {
+      "angle": 93.44,
+      "P": -3766.73,
+      "Mx": -369214.3,
+      "My": 77387.39,
+      "phiP": -3767.85,
+      "phiMx": -333397.66,
+      "phiMy": 70210.72
+    },
+    {
+      "angle": 93.75,
+      "P": -3770.75,
+      "Mx": -388919.7,
+      "My": 76156.54,
+      "phiP": -3779.85,
+      "phiMx": -352586.93,
+      "phiMy": 69022.61
+    },
+    {
+      "angle": 94.38,
+      "P": -3771.35,
+      "Mx": -419165.84,
+      "My": 74033.26,
+      "phiP": -3761.34,
+      "phiMx": -378558.21,
+      "phiMy": 67162.44
+    },
+    {
+      "angle": 95,
+      "P": -3770.96,
+      "Mx": -440241.96,
+      "My": 72313.94,
+      "phiP": -3763.26,
+      "phiMx": -398600.63,
+      "phiMy": 65527.79
+    },
+    {
+      "angle": 96.25,
+      "P": -3775.48,
+      "Mx": -473395.08,
+      "My": 69097.66,
+      "phiP": -3766.77,
+      "phiMx": -428243.96,
+      "phiMy": 62641.32
+    },
+    {
+      "angle": 97.5,
+      "P": -3774.85,
+      "Mx": -492299.6,
+      "My": 66827.94,
+      "phiP": -3761.84,
+      "phiMx": -445181.2,
+      "phiMy": 60593.1
+    },
+    {
+      "angle": 100,
+      "P": -3768.82,
+      "Mx": -522555.56,
+      "My": 62253.49,
+      "phiP": -3768.29,
+      "phiMx": -473628.24,
+      "phiMy": 56296.15
+    },
+    {
+      "angle": 105,
+      "P": -3780.47,
+      "Mx": -566184.89,
+      "My": 52725.36,
+      "phiP": -3771.56,
+      "phiMx": -511897.02,
+      "phiMy": 47921.9
+    },
+    {
+      "angle": 110,
+      "P": -3768.94,
+      "Mx": -596778.55,
+      "My": 43011.05,
+      "phiP": -3776.24,
+      "phiMx": -539589.8,
+      "phiMy": 39281.33
+    },
+    {
+      "angle": 115,
+      "P": -3769.96,
+      "Mx": -621459.67,
+      "My": 32833.66,
+      "phiP": -3778.51,
+      "phiMx": -564358.84,
+      "phiMy": 29087.98
+    },
+    {
+      "angle": 120,
+      "P": -3781.33,
+      "Mx": -643855.36,
+      "My": 21305.18,
+      "phiP": -3768.03,
+      "phiMx": -583897.01,
+      "phiMy": 18882.31
+    },
+    {
+      "angle": 125,
+      "P": -3772.37,
+      "Mx": -663046.82,
+      "My": 9076.59,
+      "phiP": -3777.45,
+      "phiMx": -602031.27,
+      "phiMy": 7442.15
+    },
+    {
+      "angle": 130,
+      "P": -3769.62,
+      "Mx": -681246.37,
+      "My": -4890.01,
+      "phiP": -3771.81,
+      "phiMx": -618431.59,
+      "phiMy": -5196.15
+    },
+    {
+      "angle": 135,
+      "P": -3778.16,
+      "Mx": -696579.18,
+      "My": -18874.67,
+      "phiP": -3774.38,
+      "phiMx": -632674.82,
+      "phiMy": -18246.97
+    },
+    {
+      "angle": 140,
+      "P": -3763.73,
+      "Mx": -708375.06,
+      "My": -31891.99,
+      "phiP": -3779.9,
+      "phiMx": -642973.12,
+      "phiMy": -29373.87
+    },
+    {
+      "angle": 145,
+      "P": -3769.23,
+      "Mx": -713027.76,
+      "My": -37618.21,
+      "phiP": -3768.19,
+      "phiMx": -646017.98,
+      "phiMy": -33305.96
+    },
+    {
+      "angle": 150,
+      "P": -3762.42,
+      "Mx": -713028.8,
+      "My": -37759.51,
+      "phiP": -3781.07,
+      "phiMx": -646237.38,
+      "phiMy": -33405.18
+    },
+    {
+      "angle": 155,
+      "P": -3771.82,
+      "Mx": -713177.3,
+      "My": -37822.15,
+      "phiP": -3781.32,
+      "phiMx": -646266.44,
+      "phiMy": -33454.4
+    },
+    {
+      "angle": 160,
+      "P": -3759.83,
+      "Mx": -713098.77,
+      "My": -37988.44,
+      "phiP": -3776.42,
+      "phiMx": -646234.65,
+      "phiMy": -33520.36
+    },
+    {
+      "angle": 165,
+      "P": -3759.83,
+      "Mx": -713098.77,
+      "My": -37988.44,
+      "phiP": -3768.54,
+      "phiMx": -646150.25,
+      "phiMy": -33546.87
+    },
+    {
+      "angle": 170,
+      "P": -3762.18,
+      "Mx": -713150.48,
+      "My": -38100.22,
+      "phiP": -3772.05,
+      "phiMx": -646220.14,
+      "phiMy": -33673.3
+    },
+    {
+      "angle": 175,
+      "P": -3771.99,
+      "Mx": -713262.08,
+      "My": -38078.55,
+      "phiP": -3771.06,
+      "phiMx": -646221.53,
+      "phiMy": -33760.11
+    },
+    {
+      "angle": 180,
+      "P": -3770.75,
+      "Mx": -713254.43,
+      "My": -38193.9,
+      "phiP": -3775.72,
+      "phiMx": -646274.42,
+      "phiMy": -33802.65
+    },
+    {
+      "angle": 185,
+      "P": -3770.31,
+      "Mx": -713242.94,
+      "My": -38306.78,
+      "phiP": -3769.5,
+      "phiMx": -646203.77,
+      "phiMy": -33861.3
+    },
+    {
+      "angle": 190,
+      "P": -3771.79,
+      "Mx": -713259.75,
+      "My": -38305.65,
+      "phiP": -3767.57,
+      "phiMx": -646170.54,
+      "phiMy": -33942.82
+    },
+    {
+      "angle": 195,
+      "P": -3759.83,
+      "Mx": -713098.77,
+      "My": -38431.91,
+      "phiP": -3766.11,
+      "phiMx": -646131.6,
+      "phiMy": -34048.17
+    },
+    {
+      "angle": 200,
+      "P": -3759,
+      "Mx": -713074.49,
+      "My": -38475.18,
+      "phiP": -3774.47,
+      "phiMx": -646204.52,
+      "phiMy": -34111.25
+    },
+    {
+      "angle": 205,
+      "P": -3767.13,
+      "Mx": -713121.42,
+      "My": -38576.28,
+      "phiP": -3759.04,
+      "phiMx": -646015.62,
+      "phiMy": -34166.24
+    },
+    {
+      "angle": 210,
+      "P": -3765.66,
+      "Mx": -713087.51,
+      "My": -38612.93,
+      "phiP": -3765.55,
+      "phiMx": -646059.42,
+      "phiMy": -34214.39
+    },
+    {
+      "angle": 215,
+      "P": -3769.23,
+      "Mx": -713042.25,
+      "My": -38752.4,
+      "phiP": -3765.34,
+      "phiMx": -645970.61,
+      "phiMy": -34351.82
+    },
+    {
+      "angle": 220,
+      "P": -3768.9,
+      "Mx": -712916.69,
+      "My": -38908.25,
+      "phiP": -3767.74,
+      "phiMx": -645951.31,
+      "phiMy": -34407.49
+    },
+    {
+      "angle": 225,
+      "P": -3766.17,
+      "Mx": -712794.09,
+      "My": -39005.33,
+      "phiP": -3781.32,
+      "phiMx": -645962.68,
+      "phiMy": -34540.05
+    },
+    {
+      "angle": 227.5,
+      "P": -3773.93,
+      "Mx": -712820.27,
+      "My": -39055.29,
+      "phiP": -3772.25,
+      "phiMx": -645789.3,
+      "phiMy": -34621.8
+    },
+    {
+      "angle": 230,
+      "P": -3767.63,
+      "Mx": -712642.27,
+      "My": -39155,
+      "phiP": -3776.57,
+      "phiMx": -635473.02,
+      "phiMy": -33993.54
+    },
+    {
+      "angle": 235,
+      "P": -3763.99,
+      "Mx": -712325.48,
+      "My": -39371.67,
+      "phiP": -3769.18,
+      "phiMx": -607083.4,
+      "phiMy": -32281.76
+    },
+    {
+      "angle": 240,
+      "P": -3767.3,
+      "Mx": -711992.06,
+      "My": -39601.66,
+      "phiP": -3761.47,
+      "phiMx": -578148.33,
+      "phiMy": -30541.03
+    },
+    {
+      "angle": 245,
+      "P": -3776.89,
+      "Mx": -711475.13,
+      "My": -39913.04,
+      "phiP": -3775.24,
+      "phiMx": -550048.17,
+      "phiMy": -28924.69
+    },
+    {
+      "angle": 250,
+      "P": -3766.21,
+      "Mx": -710052.67,
+      "My": -40457.39,
+      "phiP": -3769.03,
+      "phiMx": -519218.53,
+      "phiMy": -27270.43
+    },
+    {
+      "angle": 252.5,
+      "P": -3765.24,
+      "Mx": -709088.29,
+      "My": -40781.14,
+      "phiP": -3771.4,
+      "phiMx": -503181.11,
+      "phiMy": -26437.78
+    },
+    {
+      "angle": 252.81,
+      "P": -3779.38,
+      "Mx": -709199.05,
+      "My": -40776.46,
+      "phiP": -3767.99,
+      "phiMx": -495259.3,
+      "phiMy": -28574.8
+    },
+    {
+      "angle": 253.13,
+      "P": -3763.66,
+      "Mx": -702131.38,
+      "My": -42900.27,
+      "phiP": -3780.76,
+      "phiMx": -486265.08,
+      "phiMy": -31030.38
+    },
+    {
+      "angle": 253.75,
+      "P": -3767.1,
+      "Mx": -677303.17,
+      "My": -50285.28,
+      "phiP": -3769.24,
+      "phiMx": -468854.99,
+      "phiMy": -35851.42
+    },
+    {
+      "angle": 254.38,
+      "P": -3764.27,
+      "Mx": -649661.6,
+      "My": -58166.34,
+      "phiP": -3766.55,
+      "phiMx": -454130.33,
+      "phiMy": -39294.11
+    },
+    {
+      "angle": 255,
+      "P": -3763.93,
+      "Mx": -630807.68,
+      "My": -63300.81,
+      "phiP": -3763,
+      "phiMx": -437216,
+      "phiMy": -43235.2
+    },
+    {
+      "angle": 257.5,
+      "P": -3780.21,
+      "Mx": -541990.19,
+      "My": -84997.87,
+      "phiP": -3765.51,
+      "phiMx": -369760.94,
+      "phiMy": -56052.76
+    },
+    {
+      "angle": 260,
+      "P": -3762.1,
+      "Mx": -440351.84,
+      "My": -105150.91,
+      "phiP": -3778.75,
+      "phiMx": -300397.89,
+      "phiMy": -67307.92
+    },
+    {
+      "angle": 262.5,
+      "P": -3775.38,
+      "Mx": -335102.09,
+      "My": -121371.74,
+      "phiP": -3771.61,
+      "phiMx": -229792.41,
+      "phiMy": -78188.19
+    },
+    {
+      "angle": 265,
+      "P": -3772.12,
+      "Mx": -234568.85,
+      "My": -132342.28,
+      "phiP": -3769.29,
+      "phiMx": -166994.72,
+      "phiMy": -85093.74
+    },
+    {
+      "angle": 267.5,
+      "P": -3761.67,
+      "Mx": -135479.16,
+      "My": -138846.22,
+      "phiP": -3765.04,
+      "phiMx": -99194.28,
+      "phiMy": -89520.76
+    },
+    {
+      "angle": 268.75,
+      "P": -3766.18,
+      "Mx": -76147.73,
+      "My": -140796.14,
+      "phiP": -3760.94,
+      "phiMx": -63862.75,
+      "phiMy": -90621.44
+    },
+    {
+      "angle": 269.06,
+      "P": -3770.62,
+      "Mx": -59674.34,
+      "My": -141106.84,
+      "phiP": -3768.12,
+      "phiMx": -58788.35,
+      "phiMy": -90714.04
+    },
+    {
+      "angle": 269.38,
+      "P": -3776.6,
+      "Mx": -52648.67,
+      "My": -141200.57,
+      "phiP": -3765.16,
+      "phiMx": -48979.55,
+      "phiMy": -90842.66
+    },
+    {
+      "angle": 269.69,
+      "P": -3763.24,
+      "Mx": -34560.04,
+      "My": -141375.52,
+      "phiP": -3759.51,
+      "phiMx": -35346.21,
+      "phiMy": -90940.22
+    },
+    {
+      "angle": 270,
+      "P": -3765.1,
+      "Mx": 13.01,
+      "My": -141469.36,
+      "phiP": -3761.24,
+      "phiMx": -17.08,
+      "phiMy": -90976.38
+    },
+    {
+      "angle": 270.31,
+      "P": -3770.12,
+      "Mx": 34559.2,
+      "My": -141370.82,
+      "phiP": -3769.18,
+      "phiMx": 35531.43,
+      "phiMy": -90932.46
+    },
+    {
+      "angle": 270.63,
+      "P": -3763.45,
+      "Mx": 52416.02,
+      "My": -141210.82,
+      "phiP": -3779.47,
+      "phiMx": 48989.83,
+      "phiMy": -90833.71
+    },
+    {
+      "angle": 270.94,
+      "P": -3776.52,
+      "Mx": 59744.22,
+      "My": -141102.84,
+      "phiP": -3771.68,
+      "phiMx": 58835.82,
+      "phiMy": -90711.37
+    },
+    {
+      "angle": 271.25,
+      "P": -3761.04,
+      "Mx": 76066.68,
+      "My": -140799.91,
+      "phiP": -3770.47,
+      "phiMx": 63727.17,
+      "phiMy": -90620.11
+    },
+    {
+      "angle": 272.5,
+      "P": -3770.2,
+      "Mx": 135186.98,
+      "My": -138856.3,
+      "phiP": -3770.29,
+      "phiMx": 99389.67,
+      "phiMy": -89510.3
+    },
+    {
+      "angle": 273.75,
+      "P": -3778.09,
+      "Mx": 188820.15,
+      "My": -135872.59,
+      "phiP": -3760.8,
+      "phiMx": 134792.15,
+      "phiMy": -87580.45
+    },
+    {
+      "angle": 275,
+      "P": -3774.96,
+      "Mx": 234646.34,
+      "My": -132331.81,
+      "phiP": -3766.53,
+      "phiMx": 166804.66,
+      "phiMy": -85111.51
+    },
+    {
+      "angle": 277.5,
+      "P": -3766.93,
+      "Mx": 335326.19,
+      "My": -121339.38,
+      "phiP": -3762.75,
+      "phiMx": 229697.76,
+      "phiMy": -78193.06
+    },
+    {
+      "angle": 280,
+      "P": -3762.09,
+      "Mx": 440386.68,
+      "My": -105132,
+      "phiP": -3759.07,
+      "phiMx": 301058.75,
+      "phiMy": -67169.33
+    },
+    {
+      "angle": 282.5,
+      "P": -3773.33,
+      "Mx": 542081.02,
+      "My": -84970.64,
+      "phiP": -3774.29,
+      "phiMx": 369867.84,
+      "phiMy": -56058.16
+    },
+    {
+      "angle": 285,
+      "P": -3763.46,
+      "Mx": 631847.56,
+      "My": -63020.96,
+      "phiP": -3769.74,
+      "phiMx": 437039.95,
+      "phiMy": -43188.9
+    },
+    {
+      "angle": 285.63,
+      "P": -3772.74,
+      "Mx": 650991.5,
+      "My": -57809.81,
+      "phiP": -3760.02,
+      "phiMx": 454236.24,
+      "phiMy": -39170.77
+    },
+    {
+      "angle": 286.25,
+      "P": -3780,
+      "Mx": 677030.05,
+      "My": -50394.12,
+      "phiP": -3778.14,
+      "phiMx": 467851.84,
+      "phiMy": -36157.75
+    },
+    {
+      "angle": 286.88,
+      "P": -3761.91,
+      "Mx": 701991.1,
+      "My": -42941.63,
+      "phiP": -3773.88,
+      "phiMx": 487707.45,
+      "phiMy": -30774.61
+    },
+    {
+      "angle": 287.5,
+      "P": -3768.07,
+      "Mx": 709154.21,
+      "My": -40765.9,
+      "phiP": -3777.03,
+      "phiMx": 502391.24,
+      "phiMy": -26575.03
+    },
+    {
+      "angle": 290,
+      "P": -3777.91,
+      "Mx": 710224.19,
+      "My": -40425.53,
+      "phiP": -3779.84,
+      "phiMx": 519100.6,
+      "phiMy": -27237.71
+    },
+    {
+      "angle": 295,
+      "P": -3766.88,
+      "Mx": 711356.94,
+      "My": -39931.05,
+      "phiP": -3766.83,
+      "phiMx": 549976.74,
+      "phiMy": -28929.64
+    },
+    {
+      "angle": 300,
+      "P": -3762.29,
+      "Mx": 711986.19,
+      "My": -39582.31,
+      "phiP": -3760.85,
+      "phiMx": 578749.85,
+      "phiMy": -30614.95
+    },
+    {
+      "angle": 305,
+      "P": -3773.14,
+      "Mx": 712431.14,
+      "My": -39363.06,
+      "phiP": -3780,
+      "phiMx": 607566.68,
+      "phiMy": -32299.35
+    },
+    {
+      "angle": 310,
+      "P": -3777.22,
+      "Mx": 712760.1,
+      "My": -39143.44,
+      "phiP": -3780.19,
+      "phiMx": 634784.21,
+      "phiMy": -33932.14
+    },
+    {
+      "angle": 312.5,
+      "P": -3764.53,
+      "Mx": 712700.74,
+      "My": -39088.74,
+      "phiP": -3761.45,
+      "phiMx": 645651.71,
+      "phiMy": -34650.29
+    },
+    {
+      "angle": 315,
+      "P": -3779.59,
+      "Mx": 712934.92,
+      "My": -39006.64,
+      "phiP": -3767.33,
+      "phiMx": 645815.98,
+      "phiMy": -34548.13
+    },
+    {
+      "angle": 320,
+      "P": -3778.63,
+      "Mx": 713010.81,
+      "My": -38919.24,
+      "phiP": -3763.55,
+      "phiMx": 645912.28,
+      "phiMy": -34403.2
+    },
+    {
+      "angle": 325,
+      "P": -3769.23,
+      "Mx": 713027.76,
+      "My": -38774.06,
+      "phiP": -3761.21,
+      "phiMx": 645939.68,
+      "phiMy": -34335.4
+    },
+    {
+      "angle": 330,
+      "P": -3762.42,
+      "Mx": 713028.89,
+      "My": -38653.05,
+      "phiP": -3780.36,
+      "phiMx": 646229.74,
+      "phiMy": -34188.93
+    },
+    {
+      "angle": 335,
+      "P": -3775.1,
+      "Mx": 713214.62,
+      "My": -38558.54,
+      "phiP": -3768.82,
+      "phiMx": 646120.7,
+      "phiMy": -34166.08
+    },
+    {
+      "angle": 340,
+      "P": -3759.83,
+      "Mx": 713098.77,
+      "My": -38431.85,
+      "phiP": -3765.51,
+      "phiMx": 646110.19,
+      "phiMy": -34105.19
+    },
+    {
+      "angle": 345,
+      "P": -3759.83,
+      "Mx": 713098.77,
+      "My": -38431.85,
+      "phiP": -3773.16,
+      "phiMx": 646201.67,
+      "phiMy": -34079.73
+    },
+    {
+      "angle": 350,
+      "P": -3771.88,
+      "Mx": 713260.76,
+      "My": -38305.59,
+      "phiP": -3774.53,
+      "phiMx": 646247.71,
+      "phiMy": -33946.24
+    },
+    {
+      "angle": 355,
+      "P": -3769.69,
+      "Mx": 713235.95,
+      "My": -38307.25,
+      "phiP": -3769.85,
+      "phiMx": 646207.7,
+      "phiMy": -33865.99
+    },
+    {
+      "angle": 360,
+      "P": -3770.75,
+      "Mx": 713254.43,
+      "My": -38193.83,
+      "phiP": -3775.72,
+      "phiMx": 646274.42,
+      "phiMy": -33806.88
+    }
+  ],
+  "method": "The supplied RETUG fixed-P result is plotted in Mx–My space. The 0° nominal point is compared with the published AISC plastic-moment point at the same target axial load; Mx and My are retained as separate components.",
+  "differenceDefinition": "Difference (%) = 100 × |RETUG − AISC| / |AISC|. Because the published My is zero, a relative My percentage is undefined; the signed My delta is shown instead.",
+  "notes": [
+    "The AISC design example reports a plastic moment of 8.81 × 10⁶ kip-in, or 734,166.67 kip-ft. The comparison point uses the supplied 731,416.67 kip-ft value shown for the plotted AISC result.",
+    "The supplied RETUG result has a small nonzero My at 0° because the plated composite wall is unsymmetric about the weak axis.",
+    "The attached model keeps its two demand cases: P = 0 and P = -3,770 kips, with M2 = 734,166.67 kip-ft. Load cases are preserved in the downloadable JSON for opening in the application.",
+    "The source request contained 7,314,166.67 in one line; the comparison interprets that as 731,416.67 kip-ft to match the cited kip-in capacity and the supplied plot scale."
+  ],
+  "chartSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1120 630\" role=\"img\" aria-labelledby=\"fixed-mm-title fixed-mm-desc\"><title id=\"fixed-mm-title\">RETUG and AISC fixed-P M–M comparison</title><desc id=\"fixed-mm-desc\">RETUG nominal and factored Mx–My curves at P = -3,770 kips with the AISC published plastic-moment point.</desc><rect width=\"1120\" height=\"630\" fill=\"white\"/><path d=\"M94.00 48V535\" stroke=\"#e8edf1\"/><text x=\"94.00\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">-829k</text><path d=\"M293.20 48V535\" stroke=\"#e8edf1\"/><text x=\"293.20\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">-494k</text><path d=\"M492.40 48V535\" stroke=\"#e8edf1\"/><text x=\"492.40\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">-159k</text><path d=\"M691.60 48V535\" stroke=\"#e8edf1\"/><text x=\"691.60\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">177k</text><path d=\"M890.80 48V535\" stroke=\"#e8edf1\"/><text x=\"890.80\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">512k</text><path d=\"M1090.00 48V535\" stroke=\"#e8edf1\"/><text x=\"1090.00\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">847k</text><path d=\"M94 535.00H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"540.00\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">-169k</text><path d=\"M94 437.60H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"442.60\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">-112k</text><path d=\"M94 340.20H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"345.20\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">-55k</text><path d=\"M94 242.80H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"247.80\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">3k</text><path d=\"M94 145.40H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"150.40\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">60k</text><path d=\"M94 48.00H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"53.00\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">117k</text><text x=\"592\" y=\"599\" text-anchor=\"middle\" fill=\"#263342\" font-size=\"17\">Mx (kip-ft)</text><text transform=\"translate(23 291.5) rotate(-90)\" text-anchor=\"middle\" fill=\"#263342\" font-size=\"17\">My (kip-ft)</text><g data-series=\"nominal\"><path d=\"M1010.52,312.07 L1010.52,311.88 L1010.56,311.85 L1010.42,311.72 L1010.53,311.63 L1010.52,311.41 L1010.52,311.33 L1010.41,311.12 L1007.56,301.06 L1000.40,278.77 L991.36,254.90 L980.61,231.61 L969.21,210.89 L955.92,191.11 L941.10,173.64 L923.10,157.32 L897.21,141.10 L879.30,133.35 L867.98,129.43 L848.43,124.03 L835.75,121.03 L817.96,117.44 L806.19,115.33 L788.35,112.43 L767.57,109.33 L740.47,105.75 L693.78,100.66 L665.84,98.25 L649.10,97.04 L584.69,95.13 L523.89,97.10 L432.35,105.77 L405.85,109.28 L385.57,112.29 L367.17,115.33 L355.46,117.43 L337.48,121.04 L324.95,123.97 L305.25,129.44 L294.02,133.30 L276.03,141.09 L250.10,157.31 L231.92,173.85 L217.25,191.17 L203.94,210.79 L192.53,231.61 L181.72,255.38 L172.60,279.19 L165.59,301.35 L162.83,311.09 L162.83,311.33 L162.74,311.44 L162.79,311.72 L162.79,311.72 L162.76,311.91 L162.69,311.88 L162.69,312.07 L162.70,312.27 L162.69,312.26 L162.79,312.48 L162.80,312.55 L162.77,312.72 L162.79,312.79 L162.82,313.02 L162.89,313.29 L162.97,313.46 L162.95,313.54 L163.06,313.71 L163.25,314.08 L163.44,314.47 L163.75,315.00 L164.60,315.93 L165.17,316.48 L165.10,316.47 L169.31,320.09 L184.06,332.66 L200.49,346.07 L211.70,354.81 L264.48,391.74 L324.89,426.05 L387.44,453.66 L447.19,472.33 L506.09,483.41 L541.35,486.73 L551.14,487.25 L555.31,487.41 L566.06,487.71 L586.61,487.87 L607.14,487.70 L617.76,487.43 L622.11,487.25 L631.81,486.73 L666.95,483.42 L698.83,478.34 L726.06,472.32 L785.90,453.61 L848.34,426.02 L908.78,391.70 L962.13,354.34 L973.51,345.46 L988.99,332.84 L1003.82,320.16 L1008.08,316.45 L1008.71,315.87 L1009.39,315.03 L1009.76,314.44 L1010.03,314.06 L1010.22,313.69 L1010.19,313.60 L1010.33,313.46 L1010.37,313.31 L1010.38,313.06 L1010.38,312.86 L1010.49,312.69 L1010.42,312.48 L1010.42,312.48 L1010.52,312.26 L1010.50,312.27 L1010.52,312.07 L1010.52,312.07\" fill=\"none\" stroke=\"#8a9dac\" stroke-width=\"2.4\" stroke-dasharray=\"8 5\"/></g><g data-series=\"factored\"><path d=\"M970.71,304.61 L970.67,304.54 L970.72,304.37 L970.65,304.22 L970.67,304.09 L970.62,304.05 L970.60,303.94 L970.62,303.67 L968.61,296.94 L962.27,277.40 L953.95,255.45 L944.24,234.16 L933.39,214.44 L921.95,197.59 L907.74,180.67 L890.87,165.55 L868.28,151.31 L851.27,143.88 L841.26,140.46 L823.53,135.48 L811.59,132.73 L795.76,129.51 L784.66,127.54 L768.97,124.97 L749.82,122.11 L725.55,118.92 L681.18,114.07 L656.93,111.95 L643.35,111.05 L584.97,109.21 L530.41,111.00 L447.93,118.87 L423.35,122.12 L404.28,124.97 L388.46,127.55 L377.05,129.57 L361.62,132.74 L349.70,135.52 L332.09,140.43 L322.02,143.92 L305.11,151.23 L282.37,165.49 L265.91,180.19 L251.19,197.55 L239.58,214.92 L228.80,234.39 L219.05,255.90 L210.59,278.12 L204.46,297.06 L202.66,303.75 L202.52,303.92 L202.51,304.01 L202.53,304.12 L202.58,304.16 L202.53,304.38 L202.53,304.53 L202.50,304.60 L202.54,304.70 L202.56,304.84 L202.59,305.02 L202.54,305.12 L202.66,305.22 L202.63,305.30 L202.68,305.53 L202.69,305.63 L202.69,305.85 L202.79,305.99 L208.92,304.92 L225.80,302.01 L242.99,299.05 L259.69,296.30 L278.02,293.48 L287.55,292.06 L292.26,295.70 L297.60,299.88 L307.95,308.09 L316.70,313.95 L326.75,320.66 L366.84,342.47 L408.07,361.63 L450.03,380.15 L487.35,391.91 L527.65,399.44 L548.65,401.32 L551.67,401.47 L557.49,401.69 L565.60,401.86 L586.59,401.92 L607.72,401.85 L615.72,401.68 L621.57,401.47 L624.48,401.31 L645.68,399.43 L666.72,396.14 L685.74,391.94 L723.12,380.16 L765.53,361.40 L806.43,342.48 L846.35,320.58 L856.57,313.74 L864.66,308.61 L876.47,299.44 L885.19,292.30 L895.12,293.42 L913.47,296.30 L930.58,299.17 L947.70,302.04 L963.88,304.82 L970.34,306.04 L970.44,305.87 L970.49,305.62 L970.51,305.51 L970.68,305.26 L970.62,305.22 L970.61,305.11 L970.66,305.07 L970.69,304.84 L970.67,304.71 L970.71,304.61 L970.71,304.61\" fill=\"none\" stroke=\"#e2673d\" stroke-width=\"2.8\"/><circle cx=\"970.71\" cy=\"304.61\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 0.00°: Mx 646,274.4 kip-ft; My -33,806.9 kip-ft</title></circle><circle cx=\"970.67\" cy=\"304.54\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 5.00°: Mx 646,217.2 kip-ft; My -33,765.9 kip-ft</title></circle><circle cx=\"970.72\" cy=\"304.37\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 10.00°: Mx 646,288.0 kip-ft; My -33,667.8 kip-ft</title></circle><circle cx=\"970.65\" cy=\"304.22\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 15.00°: Mx 646,178.2 kip-ft; My -33,582.1 kip-ft</title></circle><circle cx=\"970.67\" cy=\"304.09\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 20.00°: Mx 646,204.5 kip-ft; My -33,502.0 kip-ft</title></circle><circle cx=\"970.62\" cy=\"304.05\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 25.00°: Mx 646,128.9 kip-ft; My -33,478.5 kip-ft</title></circle><circle cx=\"970.60\" cy=\"303.94\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 30.00°: Mx 646,099.7 kip-ft; My -33,417.2 kip-ft</title></circle><circle cx=\"970.62\" cy=\"303.67\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 35.00°: Mx 646,119.9 kip-ft; My -33,258.0 kip-ft</title></circle><circle cx=\"968.61\" cy=\"296.94\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 40.00°: Mx 642,739.8 kip-ft; My -29,306.0 kip-ft</title></circle><circle cx=\"962.27\" cy=\"277.40\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 45.00°: Mx 632,081.4 kip-ft; My -17,824.4 kip-ft</title></circle><circle cx=\"953.95\" cy=\"255.45\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 50.00°: Mx 618,076.9 kip-ft; My -4,926.9 kip-ft</title></circle><circle cx=\"944.24\" cy=\"234.16\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 55.00°: Mx 601,734.8 kip-ft; My 7,578.1 kip-ft</title></circle><circle cx=\"933.39\" cy=\"214.44\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 60.00°: Mx 583,478.4 kip-ft; My 19,163.3 kip-ft</title></circle><circle cx=\"921.95\" cy=\"197.59\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 65.00°: Mx 564,230.2 kip-ft; My 29,060.0 kip-ft</title></circle><circle cx=\"907.74\" cy=\"180.67\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 70.00°: Mx 540,321.1 kip-ft; My 39,002.0 kip-ft</title></circle><circle cx=\"890.87\" cy=\"165.55\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 75.00°: Mx 511,946.3 kip-ft; My 47,885.0 kip-ft</title></circle><circle cx=\"868.28\" cy=\"151.31\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 80.00°: Mx 473,938.6 kip-ft; My 56,250.3 kip-ft</title></circle><circle cx=\"851.27\" cy=\"143.88\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 82.50°: Mx 445,312.0 kip-ft; My 60,612.9 kip-ft</title></circle><circle cx=\"841.26\" cy=\"140.46\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 83.75°: Mx 428,470.8 kip-ft; My 62,622.8 kip-ft</title></circle><circle cx=\"823.53\" cy=\"135.48\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 85.00°: Mx 398,647.3 kip-ft; My 65,550.7 kip-ft</title></circle><circle cx=\"811.59\" cy=\"132.73\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 85.63°: Mx 378,545.7 kip-ft; My 67,163.6 kip-ft</title></circle><circle cx=\"795.76\" cy=\"129.51\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 86.25°: Mx 351,918.9 kip-ft; My 69,056.9 kip-ft</title></circle><circle cx=\"784.66\" cy=\"127.54\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 86.56°: Mx 333,232.1 kip-ft; My 70,211.8 kip-ft</title></circle><circle cx=\"768.97\" cy=\"124.97\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 86.88°: Mx 306,843.3 kip-ft; My 71,724.0 kip-ft</title></circle><circle cx=\"749.82\" cy=\"122.11\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 87.19°: Mx 274,620.0 kip-ft; My 73,404.3 kip-ft</title></circle><circle cx=\"725.55\" cy=\"118.92\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 87.50°: Mx 233,789.7 kip-ft; My 75,277.6 kip-ft</title></circle><circle cx=\"681.18\" cy=\"114.07\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 88.13°: Mx 159,134.8 kip-ft; My 78,125.0 kip-ft</title></circle><circle cx=\"656.93\" cy=\"111.95\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 88.44°: Mx 118,319.0 kip-ft; My 79,371.7 kip-ft</title></circle><circle cx=\"643.35\" cy=\"111.05\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 88.75°: Mx 95,472.0 kip-ft; My 79,901.0 kip-ft</title></circle><circle cx=\"584.97\" cy=\"109.21\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 90.00°: Mx -2,744.0 kip-ft; My 80,985.5 kip-ft</title></circle><circle cx=\"530.41\" cy=\"111.00\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 91.25°: Mx -94,555.1 kip-ft; My 79,932.2 kip-ft</title></circle><circle cx=\"447.93\" cy=\"118.87\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 92.50°: Mx -233,336.1 kip-ft; My 75,309.2 kip-ft</title></circle><circle cx=\"423.35\" cy=\"122.12\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 92.81°: Mx -274,682.8 kip-ft; My 73,396.0 kip-ft</title></circle><circle cx=\"404.28\" cy=\"124.97\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 93.13°: Mx -306,768.6 kip-ft; My 71,724.8 kip-ft</title></circle><circle cx=\"388.46\" cy=\"127.55\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 93.44°: Mx -333,397.7 kip-ft; My 70,210.7 kip-ft</title></circle><circle cx=\"377.05\" cy=\"129.57\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 93.75°: Mx -352,586.9 kip-ft; My 69,022.6 kip-ft</title></circle><circle cx=\"361.62\" cy=\"132.74\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 94.38°: Mx -378,558.2 kip-ft; My 67,162.4 kip-ft</title></circle><circle cx=\"349.70\" cy=\"135.52\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 95.00°: Mx -398,600.6 kip-ft; My 65,527.8 kip-ft</title></circle><circle cx=\"332.09\" cy=\"140.43\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 96.25°: Mx -428,244.0 kip-ft; My 62,641.3 kip-ft</title></circle><circle cx=\"322.02\" cy=\"143.92\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 97.50°: Mx -445,181.2 kip-ft; My 60,593.1 kip-ft</title></circle><circle cx=\"305.11\" cy=\"151.23\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 100.00°: Mx -473,628.2 kip-ft; My 56,296.2 kip-ft</title></circle><circle cx=\"282.37\" cy=\"165.49\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 105.00°: Mx -511,897.0 kip-ft; My 47,921.9 kip-ft</title></circle><circle cx=\"265.91\" cy=\"180.19\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 110.00°: Mx -539,589.8 kip-ft; My 39,281.3 kip-ft</title></circle><circle cx=\"251.19\" cy=\"197.55\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 115.00°: Mx -564,358.8 kip-ft; My 29,088.0 kip-ft</title></circle><circle cx=\"239.58\" cy=\"214.92\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 120.00°: Mx -583,897.0 kip-ft; My 18,882.3 kip-ft</title></circle><circle cx=\"228.80\" cy=\"234.39\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 125.00°: Mx -602,031.3 kip-ft; My 7,442.2 kip-ft</title></circle><circle cx=\"219.05\" cy=\"255.90\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 130.00°: Mx -618,431.6 kip-ft; My -5,196.2 kip-ft</title></circle><circle cx=\"210.59\" cy=\"278.12\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 135.00°: Mx -632,674.8 kip-ft; My -18,247.0 kip-ft</title></circle><circle cx=\"204.46\" cy=\"297.06\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 140.00°: Mx -642,973.1 kip-ft; My -29,373.9 kip-ft</title></circle><circle cx=\"202.66\" cy=\"303.75\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 145.00°: Mx -646,018.0 kip-ft; My -33,306.0 kip-ft</title></circle><circle cx=\"202.52\" cy=\"303.92\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 150.00°: Mx -646,237.4 kip-ft; My -33,405.2 kip-ft</title></circle><circle cx=\"202.51\" cy=\"304.01\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 155.00°: Mx -646,266.4 kip-ft; My -33,454.4 kip-ft</title></circle><circle cx=\"202.53\" cy=\"304.12\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 160.00°: Mx -646,234.7 kip-ft; My -33,520.4 kip-ft</title></circle><circle cx=\"202.58\" cy=\"304.16\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 165.00°: Mx -646,150.3 kip-ft; My -33,546.9 kip-ft</title></circle><circle cx=\"202.53\" cy=\"304.38\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 170.00°: Mx -646,220.1 kip-ft; My -33,673.3 kip-ft</title></circle><circle cx=\"202.53\" cy=\"304.53\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 175.00°: Mx -646,221.5 kip-ft; My -33,760.1 kip-ft</title></circle><circle cx=\"202.50\" cy=\"304.60\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 180.00°: Mx -646,274.4 kip-ft; My -33,802.7 kip-ft</title></circle><circle cx=\"202.54\" cy=\"304.70\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 185.00°: Mx -646,203.8 kip-ft; My -33,861.3 kip-ft</title></circle><circle cx=\"202.56\" cy=\"304.84\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 190.00°: Mx -646,170.5 kip-ft; My -33,942.8 kip-ft</title></circle><circle cx=\"202.59\" cy=\"305.02\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 195.00°: Mx -646,131.6 kip-ft; My -34,048.2 kip-ft</title></circle><circle cx=\"202.54\" cy=\"305.12\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 200.00°: Mx -646,204.5 kip-ft; My -34,111.3 kip-ft</title></circle><circle cx=\"202.66\" cy=\"305.22\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 205.00°: Mx -646,015.6 kip-ft; My -34,166.2 kip-ft</title></circle><circle cx=\"202.63\" cy=\"305.30\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 210.00°: Mx -646,059.4 kip-ft; My -34,214.4 kip-ft</title></circle><circle cx=\"202.68\" cy=\"305.53\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 215.00°: Mx -645,970.6 kip-ft; My -34,351.8 kip-ft</title></circle><circle cx=\"202.69\" cy=\"305.63\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 220.00°: Mx -645,951.3 kip-ft; My -34,407.5 kip-ft</title></circle><circle cx=\"202.69\" cy=\"305.85\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 225.00°: Mx -645,962.7 kip-ft; My -34,540.1 kip-ft</title></circle><circle cx=\"202.79\" cy=\"305.99\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 227.50°: Mx -645,789.3 kip-ft; My -34,621.8 kip-ft</title></circle><circle cx=\"208.92\" cy=\"304.92\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 230.00°: Mx -635,473.0 kip-ft; My -33,993.5 kip-ft</title></circle><circle cx=\"225.80\" cy=\"302.01\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 235.00°: Mx -607,083.4 kip-ft; My -32,281.8 kip-ft</title></circle><circle cx=\"242.99\" cy=\"299.05\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 240.00°: Mx -578,148.3 kip-ft; My -30,541.0 kip-ft</title></circle><circle cx=\"259.69\" cy=\"296.30\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 245.00°: Mx -550,048.2 kip-ft; My -28,924.7 kip-ft</title></circle><circle cx=\"278.02\" cy=\"293.48\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 250.00°: Mx -519,218.5 kip-ft; My -27,270.4 kip-ft</title></circle><circle cx=\"287.55\" cy=\"292.06\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 252.50°: Mx -503,181.1 kip-ft; My -26,437.8 kip-ft</title></circle><circle cx=\"292.26\" cy=\"295.70\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 252.81°: Mx -495,259.3 kip-ft; My -28,574.8 kip-ft</title></circle><circle cx=\"297.60\" cy=\"299.88\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 253.13°: Mx -486,265.1 kip-ft; My -31,030.4 kip-ft</title></circle><circle cx=\"307.95\" cy=\"308.09\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 253.75°: Mx -468,855.0 kip-ft; My -35,851.4 kip-ft</title></circle><circle cx=\"316.70\" cy=\"313.95\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 254.38°: Mx -454,130.3 kip-ft; My -39,294.1 kip-ft</title></circle><circle cx=\"326.75\" cy=\"320.66\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 255.00°: Mx -437,216.0 kip-ft; My -43,235.2 kip-ft</title></circle><circle cx=\"366.84\" cy=\"342.47\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 257.50°: Mx -369,760.9 kip-ft; My -56,052.8 kip-ft</title></circle><circle cx=\"408.07\" cy=\"361.63\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 260.00°: Mx -300,397.9 kip-ft; My -67,307.9 kip-ft</title></circle><circle cx=\"450.03\" cy=\"380.15\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 262.50°: Mx -229,792.4 kip-ft; My -78,188.2 kip-ft</title></circle><circle cx=\"487.35\" cy=\"391.91\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 265.00°: Mx -166,994.7 kip-ft; My -85,093.7 kip-ft</title></circle><circle cx=\"527.65\" cy=\"399.44\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 267.50°: Mx -99,194.3 kip-ft; My -89,520.8 kip-ft</title></circle><circle cx=\"548.65\" cy=\"401.32\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 268.75°: Mx -63,862.8 kip-ft; My -90,621.4 kip-ft</title></circle><circle cx=\"551.67\" cy=\"401.47\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 269.06°: Mx -58,788.4 kip-ft; My -90,714.0 kip-ft</title></circle><circle cx=\"557.49\" cy=\"401.69\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 269.38°: Mx -48,979.6 kip-ft; My -90,842.7 kip-ft</title></circle><circle cx=\"565.60\" cy=\"401.86\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 269.69°: Mx -35,346.2 kip-ft; My -90,940.2 kip-ft</title></circle><circle cx=\"586.59\" cy=\"401.92\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 270.00°: Mx -17.1 kip-ft; My -90,976.4 kip-ft</title></circle><circle cx=\"607.72\" cy=\"401.85\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 270.31°: Mx 35,531.4 kip-ft; My -90,932.5 kip-ft</title></circle><circle cx=\"615.72\" cy=\"401.68\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 270.63°: Mx 48,989.8 kip-ft; My -90,833.7 kip-ft</title></circle><circle cx=\"621.57\" cy=\"401.47\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 270.94°: Mx 58,835.8 kip-ft; My -90,711.4 kip-ft</title></circle><circle cx=\"624.48\" cy=\"401.31\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 271.25°: Mx 63,727.2 kip-ft; My -90,620.1 kip-ft</title></circle><circle cx=\"645.68\" cy=\"399.43\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 272.50°: Mx 99,389.7 kip-ft; My -89,510.3 kip-ft</title></circle><circle cx=\"666.72\" cy=\"396.14\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 273.75°: Mx 134,792.2 kip-ft; My -87,580.5 kip-ft</title></circle><circle cx=\"685.74\" cy=\"391.94\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 275.00°: Mx 166,804.7 kip-ft; My -85,111.5 kip-ft</title></circle><circle cx=\"723.12\" cy=\"380.16\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 277.50°: Mx 229,697.8 kip-ft; My -78,193.1 kip-ft</title></circle><circle cx=\"765.53\" cy=\"361.40\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 280.00°: Mx 301,058.8 kip-ft; My -67,169.3 kip-ft</title></circle><circle cx=\"806.43\" cy=\"342.48\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 282.50°: Mx 369,867.8 kip-ft; My -56,058.2 kip-ft</title></circle><circle cx=\"846.35\" cy=\"320.58\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 285.00°: Mx 437,040.0 kip-ft; My -43,188.9 kip-ft</title></circle><circle cx=\"856.57\" cy=\"313.74\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 285.63°: Mx 454,236.2 kip-ft; My -39,170.8 kip-ft</title></circle><circle cx=\"864.66\" cy=\"308.61\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 286.25°: Mx 467,851.8 kip-ft; My -36,157.8 kip-ft</title></circle><circle cx=\"876.47\" cy=\"299.44\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 286.88°: Mx 487,707.5 kip-ft; My -30,774.6 kip-ft</title></circle><circle cx=\"885.19\" cy=\"292.30\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 287.50°: Mx 502,391.2 kip-ft; My -26,575.0 kip-ft</title></circle><circle cx=\"895.12\" cy=\"293.42\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 290.00°: Mx 519,100.6 kip-ft; My -27,237.7 kip-ft</title></circle><circle cx=\"913.47\" cy=\"296.30\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 295.00°: Mx 549,976.7 kip-ft; My -28,929.6 kip-ft</title></circle><circle cx=\"930.58\" cy=\"299.17\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 300.00°: Mx 578,749.9 kip-ft; My -30,615.0 kip-ft</title></circle><circle cx=\"947.70\" cy=\"302.04\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 305.00°: Mx 607,566.7 kip-ft; My -32,299.4 kip-ft</title></circle><circle cx=\"963.88\" cy=\"304.82\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 310.00°: Mx 634,784.2 kip-ft; My -33,932.1 kip-ft</title></circle><circle cx=\"970.34\" cy=\"306.04\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 312.50°: Mx 645,651.7 kip-ft; My -34,650.3 kip-ft</title></circle><circle cx=\"970.44\" cy=\"305.87\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 315.00°: Mx 645,816.0 kip-ft; My -34,548.1 kip-ft</title></circle><circle cx=\"970.49\" cy=\"305.62\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 320.00°: Mx 645,912.3 kip-ft; My -34,403.2 kip-ft</title></circle><circle cx=\"970.51\" cy=\"305.51\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 325.00°: Mx 645,939.7 kip-ft; My -34,335.4 kip-ft</title></circle><circle cx=\"970.68\" cy=\"305.26\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 330.00°: Mx 646,229.7 kip-ft; My -34,188.9 kip-ft</title></circle><circle cx=\"970.62\" cy=\"305.22\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 335.00°: Mx 646,120.7 kip-ft; My -34,166.1 kip-ft</title></circle><circle cx=\"970.61\" cy=\"305.11\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 340.00°: Mx 646,110.2 kip-ft; My -34,105.2 kip-ft</title></circle><circle cx=\"970.66\" cy=\"305.07\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 345.00°: Mx 646,201.7 kip-ft; My -34,079.7 kip-ft</title></circle><circle cx=\"970.69\" cy=\"304.84\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 350.00°: Mx 646,247.7 kip-ft; My -33,946.2 kip-ft</title></circle><circle cx=\"970.67\" cy=\"304.71\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 355.00°: Mx 646,207.7 kip-ft; My -33,866.0 kip-ft</title></circle><circle cx=\"970.71\" cy=\"304.61\" r=\"2.5\" fill=\"#e2673d\"><title>RETUG factored angle 360.00°: Mx 646,274.4 kip-ft; My -33,806.9 kip-ft</title></circle></g><g data-series=\"published\"><path d=\"M1021.3103448275862 239.05984924558487l8 8 -8 8 -8 -8Z\" fill=\"#fff\" stroke=\"#277f88\" stroke-width=\"2.5\"><title>AISC published point: Mx 731,416.7 kip-ft; My 0.0 kip-ft</title></path><circle cx=\"1010.52\" cy=\"312.07\" r=\"6\" fill=\"#e2673d\" stroke=\"white\" stroke-width=\"1.5\"><title>RETUG nominal at 0°: Mx 713,254.4 kip-ft; My -38,193.8 kip-ft</title></circle></g></svg>"
+}

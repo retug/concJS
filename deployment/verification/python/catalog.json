@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "problem1",
+      "title": "I-Shaped Special Structural Shear Wall",
+      "summary": "An spColumn reference example for axial force and bending in an I-shaped reinforced concrete wall.",
+      "description": "This case compares the saved RETUG concreteJS wall model with StructurePoint’s spColumn control points. The plot shows the supplied 90° analysis: 100 nominal and factored profiles, including both moment directions. The bundled model includes all 16 published control points as demand checks.",
+      "status": "comparison-ready",
+      "source": {
+        "title": "StructurePoint — spColumn v10.10",
+        "report": "DE Special Structural Shear Wall – Compressive Stress, ACI 318-19 (October 12, 2023)",
+        "page": "spColumn report page 6 (PDF page 36), Control Points",
+        "url": "https://structurepoint.org/publication/pdf/DE-Special-Structural-Shear-Wall-Compressive-Stress-ACI-318-19-spColumn-v1010.pdf#page=36"
+      },
+      "details": [
+        {
+          "label": "Section",
+          "value": "384 × 216 in. overall; 24 in. web and flanges"
+        },
+        {
+          "label": "Geometry",
+          "value": "Three rectangular concrete regions forming an I-shaped wall"
+        },
+        {
+          "label": "Reinforcement",
+          "value": "156 #8 bars in the saved model"
+        },
+        {
+          "label": "Concrete",
+          "value": "f′c = 6 ksi; saved fc6ksi stress–strain curve"
+        },
+        {
+          "label": "Steel",
+          "value": "fy = 80 ksi; saved fy80ksi stress–strain curve"
+        },
+        {
+          "label": "Mesh",
+          "value": "3 in. edge and interior spacing in the saved model"
+        },
+        {
+          "label": "Units",
+          "value": "Dimensions in inches, forces in kip, moments in kip-ft"
+        },
+        {
+          "label": "Saved demand checks",
+          "value": "16 published control points; compression uses negative P and Y-moment uses M3"
+        }
+      ],
+      "modelFile": "problem1.json",
+      "previewFile": "problem1-section.png",
+      "previewAlt": "I-shaped special structural wall model preview",
+      "previewCaption": "The saved I-shaped wall in RETUG concreteJS."
+    },
+    {
+      "id": "problem2",
+      "title": "Plated Composite Shear Wall — SpeedCore Example 3-2",
+      "summary": "An AISC SpeedCore worked example compared at a fixed axial load in Mx–My space.",
+      "description": "This case compares a RETUG concreteJS fixed-P M–M result with the AISC plastic-moment point for Example 3-2, a plated composite C-shaped shear wall. The supplied model retains the P = 0 and P = -3,770 kip demand cases so the example can be opened directly in the application.",
+      "status": "comparison-ready",
+      "comparisonType": "fixed-mm",
+      "source": {
+        "title": "AISC Design Guide 37 — SpeedCore Example 3-2",
+        "report": "Seismic Design of Uncoupled 18-Story SpeedCore Walls, plated composite concrete shear wall",
+        "page": "Worked example pages 7–10",
+        "url": "https://purr.purdue.edu/publications/3753/2"
+      },
+      "details": [
+        {
+          "label": "Section",
+          "value": "Uncoupled C-shaped SpeedCore wall; 120 in flange length × 480 in wall depth"
+        },
+        {
+          "label": "Concrete",
+          "value": "f′c = 6 ksi; 17 in concrete cover regions inside 0.5 in plates"
+        },
+        {
+          "label": "Steel",
+          "value": "Fy = 50 ksi; 0.5 in face plates"
+        },
+        {
+          "label": "Verification load",
+          "value": "P = -3,770 kips; RETUG Mx and My are plotted at fixed P"
+        },
+        {
+          "label": "Published result",
+          "value": "AISC plastic-moment point: Mx = 731,416.67 kip-ft, My = 0"
+        },
+        {
+          "label": "Saved demand checks",
+          "value": "P = 0 and P = -3,770 kips, M2 = 734,166.67 kip-ft, M3 = 0"
+        }
+      ],
+      "modelFile": "problem2.json",
+      "previewFile": "problem2-section.png",
+      "previewAlt": "Fixed-P M–M plot for the SpeedCore Example 3-2 verification",
+      "previewCaption": "A quick preview of the supplied P = -3,770 kip M–M verification result."
+    }
+  ]
+}

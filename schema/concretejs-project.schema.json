@@ -54,11 +54,33 @@
       "properties": {
         "edgeSpacing": { "type": "number", "exclusiveMinimum": 0 },
         "interiorSpacing": { "type": "number", "exclusiveMinimum": 0 },
-        "momentMomentAxialLoad": { "type": "number" }
+        "momentMomentAxialLoad": { "type": "number" },
+        "dcrMethod": {
+          "enum": ["constant-p", "origin"],
+          "default": "constant-p",
+          "description": "Demand check method: constant-p holds axial force fixed while scaling moments; origin scales all three demand components."
+        },
+        "demandCases": {
+          "type": "array",
+          "default": [],
+          "description": "Demand inputs about the section centroid. IDs must be unique. Calculated DCRs are not saved.",
+          "items": { "$ref": "#/$defs/demandCase" }
+        }
       }
     }
   },
   "$defs": {
+    "demandCase": {
+      "type": "object",
+      "required": ["id", "name", "P", "M2", "M3"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[^\\u0000-\\u001f\\u007f]*[^\\s\\u0000-\\u001f\\u007f][^\\u0000-\\u001f\\u007f]*$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[^\\u0000-\\u001f\\u007f]*[^\\s\\u0000-\\u001f\\u007f][^\\u0000-\\u001f\\u007f]*$" },
+        "P": { "type": "number", "description": "Axial force in kip; compression is negative." },
+        "M2": { "type": "number", "description": "Moment about section axis 2 in kip-ft." },
+        "M3": { "type": "number", "description": "Moment about section axis 3 in kip-ft." }
+      }
+    },
     "point": {
       "type": "object",
       "required": ["x", "y"],

@@ -50,6 +50,10 @@ export class MomentMomentAnalysis {
      */
     async generate(targetAxialLoad, options = {}) {
         const onProgress = options.onProgress ?? (() => {});
+        const checkCancelled = () => {
+            if (options.signal?.aborted) throw new DOMException('MM calculation superseded.', 'AbortError');
+        };
+        checkCancelled();
         const limits = this.getAxialLimits();
         const axialTolerance = Math.max(
             0.1,
@@ -86,6 +90,7 @@ export class MomentMomentAnalysis {
         initialAngles.push(360);
 
         for (let index = 0; index < initialAngles.length; index += 1) {
+            checkCancelled();
             angleNodes.push(this._solveAtAngle(initialAngles[index]));
             onProgress({
                 stage: "initial",
@@ -100,9 +105,11 @@ export class MomentMomentAnalysis {
         // Repeatedly insert the midpoint with the greatest interpolation error.
         // This spends the fixed point budget where the curve bends most.
         while (angleNodes.length < this.maximumCurvePoints) {
+            checkCancelled();
             let bestRefinement = null;
 
             for (let index = 0; index < angleNodes.length - 1; index += 1) {
+                checkCancelled();
                 const left = angleNodes[index];
                 const right = angleNodes[index + 1];
                 const angleSpan = right.angle - left.angle;
@@ -140,6 +147,7 @@ export class MomentMomentAnalysis {
             await this._yieldToBrowser();
         }
 
+        checkCancelled();
         return {
             axialLoad: this.targetAxialLoad,
             axialTolerance,

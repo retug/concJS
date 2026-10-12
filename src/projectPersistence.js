@@ -1,12 +1,11 @@
+import { createPath } from './projectGeometry.js';
 import * as THREE from 'three';
 import { ConcShape } from './concShape.js';
 import { StructuralMaterial, defaultMaterials } from './materials.js';
 import { addRebar, resetProjectSelections } from './threeJSscenefunctions.js';
 import { getRebarArea, getRebarDiameter, rebarDia } from './rebarProperties.js';
-import {
-  createProjectDocument,
-  validateAndNormalizeProject
-} from './projectFile.js';
+import { createProjectDocument } from './projectFile.js';
+import { createProjectImportRequester } from './projectImport.js';
 import {
   getAnalysisConfiguration,
   getProjectMetadata,
@@ -28,6 +27,24 @@ export function initializeProjectPersistence({
   const saveForm = document.getElementById('saveProjectForm');
   const fileInput = document.getElementById('projectFileInput');
   const importModal = document.getElementById('importProjectModal');
+  const requestImport = createProjectImportRequester({
+    showImportModal,
+    replaceProject: project => replaceCurrentProject(project, {
+      scene,
+      getSprite,
+      getDesignModel,
+      prepareForProjectImport,
+      refreshMaterialControls,
+      onProjectReplaced
+    }),
+    onImported: (project, displayName, warnings) => {
+      setModalOpen(importModal, false);
+      showNotice(
+        `Imported “${project.metadata.name || displayName}”. Press Generate PM when you are ready to analyze.`,
+        warnings.length ? 'warning' : 'success'
+      );
+    }
+  });
 
   saveButton?.addEventListener('click', () => {
     const metadata = getProjectMetadata();
@@ -79,54 +96,7 @@ export function initializeProjectPersistence({
       return;
     }
 
-    const validation = validateAndNormalizeProject(raw);
-    if (!validation.canImport) {
-      showImportModal({
-        title: 'Import failed',
-        summary: `${file.name} could not be imported. Your current project was not changed.`,
-        details: validation.errors,
-        warnings: validation.warnings,
-        canConfirm: false
-      });
-      return;
-    }
-
-    const project = validation.project;
-    const modelSummary = `${project.concreteShapes.length} concrete shape(s), ` +
-      `${project.reinforcement.length} rebar, and ${project.materials.length} material(s)`;
-    showImportModal({
-      title: 'Replace current project?',
-      summary: `Import “${project.metadata.name || file.name}” with ${modelSummary}. ` +
-        'This will completely replace the current model. Analysis will not run automatically.',
-      details: validation.warnings,
-      warnings: validation.warnings,
-      canConfirm: true,
-      onConfirm: () => {
-        try {
-          replaceCurrentProject(project, {
-            scene,
-            getSprite,
-            getDesignModel,
-            prepareForProjectImport,
-            refreshMaterialControls,
-            onProjectReplaced
-          });
-          setModalOpen(importModal, false);
-          showNotice(
-            `Imported “${project.metadata.name || file.name}”. Press Generate PM when you are ready to analyze.`,
-            validation.warnings.length ? 'warning' : 'success'
-          );
-        } catch (error) {
-          console.error('Project import failed:', error);
-          showImportModal({
-            title: 'Import failed',
-            summary: 'The project could not be constructed. Your current project was not changed.',
-            details: [error.message],
-            canConfirm: false
-          });
-        }
-      }
-    });
+    requestImport(raw, file.name);
   });
 
   document.getElementById('cancelImportProject')?.addEventListener('click', () => setModalOpen(importModal, false));
@@ -137,6 +107,7 @@ export function initializeProjectPersistence({
       if (event.target === modal) setModalOpen(modal, false);
     });
   }
+  return { requestImport };
 }
 
 export function serializeCurrentProject({ concreteShapes, reinforcement }) {
@@ -187,6 +158,7 @@ export function serializeCurrentProject({ concreteShapes, reinforcement }) {
   const interiorSpacing = Number(document.getElementById('intSpa')?.value);
   const axialInput = Number(document.getElementById('mmAxialLoad')?.value);
   const analysisConfiguration = setAnalysisConfiguration({
+    ...currentAnalysis,
     edgeSpacing: Number.isFinite(edgeSpacing) ? edgeSpacing : currentAnalysis.edgeSpacing,
     interiorSpacing: Number.isFinite(interiorSpacing) ? interiorSpacing : currentAnalysis.interiorSpacing,
     momentMomentAxialLoad: Number.isFinite(axialInput) ? axialInput : currentAnalysis.momentMomentAxialLoad
@@ -332,30 +304,6 @@ function pointsToLineSegments(points) {
   }));
 }
 
-function createPath(contour, isShape) {
-  const path = isShape ? new THREE.Shape() : new THREE.Path();
-  path.curves = contour.segments.map(segment => {
-    if (segment.type === 'line') {
-      return new THREE.LineCurve(
-        new THREE.Vector2(segment.from.x, segment.from.y),
-        new THREE.Vector2(segment.to.x, segment.to.y)
-      );
-    }
-    return new THREE.EllipseCurve(
-      segment.center.x,
-      segment.center.y,
-      segment.radiusX,
-      segment.radiusY,
-      segment.startAngle,
-      segment.endAngle,
-      segment.clockwise,
-      segment.rotation
-    );
-  });
-  const lastCurve = path.curves.at(-1);
-  if (lastCurve) path.currentPoint.copy(lastCurve.getPoint(1));
-  return path;
-}
 
 function requireMaterialId(materialIds, material) {
   const id = materialIds.get(material);

@@ -4,11 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:deployment": "webpack --config webpack.config.cjs && node scripts/generate-django-template.mjs",
+    "dev": "node scripts/build-verification.mjs && vite",
+    "build": "node scripts/build-verification.mjs && vite build",
+    "build:deployment": "webpack --config webpack.config.cjs && node scripts/generate-django-template.mjs && node scripts/build-verification.mjs",
+    "build:verification": "node scripts/build-verification.mjs",
     "deploy:retug": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-retug.ps1",
     "test": "node --test",
+    "test:verification": "node --test test/complicatedSPColumnVerification.test.js test/wallInteractionVerification.test.js",
     "preview": "vite preview",
     "webpack-build": "webpack --config webpack.config.cjs",
     "webpack-dev": "webpack serve --config webpack.config.js --open"

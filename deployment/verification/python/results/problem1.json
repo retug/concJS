@@ -1,0 +1,1389 @@
+{
+  "schemaVersion": 1,
+  "title": "Published vs. computed",
+  "statusLabel": "100 RETUG profiles · 16 published controls",
+  "angle": 90,
+  "source": {
+    "title": "StructurePoint spColumn v10.10, special structural shear wall",
+    "url": "https://structurepoint.org/publication/pdf/DE-Special-Structural-Shear-Wall-Compressive-Stress-ACI-318-19-spColumn-v1010.pdf#page=36",
+    "reportPage": 6,
+    "pdfPage": 36,
+    "reportDate": "2023-10-12",
+    "note": "Control-point values supplied by the user and checked against the report. Published residual moments smaller than 0.1 kip-ft are represented as zero for this uniaxial comparison and its demand inputs."
+  },
+  "resultSource": "User-supplied concreteJS 90-degree PMM table, 100 profiles, October 10, 2026.",
+  "modelSha256": "99d0f3af9d60979e987f7eac5af416c6dad02fd81b255cf975aaf9121abc05b3",
+  "conventions": {
+    "P": "Positive compression for display; negate P when saving RETUG demand inputs.",
+    "M2": "RETUG Mx; published X-moment (nominally zero).",
+    "M3": "RETUG My; published Y-moment; saved model long dimension is global x."
+  },
+  "yieldStrain": 0.00207,
+  "method": "Named steel-control states; linear interpolation between supplied profiles where needed. Pure bending uses φP = 0; allowable compression uses the published φP and the end of the capped branch. Uniform compression retains the application’s 0.80 axial cap.",
+  "differenceDefinition": "100 × |RETUG − spColumn| / |spColumn|. A dash means the published component is zero, so a relative percentage is undefined.",
+  "rows": [
+    {
+      "id": "y-compression",
+      "name": "Y: Max. compression",
+      "kind": "compression",
+      "direction": 1,
+      "published": {
+        "P": 67102,
+        "M2": 0,
+        "M3": 0
+      },
+      "computed": {
+        "P": 53681.62,
+        "M2": 0,
+        "M3": 0
+      },
+      "match": "Profile 0 · includes 0.80 axial cap",
+      "difference": {
+        "P": 19.999970194629068,
+        "M2": null,
+        "M3": null
+      }
+    },
+    {
+      "id": "y-allowable",
+      "name": "Y: Allowable compression",
+      "kind": "allowable",
+      "direction": 1,
+      "published": {
+        "P": 53681.6,
+        "M2": 0,
+        "M3": 195926.19
+      },
+      "computed": {
+        "P": 53681.6,
+        "M2": -0.060000052327665386,
+        "M3": 181501.71968496137
+      },
+      "match": "Interpolated: profiles 6–7 · at published φP",
+      "difference": {
+        "P": 0,
+        "M2": null,
+        "M3": 7.362196097948229
+      }
+    },
+    {
+      "id": "y-zero-steel",
+      "name": "Y: fs = 0",
+      "kind": "zero-steel",
+      "direction": 1,
+      "published": {
+        "P": 41195.7,
+        "M2": 0,
+        "M3": 352228.28
+      },
+      "computed": {
+        "P": 41323.19,
+        "M2": -0.12,
+        "M3": 336086.94
+      },
+      "match": "Profile 9",
+      "difference": {
+        "P": 0.3094740470486125,
+        "M2": null,
+        "M3": 4.582636010941547
+      }
+    },
+    {
+      "id": "y-half-yield",
+      "name": "Y: fs = 0.5 fy",
+      "kind": "half-yield",
+      "direction": 1,
+      "published": {
+        "P": 32476.9,
+        "M2": 0,
+        "M3": 397760.22
+      },
+      "computed": {
+        "P": 33529.4620093458,
+        "M2": 0.009672897196261684,
+        "M3": 390860.73827102804
+      },
+      "match": "Interpolated: profiles 12–13",
+      "difference": {
+        "P": 3.2409559081864288,
+        "M2": null,
+        "M3": 1.73458314382769
+      }
+    },
+    {
+      "id": "y-balanced",
+      "name": "Y: Balanced point",
+      "kind": "balanced",
+      "direction": 1,
+      "published": {
+        "P": 27151.3,
+        "M2": 0,
+        "M3": 407624.5
+      },
+      "computed": {
+        "P": 28662.36,
+        "M2": 0,
+        "M3": 407808.96
+      },
+      "match": "Profile 13",
+      "difference": {
+        "P": 5.565332046716,
+        "M2": null,
+        "M3": 0.04525243207903866
+      }
+    },
+    {
+      "id": "y-tension-control",
+      "name": "Y: Tension control",
+      "kind": "tension-control",
+      "direction": 1,
+      "published": {
+        "P": 30250.3,
+        "M2": 0,
+        "M3": 535871.94
+      },
+      "computed": {
+        "P": 31034.92,
+        "M2": 0.07,
+        "M3": 541077.52
+      },
+      "match": "Profile 16",
+      "difference": {
+        "P": 2.5937594007332128,
+        "M2": null,
+        "M3": 0.9714223887147506
+      }
+    },
+    {
+      "id": "y-pure-bending",
+      "name": "Y: Pure bending",
+      "kind": "pure-bending",
+      "direction": 1,
+      "published": {
+        "P": 0,
+        "M2": 0,
+        "M3": 139631.3
+      },
+      "computed": {
+        "P": 0,
+        "M2": -9.667133113471287,
+        "M3": 139649.38022576616
+      },
+      "match": "Interpolated: profiles 27–28",
+      "difference": {
+        "P": null,
+        "M2": null,
+        "M3": 0.012948547901631491
+      }
+    },
+    {
+      "id": "y-tension",
+      "name": "Y: Max. tension",
+      "kind": "tension",
+      "direction": 1,
+      "published": {
+        "P": -8873.3,
+        "M2": 0,
+        "M3": 0
+      },
+      "computed": {
+        "P": -8873.28,
+        "M2": 0,
+        "M3": 0
+      },
+      "match": "Profile 50 · uniform tension",
+      "difference": {
+        "P": 0.00022539528696896948,
+        "M2": null,
+        "M3": null
+      }
+    },
+    {
+      "id": "minus-y-compression",
+      "name": "−Y: Max. compression",
+      "kind": "compression",
+      "direction": -1,
+      "published": {
+        "P": 67102,
+        "M2": 0,
+        "M3": 0
+      },
+      "computed": {
+        "P": 53681.62,
+        "M2": 0,
+        "M3": 0
+      },
+      "match": "Profile 0 · includes 0.80 axial cap",
+      "difference": {
+        "P": 19.999970194629068,
+        "M2": null,
+        "M3": null
+      }
+    },
+    {
+      "id": "minus-y-allowable",
+      "name": "−Y: Allowable compression",
+      "kind": "allowable",
+      "direction": -1,
+      "published": {
+        "P": 53681.6,
+        "M2": 0,
+        "M3": -195926.33
+      },
+      "computed": {
+        "P": 53681.6,
+        "M2": 0.060000052327665386,
+        "M3": -181501.71968496137
+      },
+      "match": "Interpolated: profiles 94–93 · at published φP",
+      "difference": {
+        "P": 0,
+        "M2": null,
+        "M3": 7.362262292688593
+      }
+    },
+    {
+      "id": "minus-y-zero-steel",
+      "name": "−Y: fs = 0",
+      "kind": "zero-steel",
+      "direction": -1,
+      "published": {
+        "P": 41195.7,
+        "M2": 0,
+        "M3": -352228.28
+      },
+      "computed": {
+        "P": 41323.19,
+        "M2": 0.12,
+        "M3": -336086.94
+      },
+      "match": "Profile 91",
+      "difference": {
+        "P": 0.3094740470486125,
+        "M2": null,
+        "M3": 4.582636010941547
+      }
+    },
+    {
+      "id": "minus-y-half-yield",
+      "name": "−Y: fs = 0.5 fy",
+      "kind": "half-yield",
+      "direction": -1,
+      "published": {
+        "P": 32476.9,
+        "M2": 0,
+        "M3": -397760.22
+      },
+      "computed": {
+        "P": 33529.4620093458,
+        "M2": -0.009672897196261684,
+        "M3": -390860.73827102804
+      },
+      "match": "Interpolated: profiles 88–87",
+      "difference": {
+        "P": 3.2409559081864288,
+        "M2": null,
+        "M3": 1.73458314382769
+      }
+    },
+    {
+      "id": "minus-y-balanced",
+      "name": "−Y: Balanced point",
+      "kind": "balanced",
+      "direction": -1,
+      "published": {
+        "P": 27151.3,
+        "M2": 0,
+        "M3": -407624.44
+      },
+      "computed": {
+        "P": 28662.36,
+        "M2": 0,
+        "M3": -407808.96
+      },
+      "match": "Profile 87",
+      "difference": {
+        "P": 5.565332046716,
+        "M2": null,
+        "M3": 0.04526715817138409
+      }
+    },
+    {
+      "id": "minus-y-tension-control",
+      "name": "−Y: Tension control",
+      "kind": "tension-control",
+      "direction": -1,
+      "published": {
+        "P": 30250.3,
+        "M2": 0,
+        "M3": -535871.94
+      },
+      "computed": {
+        "P": 31034.92,
+        "M2": -0.07,
+        "M3": -541077.52
+      },
+      "match": "Profile 84",
+      "difference": {
+        "P": 2.5937594007332128,
+        "M2": null,
+        "M3": 0.9714223887147506
+      }
+    },
+    {
+      "id": "minus-y-pure-bending",
+      "name": "−Y: Pure bending",
+      "kind": "pure-bending",
+      "direction": -1,
+      "published": {
+        "P": 0,
+        "M2": 0,
+        "M3": -139630.8
+      },
+      "computed": {
+        "P": 0,
+        "M2": 9.667133113471287,
+        "M3": -139649.38022576616
+      },
+      "match": "Interpolated: profiles 73–72",
+      "difference": {
+        "P": null,
+        "M2": null,
+        "M3": 0.01330668145292498
+      }
+    },
+    {
+      "id": "minus-y-tension",
+      "name": "−Y: Max. tension",
+      "kind": "tension",
+      "direction": -1,
+      "published": {
+        "P": -8873.3,
+        "M2": 0,
+        "M3": 0
+      },
+      "computed": {
+        "P": -8873.28,
+        "M2": 0,
+        "M3": 0
+      },
+      "match": "Profile 50 · uniform tension",
+      "difference": {
+        "P": 0.00022539528696896948,
+        "M2": null,
+        "M3": null
+      }
+    }
+  ],
+  "profiles": [
+    {
+      "index": 0,
+      "P": -103233.88,
+      "Mx": 0,
+      "My": 0,
+      "phiP": -53681.62,
+      "phiMx": 0,
+      "phiMy": 0,
+      "maxRebarStrain": -0.003
+    },
+    {
+      "index": 1,
+      "P": -103176.27,
+      "Mx": 0,
+      "My": 892.87,
+      "phiP": -53681.62,
+      "phiMx": 0,
+      "phiMy": 580.37,
+      "maxRebarStrain": -0.002
+    },
+    {
+      "index": 2,
+      "P": -102788.47,
+      "Mx": 0,
+      "My": 6538.24,
+      "phiP": -53681.62,
+      "phiMx": 0,
+      "phiMy": 4249.86,
+      "maxRebarStrain": -0.0017499999999999998
+    },
+    {
+      "index": 3,
+      "P": -99767.18,
+      "Mx": -0.08,
+      "My": 51282.02,
+      "phiP": -53681.62,
+      "phiMx": -0.05,
+      "phiMy": 33333.32,
+      "maxRebarStrain": -0.0015
+    },
+    {
+      "index": 4,
+      "P": -94691.13,
+      "Mx": -0.08,
+      "My": 123710.31,
+      "phiP": -53681.62,
+      "phiMx": -0.05,
+      "phiMy": 80411.7,
+      "maxRebarStrain": -0.00125
+    },
+    {
+      "index": 5,
+      "P": -89041.2,
+      "Mx": -0.08,
+      "My": 200574.27,
+      "phiP": -53681.62,
+      "phiMx": -0.05,
+      "phiMy": 130373.28,
+      "maxRebarStrain": -0.0009999999999999998
+    },
+    {
+      "index": 6,
+      "P": -83008.41,
+      "Mx": -0.09,
+      "My": 279233,
+      "phiP": -53681.62,
+      "phiMx": -0.06,
+      "phiMy": 181501.45,
+      "maxRebarStrain": -0.0007499999999999998
+    },
+    {
+      "index": 7,
+      "P": -76707,
+      "Mx": -0.1,
+      "My": 358521.83,
+      "phiP": -49859.55,
+      "phiMx": -0.07,
+      "phiMy": 233039.19,
+      "maxRebarStrain": -0.0005
+    },
+    {
+      "index": 8,
+      "P": -70211.02,
+      "Mx": -0.11,
+      "My": 437906.92,
+      "phiP": -45637.16,
+      "phiMx": -0.07,
+      "phiMy": 284639.5,
+      "maxRebarStrain": -0.0002500000000000002
+    },
+    {
+      "index": 9,
+      "P": -63574.15,
+      "Mx": -0.18,
+      "My": 517056.83,
+      "phiP": -41323.19,
+      "phiMx": -0.12,
+      "phiMy": 336086.94,
+      "maxRebarStrain": -2.168404344971009e-19
+    },
+    {
+      "index": 10,
+      "P": -59312.6,
+      "Mx": 0.06,
+      "My": 558148.69,
+      "phiP": -38553.19,
+      "phiMx": 0.04,
+      "phiMy": 362796.65,
+      "maxRebarStrain": 0.00025
+    },
+    {
+      "index": 11,
+      "P": -56549.15,
+      "Mx": 0.02,
+      "My": 576224.55,
+      "phiP": -36756.95,
+      "phiMx": 0.01,
+      "phiMy": 374545.96,
+      "maxRebarStrain": 0.0005
+    },
+    {
+      "index": 12,
+      "P": -51837,
+      "Mx": 0.01,
+      "My": 600442.47,
+      "phiP": -33694.05,
+      "phiMx": 0.01,
+      "phiMy": 390287.61,
+      "maxRebarStrain": 0.001
+    },
+    {
+      "index": 13,
+      "P": -44095.94,
+      "Mx": 0,
+      "My": 627398.4,
+      "phiP": -28662.36,
+      "phiMx": 0,
+      "phiMy": 407808.96,
+      "maxRebarStrain": 0.0020700000000000002
+    },
+    {
+      "index": 14,
+      "P": -39988.43,
+      "Mx": 0.03,
+      "My": 624690.59,
+      "phiP": -29091.58,
+      "phiMx": 0.02,
+      "phiMy": 454462.4,
+      "maxRebarStrain": 0.0029999999999999996
+    },
+    {
+      "index": 15,
+      "P": -36920.04,
+      "Mx": 0.01,
+      "My": 613946.05,
+      "phiP": -29936,
+      "phiMx": 0.01,
+      "phiMy": 497807.92,
+      "maxRebarStrain": 0.004
+    },
+    {
+      "index": 16,
+      "P": -34483.25,
+      "Mx": 0.08,
+      "My": 601197.24,
+      "phiP": -31034.92,
+      "phiMx": 0.07,
+      "phiMy": 541077.52,
+      "maxRebarStrain": 0.005070000000000002
+    },
+    {
+      "index": 17,
+      "P": -30792.29,
+      "Mx": 0.2,
+      "My": 574798.73,
+      "phiP": -27713.06,
+      "phiMx": 0.18,
+      "phiMy": 517318.86,
+      "maxRebarStrain": 0.007499999999999999
+    },
+    {
+      "index": 18,
+      "P": -28434.45,
+      "Mx": 0.32,
+      "My": 553461.79,
+      "phiP": -25591.01,
+      "phiMx": 0.29,
+      "phiMy": 498115.61,
+      "maxRebarStrain": 0.01
+    },
+    {
+      "index": 19,
+      "P": -25602.4,
+      "Mx": 0.34,
+      "My": 523022.57,
+      "phiP": -23042.16,
+      "phiMx": 0.31,
+      "phiMy": 470720.31,
+      "maxRebarStrain": 0.015
+    },
+    {
+      "index": 20,
+      "P": -21902.13,
+      "Mx": 1.11,
+      "My": 475337.08,
+      "phiP": -19711.91,
+      "phiMx": 1,
+      "phiMy": 427803.38,
+      "maxRebarStrain": 0.025
+    },
+    {
+      "index": 21,
+      "P": -18858.74,
+      "Mx": -1.7,
+      "My": 432667.1,
+      "phiP": -16972.87,
+      "phiMx": -1.53,
+      "phiMy": 389400.39,
+      "maxRebarStrain": 0.032421875
+    },
+    {
+      "index": 22,
+      "P": -15665.72,
+      "Mx": -1.61,
+      "My": 386997.75,
+      "phiP": -14099.15,
+      "phiMx": -1.45,
+      "phiMy": 348297.98,
+      "maxRebarStrain": 0.03984375
+    },
+    {
+      "index": 23,
+      "P": -12446.99,
+      "Mx": -1.95,
+      "My": 340523.06,
+      "phiP": -11202.29,
+      "phiMx": -1.75,
+      "phiMy": 306470.75,
+      "maxRebarStrain": 0.047265625000000006
+    },
+    {
+      "index": 24,
+      "P": -9779.4,
+      "Mx": -8.66,
+      "My": 301618,
+      "phiP": -8801.46,
+      "phiMx": -7.8,
+      "phiMy": 271456.2,
+      "maxRebarStrain": 0.05468750000000001
+    },
+    {
+      "index": 25,
+      "P": -5917.74,
+      "Mx": -11.23,
+      "My": 244619.95,
+      "phiP": -5325.96,
+      "phiMx": -10.11,
+      "phiMy": 220157.96,
+      "maxRebarStrain": 0.06953125
+    },
+    {
+      "index": 26,
+      "P": -3237.75,
+      "Mx": -4.85,
+      "My": 204673.86,
+      "phiP": -2913.97,
+      "phiMx": -4.36,
+      "phiMy": 184206.48,
+      "maxRebarStrain": 0.084375
+    },
+    {
+      "index": 27,
+      "P": -495.23,
+      "Mx": -11.96,
+      "My": 162800.53,
+      "phiP": -445.71,
+      "phiMx": -10.76,
+      "phiMy": 146520.47,
+      "maxRebarStrain": 0.11406250000000001
+    },
+    {
+      "index": 28,
+      "P": 1185.95,
+      "Mx": -7.83,
+      "My": 136883.22,
+      "phiP": 1067.36,
+      "phiMx": -7.05,
+      "phiMy": 123194.9,
+      "maxRebarStrain": 0.14375
+    },
+    {
+      "index": 29,
+      "P": 4084.41,
+      "Mx": -2.28,
+      "My": 91629.67,
+      "phiP": 3675.97,
+      "phiMx": -2.05,
+      "phiMy": 82466.7,
+      "maxRebarStrain": 0.26250000000000007
+    },
+    {
+      "index": 30,
+      "P": 6260.32,
+      "Mx": -16.7,
+      "My": 57221.67,
+      "phiP": 5634.29,
+      "phiMx": -15.03,
+      "phiMy": 51499.5,
+      "maxRebarStrain": 0.5
+    },
+    {
+      "index": 31,
+      "P": 6332.63,
+      "Mx": -14.95,
+      "My": 56074.63,
+      "phiP": 5699.37,
+      "phiMx": -13.45,
+      "phiMy": 50467.16,
+      "maxRebarStrain": 0.512575
+    },
+    {
+      "index": 32,
+      "P": 6365.18,
+      "Mx": -12.81,
+      "My": 55557.96,
+      "phiP": 5728.67,
+      "phiMx": -11.53,
+      "phiMy": 50002.17,
+      "maxRebarStrain": 0.5188625
+    },
+    {
+      "index": 33,
+      "P": 6381.33,
+      "Mx": -11.58,
+      "My": 55301.72,
+      "phiP": 5743.2,
+      "phiMx": -10.42,
+      "phiMy": 49771.55,
+      "maxRebarStrain": 0.52200625
+    },
+    {
+      "index": 34,
+      "P": 6388.99,
+      "Mx": -10.46,
+      "My": 55180.12,
+      "phiP": 5750.09,
+      "phiMx": -9.41,
+      "phiMy": 49662.1,
+      "maxRebarStrain": 0.523578125
+    },
+    {
+      "index": 35,
+      "P": 6392.82,
+      "Mx": -9.9,
+      "My": 55119.31,
+      "phiP": 5753.54,
+      "phiMx": -8.91,
+      "phiMy": 49607.38,
+      "maxRebarStrain": 0.5243640625
+    },
+    {
+      "index": 36,
+      "P": 6394.74,
+      "Mx": -9.62,
+      "My": 55088.91,
+      "phiP": 5755.26,
+      "phiMx": -8.66,
+      "phiMy": 49580.02,
+      "maxRebarStrain": 0.5247570312500001
+    },
+    {
+      "index": 37,
+      "P": 6395.7,
+      "Mx": -9.48,
+      "My": 55073.71,
+      "phiP": 5756.13,
+      "phiMx": -8.53,
+      "phiMy": 49566.34,
+      "maxRebarStrain": 0.524953515625
+    },
+    {
+      "index": 38,
+      "P": 6396.17,
+      "Mx": -9.41,
+      "My": 55066.11,
+      "phiP": 5756.56,
+      "phiMx": -8.47,
+      "phiMy": 49559.5,
+      "maxRebarStrain": 0.5250517578125
+    },
+    {
+      "index": 39,
+      "P": 6396.41,
+      "Mx": -9.37,
+      "My": 55062.31,
+      "phiP": 5756.77,
+      "phiMx": -8.44,
+      "phiMy": 49556.08,
+      "maxRebarStrain": 0.5251008789062499
+    },
+    {
+      "index": 40,
+      "P": 6396.53,
+      "Mx": -9.36,
+      "My": 55060.41,
+      "phiP": 5756.88,
+      "phiMx": -8.42,
+      "phiMy": 49554.37,
+      "maxRebarStrain": 0.5251254394531251
+    },
+    {
+      "index": 41,
+      "P": 6396.59,
+      "Mx": -9.35,
+      "My": 55059.46,
+      "phiP": 5756.93,
+      "phiMx": -8.41,
+      "phiMy": 49553.51,
+      "maxRebarStrain": 0.5251377197265625
+    },
+    {
+      "index": 42,
+      "P": 6396.62,
+      "Mx": -9.34,
+      "My": 55058.98,
+      "phiP": 5756.96,
+      "phiMx": -8.41,
+      "phiMy": 49553.08,
+      "maxRebarStrain": 0.5251438598632813
+    },
+    {
+      "index": 43,
+      "P": 6396.64,
+      "Mx": -9.34,
+      "My": 55058.75,
+      "phiP": 5756.97,
+      "phiMx": -8.41,
+      "phiMy": 49552.87,
+      "maxRebarStrain": 0.5251469299316407
+    },
+    {
+      "index": 44,
+      "P": 6396.65,
+      "Mx": -9.34,
+      "My": 55058.63,
+      "phiP": 5756.98,
+      "phiMx": -8.41,
+      "phiMy": 49552.76,
+      "maxRebarStrain": 0.5251484649658202
+    },
+    {
+      "index": 45,
+      "P": 6396.65,
+      "Mx": -9.34,
+      "My": 55058.57,
+      "phiP": 5756.98,
+      "phiMx": -8.41,
+      "phiMy": 49552.71,
+      "maxRebarStrain": 0.5251492324829101
+    },
+    {
+      "index": 46,
+      "P": 6396.65,
+      "Mx": -9.34,
+      "My": 55058.54,
+      "phiP": 5756.99,
+      "phiMx": -8.41,
+      "phiMy": 49552.68,
+      "maxRebarStrain": 0.5251496162414551
+    },
+    {
+      "index": 47,
+      "P": 6396.65,
+      "Mx": -9.34,
+      "My": 55058.52,
+      "phiP": 5756.99,
+      "phiMx": -8.41,
+      "phiMy": 49552.67,
+      "maxRebarStrain": 0.5251498081207275
+    },
+    {
+      "index": 48,
+      "P": 6396.65,
+      "Mx": -9.34,
+      "My": 55058.52,
+      "phiP": 5756.99,
+      "phiMx": -8.41,
+      "phiMy": 49552.66,
+      "maxRebarStrain": 0.5251499040603638
+    },
+    {
+      "index": 49,
+      "P": 6396.65,
+      "Mx": -9.34,
+      "My": 55058.51,
+      "phiP": 5756.99,
+      "phiMx": -8.41,
+      "phiMy": 49552.66,
+      "maxRebarStrain": 0.525149976015091
+    },
+    {
+      "index": 50,
+      "P": 9859.2,
+      "Mx": 0,
+      "My": 0,
+      "phiP": 8873.28,
+      "phiMx": 0,
+      "phiMy": 0,
+      "maxRebarStrain": 0.00507
+    },
+    {
+      "index": 51,
+      "P": 6396.65,
+      "Mx": 9.34,
+      "My": -55058.51,
+      "phiP": 5756.99,
+      "phiMx": 8.41,
+      "phiMy": -49552.66,
+      "maxRebarStrain": 0.525149976015091
+    },
+    {
+      "index": 52,
+      "P": 6396.65,
+      "Mx": 9.34,
+      "My": -55058.52,
+      "phiP": 5756.99,
+      "phiMx": 8.41,
+      "phiMy": -49552.66,
+      "maxRebarStrain": 0.5251499040603638
+    },
+    {
+      "index": 53,
+      "P": 6396.65,
+      "Mx": 9.34,
+      "My": -55058.52,
+      "phiP": 5756.99,
+      "phiMx": 8.41,
+      "phiMy": -49552.67,
+      "maxRebarStrain": 0.5251498081207275
+    },
+    {
+      "index": 54,
+      "P": 6396.65,
+      "Mx": 9.34,
+      "My": -55058.54,
+      "phiP": 5756.99,
+      "phiMx": 8.41,
+      "phiMy": -49552.68,
+      "maxRebarStrain": 0.5251496162414551
+    },
+    {
+      "index": 55,
+      "P": 6396.65,
+      "Mx": 9.34,
+      "My": -55058.57,
+      "phiP": 5756.98,
+      "phiMx": 8.41,
+      "phiMy": -49552.71,
+      "maxRebarStrain": 0.5251492324829101
+    },
+    {
+      "index": 56,
+      "P": 6396.65,
+      "Mx": 9.34,
+      "My": -55058.63,
+      "phiP": 5756.98,
+      "phiMx": 8.41,
+      "phiMy": -49552.76,
+      "maxRebarStrain": 0.5251484649658202
+    },
+    {
+      "index": 57,
+      "P": 6396.64,
+      "Mx": 9.34,
+      "My": -55058.75,
+      "phiP": 5756.97,
+      "phiMx": 8.41,
+      "phiMy": -49552.87,
+      "maxRebarStrain": 0.5251469299316407
+    },
+    {
+      "index": 58,
+      "P": 6396.62,
+      "Mx": 9.34,
+      "My": -55058.98,
+      "phiP": 5756.96,
+      "phiMx": 8.41,
+      "phiMy": -49553.08,
+      "maxRebarStrain": 0.5251438598632813
+    },
+    {
+      "index": 59,
+      "P": 6396.59,
+      "Mx": 9.35,
+      "My": -55059.46,
+      "phiP": 5756.93,
+      "phiMx": 8.41,
+      "phiMy": -49553.51,
+      "maxRebarStrain": 0.5251377197265625
+    },
+    {
+      "index": 60,
+      "P": 6396.53,
+      "Mx": 9.36,
+      "My": -55060.41,
+      "phiP": 5756.88,
+      "phiMx": 8.42,
+      "phiMy": -49554.37,
+      "maxRebarStrain": 0.5251254394531251
+    },
+    {
+      "index": 61,
+      "P": 6396.41,
+      "Mx": 9.37,
+      "My": -55062.31,
+      "phiP": 5756.77,
+      "phiMx": 8.44,
+      "phiMy": -49556.08,
+      "maxRebarStrain": 0.5251008789062499
+    },
+    {
+      "index": 62,
+      "P": 6396.17,
+      "Mx": 9.41,
+      "My": -55066.11,
+      "phiP": 5756.56,
+      "phiMx": 8.47,
+      "phiMy": -49559.5,
+      "maxRebarStrain": 0.5250517578125
+    },
+    {
+      "index": 63,
+      "P": 6395.7,
+      "Mx": 9.48,
+      "My": -55073.71,
+      "phiP": 5756.13,
+      "phiMx": 8.53,
+      "phiMy": -49566.34,
+      "maxRebarStrain": 0.524953515625
+    },
+    {
+      "index": 64,
+      "P": 6394.74,
+      "Mx": 9.62,
+      "My": -55088.91,
+      "phiP": 5755.26,
+      "phiMx": 8.66,
+      "phiMy": -49580.02,
+      "maxRebarStrain": 0.5247570312500001
+    },
+    {
+      "index": 65,
+      "P": 6392.82,
+      "Mx": 9.9,
+      "My": -55119.31,
+      "phiP": 5753.54,
+      "phiMx": 8.91,
+      "phiMy": -49607.38,
+      "maxRebarStrain": 0.5243640625
+    },
+    {
+      "index": 66,
+      "P": 6388.99,
+      "Mx": 10.46,
+      "My": -55180.12,
+      "phiP": 5750.09,
+      "phiMx": 9.41,
+      "phiMy": -49662.1,
+      "maxRebarStrain": 0.523578125
+    },
+    {
+      "index": 67,
+      "P": 6381.33,
+      "Mx": 11.58,
+      "My": -55301.72,
+      "phiP": 5743.2,
+      "phiMx": 10.42,
+      "phiMy": -49771.55,
+      "maxRebarStrain": 0.52200625
+    },
+    {
+      "index": 68,
+      "P": 6365.18,
+      "Mx": 12.81,
+      "My": -55557.96,
+      "phiP": 5728.67,
+      "phiMx": 11.53,
+      "phiMy": -50002.17,
+      "maxRebarStrain": 0.5188625
+    },
+    {
+      "index": 69,
+      "P": 6332.63,
+      "Mx": 14.95,
+      "My": -56074.63,
+      "phiP": 5699.37,
+      "phiMx": 13.45,
+      "phiMy": -50467.16,
+      "maxRebarStrain": 0.512575
+    },
+    {
+      "index": 70,
+      "P": 6260.32,
+      "Mx": 16.7,
+      "My": -57221.67,
+      "phiP": 5634.29,
+      "phiMx": 15.03,
+      "phiMy": -51499.5,
+      "maxRebarStrain": 0.5
+    },
+    {
+      "index": 71,
+      "P": 4084.41,
+      "Mx": 2.28,
+      "My": -91629.67,
+      "phiP": 3675.97,
+      "phiMx": 2.05,
+      "phiMy": -82466.7,
+      "maxRebarStrain": 0.26250000000000007
+    },
+    {
+      "index": 72,
+      "P": 1185.95,
+      "Mx": 7.83,
+      "My": -136883.22,
+      "phiP": 1067.36,
+      "phiMx": 7.05,
+      "phiMy": -123194.9,
+      "maxRebarStrain": 0.14375
+    },
+    {
+      "index": 73,
+      "P": -495.23,
+      "Mx": 11.96,
+      "My": -162800.53,
+      "phiP": -445.71,
+      "phiMx": 10.76,
+      "phiMy": -146520.47,
+      "maxRebarStrain": 0.11406250000000001
+    },
+    {
+      "index": 74,
+      "P": -3237.75,
+      "Mx": 4.85,
+      "My": -204673.86,
+      "phiP": -2913.97,
+      "phiMx": 4.36,
+      "phiMy": -184206.48,
+      "maxRebarStrain": 0.084375
+    },
+    {
+      "index": 75,
+      "P": -5917.74,
+      "Mx": 11.23,
+      "My": -244619.95,
+      "phiP": -5325.96,
+      "phiMx": 10.11,
+      "phiMy": -220157.96,
+      "maxRebarStrain": 0.06953125
+    },
+    {
+      "index": 76,
+      "P": -9779.4,
+      "Mx": 8.66,
+      "My": -301618,
+      "phiP": -8801.46,
+      "phiMx": 7.8,
+      "phiMy": -271456.2,
+      "maxRebarStrain": 0.05468750000000001
+    },
+    {
+      "index": 77,
+      "P": -12446.99,
+      "Mx": 1.95,
+      "My": -340523.06,
+      "phiP": -11202.29,
+      "phiMx": 1.75,
+      "phiMy": -306470.75,
+      "maxRebarStrain": 0.047265625000000006
+    },
+    {
+      "index": 78,
+      "P": -15665.72,
+      "Mx": 1.61,
+      "My": -386997.75,
+      "phiP": -14099.15,
+      "phiMx": 1.45,
+      "phiMy": -348297.98,
+      "maxRebarStrain": 0.03984375
+    },
+    {
+      "index": 79,
+      "P": -18858.74,
+      "Mx": 1.7,
+      "My": -432667.1,
+      "phiP": -16972.87,
+      "phiMx": 1.53,
+      "phiMy": -389400.39,
+      "maxRebarStrain": 0.032421875
+    },
+    {
+      "index": 80,
+      "P": -21902.13,
+      "Mx": -1.11,
+      "My": -475337.08,
+      "phiP": -19711.91,
+      "phiMx": -1,
+      "phiMy": -427803.38,
+      "maxRebarStrain": 0.025
+    },
+    {
+      "index": 81,
+      "P": -25602.4,
+      "Mx": -0.34,
+      "My": -523022.57,
+      "phiP": -23042.16,
+      "phiMx": -0.31,
+      "phiMy": -470720.31,
+      "maxRebarStrain": 0.015
+    },
+    {
+      "index": 82,
+      "P": -28434.45,
+      "Mx": -0.32,
+      "My": -553461.79,
+      "phiP": -25591.01,
+      "phiMx": -0.29,
+      "phiMy": -498115.61,
+      "maxRebarStrain": 0.01
+    },
+    {
+      "index": 83,
+      "P": -30792.29,
+      "Mx": -0.2,
+      "My": -574798.73,
+      "phiP": -27713.06,
+      "phiMx": -0.18,
+      "phiMy": -517318.86,
+      "maxRebarStrain": 0.007499999999999999
+    },
+    {
+      "index": 84,
+      "P": -34483.25,
+      "Mx": -0.08,
+      "My": -601197.24,
+      "phiP": -31034.92,
+      "phiMx": -0.07,
+      "phiMy": -541077.52,
+      "maxRebarStrain": 0.005070000000000002
+    },
+    {
+      "index": 85,
+      "P": -36920.04,
+      "Mx": -0.01,
+      "My": -613946.05,
+      "phiP": -29936,
+      "phiMx": -0.01,
+      "phiMy": -497807.92,
+      "maxRebarStrain": 0.004
+    },
+    {
+      "index": 86,
+      "P": -39988.43,
+      "Mx": -0.03,
+      "My": -624690.59,
+      "phiP": -29091.58,
+      "phiMx": -0.02,
+      "phiMy": -454462.4,
+      "maxRebarStrain": 0.0029999999999999996
+    },
+    {
+      "index": 87,
+      "P": -44095.94,
+      "Mx": 0,
+      "My": -627398.4,
+      "phiP": -28662.36,
+      "phiMx": 0,
+      "phiMy": -407808.96,
+      "maxRebarStrain": 0.0020700000000000002
+    },
+    {
+      "index": 88,
+      "P": -51837,
+      "Mx": -0.01,
+      "My": -600442.47,
+      "phiP": -33694.05,
+      "phiMx": -0.01,
+      "phiMy": -390287.61,
+      "maxRebarStrain": 0.001
+    },
+    {
+      "index": 89,
+      "P": -56549.15,
+      "Mx": -0.02,
+      "My": -576224.55,
+      "phiP": -36756.95,
+      "phiMx": -0.01,
+      "phiMy": -374545.96,
+      "maxRebarStrain": 0.0005
+    },
+    {
+      "index": 90,
+      "P": -59312.6,
+      "Mx": -0.06,
+      "My": -558148.69,
+      "phiP": -38553.19,
+      "phiMx": -0.04,
+      "phiMy": -362796.65,
+      "maxRebarStrain": 0.00025
+    },
+    {
+      "index": 91,
+      "P": -63574.15,
+      "Mx": 0.18,
+      "My": -517056.83,
+      "phiP": -41323.19,
+      "phiMx": 0.12,
+      "phiMy": -336086.94,
+      "maxRebarStrain": -2.168404344971009e-19
+    },
+    {
+      "index": 92,
+      "P": -70211.02,
+      "Mx": 0.11,
+      "My": -437906.92,
+      "phiP": -45637.16,
+      "phiMx": 0.07,
+      "phiMy": -284639.5,
+      "maxRebarStrain": -0.0002500000000000002
+    },
+    {
+      "index": 93,
+      "P": -76707,
+      "Mx": 0.1,
+      "My": -358521.83,
+      "phiP": -49859.55,
+      "phiMx": 0.07,
+      "phiMy": -233039.19,
+      "maxRebarStrain": -0.0005
+    },
+    {
+      "index": 94,
+      "P": -83008.41,
+      "Mx": 0.09,
+      "My": -279233,
+      "phiP": -53681.62,
+      "phiMx": 0.06,
+      "phiMy": -181501.45,
+      "maxRebarStrain": -0.0007499999999999998
+    },
+    {
+      "index": 95,
+      "P": -89041.2,
+      "Mx": 0.08,
+      "My": -200574.27,
+      "phiP": -53681.62,
+      "phiMx": 0.05,
+      "phiMy": -130373.28,
+      "maxRebarStrain": -0.0009999999999999998
+    },
+    {
+      "index": 96,
+      "P": -94691.13,
+      "Mx": 0.08,
+      "My": -123710.31,
+      "phiP": -53681.62,
+      "phiMx": 0.05,
+      "phiMy": -80411.7,
+      "maxRebarStrain": -0.00125
+    },
+    {
+      "index": 97,
+      "P": -99767.18,
+      "Mx": 0.08,
+      "My": -51282.02,
+      "phiP": -53681.62,
+      "phiMx": 0.05,
+      "phiMy": -33333.32,
+      "maxRebarStrain": -0.0015
+    },
+    {
+      "index": 98,
+      "P": -102788.47,
+      "Mx": 0,
+      "My": -6538.24,
+      "phiP": -53681.62,
+      "phiMx": 0,
+      "phiMy": -4249.86,
+      "maxRebarStrain": -0.0017499999999999998
+    },
+    {
+      "index": 99,
+      "P": -103176.27,
+      "Mx": 0,
+      "My": -892.87,
+      "phiP": -53681.62,
+      "phiMx": 0,
+      "phiMy": -580.37,
+      "maxRebarStrain": -0.002
+    }
+  ],
+  "notes": [
+    "P is shown positive in compression to match spColumn. The saved demand cases negate P; M2 = Mx and M3 = My. The 90° curve bends about the model’s Y axis (M3).",
+    "Orange points are the supplied RETUG factored profiles; the dashed gray line is RETUG nominal strength. The teal line only joins the published control points as a visual guide; it is not a reconstructed spColumn design envelope.",
+    "The maximum-compression row compares the displayed RETUG value, including its 0.80 axial cap, with spColumn’s uncapped φP maximum. The resulting 20% difference is a capacity-definition difference. spColumn’s allowable-compression row is the corresponding 0.80 limit.",
+    "Named steel states use the saved curve’s yield strain (0.00207) and the current engine’s tension-control strain (0.00507). The spColumn report uses approximately 0.00276 and 0.00576. These inputs are not identical; the verification does not change them to force agreement.",
+    "The report notes that the increase in axial capacity between balanced and tension control is omitted from its design diagram. The table compares named states, rather than choosing an arbitrary intersection at the same factored axial load.",
+    "Small M2 residuals come from the supplied mesh results. Published moments smaller than 0.1 kip-ft are normalized to zero. Values are based on the 3 in. saved mesh and a 100-profile curve; interpolation and displayed rounding are included."
+  ],
+  "chartSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1120 630\" role=\"img\" aria-labelledby=\"comparison-chart-title comparison-chart-desc\"><title id=\"comparison-chart-title\">RETUG and spColumn axial force–moment interaction</title><desc id=\"comparison-chart-desc\">Nominal and factored RETUG profiles with spColumn factored control points. Compression is positive; horizontal axis is M3 in kip-ft. The comparison table below provides the control-point values.</desc><rect width=\"1120\" height=\"630\" fill=\"white\"/><path d=\"M152.58823529411765 35V535\" stroke=\"#e8edf1\"/><text x=\"152.58823529411765\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">-600k</text><path d=\"M299.05882352941177 35V535\" stroke=\"#e8edf1\"/><text x=\"299.05882352941177\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">-400k</text><path d=\"M445.5294117647059 35V535\" stroke=\"#e8edf1\"/><text x=\"445.5294117647059\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">-200k</text><path d=\"M592 35V535\" stroke=\"#aebdc7\"/><text x=\"592\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">0k</text><path d=\"M738.4705882352941 35V535\" stroke=\"#e8edf1\"/><text x=\"738.4705882352941\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">200k</text><path d=\"M884.9411764705882 35V535\" stroke=\"#e8edf1\"/><text x=\"884.9411764705882\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">400k</text><path d=\"M1031.4117647058824 35V535\" stroke=\"#e8edf1\"/><text x=\"1031.4117647058824\" y=\"563\" text-anchor=\"middle\" fill=\"#526473\" font-size=\"14\">600k</text><path d=\"M94 515H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"520\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">-10k</text><path d=\"M94 475H1090\" stroke=\"#aebdc7\"/><text x=\"80\" y=\"480\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">0k</text><path d=\"M94 395H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"400\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">20k</text><path d=\"M94 315H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"320\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">40k</text><path d=\"M94 235H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"240\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">60k</text><path d=\"M94 155H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"160\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">80k</text><path d=\"M94 75H1090\" stroke=\"#e8edf1\"/><text x=\"80\" y=\"80\" text-anchor=\"end\" fill=\"#526473\" font-size=\"14\">100k</text><text x=\"592\" y=\"599\" text-anchor=\"middle\" fill=\"#263342\" font-size=\"17\">Moment M3 = My (kip-ft)</text><text transform=\"translate(23 285) rotate(-90)\" text-anchor=\"middle\" fill=\"#263342\" font-size=\"17\">Axial load, P (kip) · compression positive</text><g data-series=\"nominal\"><path d=\"M592.00,62.06 L592.65,62.29 L596.79,63.85 L629.56,75.93 L682.60,96.24 L738.89,118.84 L796.50,142.97 L854.56,168.17 L912.70,194.16 L970.67,220.70 L1000.76,237.75 L1014.00,248.80 L1031.74,267.65 L1051.48,298.62 L1049.49,315.05 L1041.63,327.32 L1032.29,337.07 L1012.96,351.83 L997.33,361.26 L975.04,372.59 L940.11,387.39 L908.87,399.57 L875.42,412.34 L841.38,425.21 L812.89,435.88 L771.15,451.33 L741.89,462.05 L711.23,473.02 L692.25,479.74 L659.11,491.34 L633.91,500.04 L633.07,500.33 L632.69,500.46 L632.50,500.53 L632.41,500.56 L632.37,500.57 L632.34,500.58 L632.33,500.58 L632.33,500.58 L632.33,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L632.32,500.59 L592.00,514.44 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.68,500.59 L551.67,500.59 L551.67,500.58 L551.67,500.58 L551.66,500.58 L551.63,500.57 L551.59,500.56 L551.50,500.53 L551.31,500.46 L550.93,500.33 L550.09,500.04 L524.89,491.34 L491.75,479.74 L472.77,473.02 L442.11,462.05 L412.85,451.33 L371.11,435.88 L342.62,425.21 L308.58,412.34 L275.13,399.57 L243.89,387.39 L208.96,372.59 L186.67,361.26 L171.04,351.83 L151.71,337.07 L142.37,327.32 L134.51,315.05 L132.52,298.62 L152.26,267.65 L170.00,248.80 L183.24,237.75 L213.33,220.70 L271.30,194.16 L329.44,168.17 L387.50,142.97 L445.11,118.84 L501.40,96.24 L554.44,75.93 L587.21,63.85 L591.35,62.29 L592.00,62.06\" fill=\"none\" stroke=\"#8a9dac\" stroke-width=\"2\" stroke-dasharray=\"7 5\"/></g><g data-series=\"published\"><path d=\"M592.00,206.59 L735.49,260.27 L849.96,310.22 L883.30,345.09 L890.53,366.39 L984.45,354.00 L694.26,475.00 L592.00,510.49\" fill=\"none\" stroke=\"#277f88\" stroke-width=\"2.6\"/><path d=\"M592.00,206.59 L448.51,260.27 L334.04,310.22 L300.70,345.09 L293.48,366.39 L199.55,354.00 L489.74,475.00 L592.00,510.49\" fill=\"none\" stroke=\"#277f88\" stroke-width=\"2.6\"/><path d=\"M592 201.59200000000004l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: Max. compression · spColumn: P 67,102.0 kip; M3 0.0 kip-ft</title></path><path d=\"M735.4871215 255.2736l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: Allowable compression · spColumn: P 53,681.6 kip; M3 195,926.2 kip-ft</title></path><path d=\"M849.9554168235294 305.21720000000005l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: fs = 0 · spColumn: P 41,195.7 kip; M3 352,228.3 kip-ft</title></path><path d=\"M883.300867 340.0924l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: fs = 0.5 fy · spColumn: P 32,476.9 kip; M3 397,760.2 kip-ft</title></path><path d=\"M890.5250014705882 361.3948l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: Balanced point · spColumn: P 27,151.3 kip; M3 407,624.5 kip-ft</title></path><path d=\"M984.447391352941 348.99879999999996l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: Tension control · spColumn: P 30,250.3 kip; M3 535,871.9 kip-ft</title></path><path d=\"M694.2593932352942 470l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: Pure bending · spColumn: P 0.0 kip; M3 139,631.3 kip-ft</title></path><path d=\"M592 505.4932l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>Y: Max. tension · spColumn: P -8,873.3 kip; M3 0.0 kip-ft</title></path><path d=\"M592 201.59200000000004l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: Max. compression · spColumn: P 67,102.0 kip; M3 0.0 kip-ft</title></path><path d=\"M448.5127759705882 255.2736l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: Allowable compression · spColumn: P 53,681.6 kip; M3 -195,926.3 kip-ft</title></path><path d=\"M334.0445831764706 305.21720000000005l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: fs = 0 · spColumn: P 41,195.7 kip; M3 -352,228.3 kip-ft</title></path><path d=\"M300.699133 340.0924l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: fs = 0.5 fy · spColumn: P 32,476.9 kip; M3 -397,760.2 kip-ft</title></path><path d=\"M293.4750424705882 361.3948l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: Balanced point · spColumn: P 27,151.3 kip; M3 -407,624.4 kip-ft</title></path><path d=\"M199.55260864705886 348.99879999999996l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: Tension control · spColumn: P 30,250.3 kip; M3 -535,871.9 kip-ft</title></path><path d=\"M489.74097294117644 470l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: Pure bending · spColumn: P 0.0 kip; M3 -139,630.8 kip-ft</title></path><path d=\"M592 505.4932l5 5 -5 5 -5 -5Z\" fill=\"white\" stroke=\"#277f88\" stroke-width=\"2\"><title>−Y: Max. tension · spColumn: P -8,873.3 kip; M3 0.0 kip-ft</title></path></g><g data-series=\"factored\"><path d=\"M592.00,260.27 L592.43,260.27 L595.11,260.27 L616.41,260.27 L650.89,260.27 L687.48,260.27 L724.92,260.27 L762.67,275.56 L800.46,292.45 L838.13,309.71 L857.70,320.79 L866.30,327.97 L877.83,340.22 L890.66,360.35 L924.83,358.63 L956.57,355.26 L988.26,350.86 L970.86,364.15 L956.80,372.64 L936.73,382.83 L905.30,396.15 L877.18,407.11 L847.08,418.60 L816.44,430.19 L790.80,439.79 L753.23,453.70 L726.90,463.34 L699.30,473.22 L682.22,479.27 L652.39,489.70 L629.72,497.54 L628.96,497.80 L628.62,497.91 L628.45,497.97 L628.37,498.00 L628.33,498.01 L628.31,498.02 L628.30,498.02 L628.30,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L628.29,498.03 L592.00,510.49 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.71,498.03 L555.70,498.03 L555.70,498.02 L555.69,498.02 L555.67,498.01 L555.63,498.00 L555.55,497.97 L555.38,497.91 L555.04,497.80 L554.28,497.54 L531.61,489.70 L501.78,479.27 L484.70,473.22 L457.10,463.34 L430.77,453.70 L393.20,439.79 L367.56,430.19 L336.92,418.60 L306.82,407.11 L278.70,396.15 L247.27,382.83 L227.20,372.64 L213.14,364.15 L195.74,350.86 L227.43,355.26 L259.17,358.63 L293.34,360.35 L306.17,340.22 L317.70,327.97 L326.30,320.79 L345.87,309.71 L383.54,292.45 L421.33,275.56 L459.08,260.27 L496.52,260.27 L533.11,260.27 L567.59,260.27 L588.89,260.27 L591.57,260.27 L592.00,260.27\" fill=\"none\" stroke=\"#ce6838\" stroke-width=\"1.3\" stroke-opacity=\"0.55\"/><circle cx=\"592\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 0: φP 53,681.6 kip; φM2 0.0 kip-ft; φM3 0.0 kip-ft</title></circle><circle cx=\"592.4250356764705\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 1: φP 53,681.6 kip; φM2 0.0 kip-ft; φM3 580.4 kip-ft</title></circle><circle cx=\"595.1123974705883\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 2: φP 53,681.6 kip; φM2 0.0 kip-ft; φM3 4,249.9 kip-ft</title></circle><circle cx=\"616.4117549411764\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 3: φP 53,681.6 kip; φM2 -0.1 kip-ft; φM3 33,333.3 kip-ft</title></circle><circle cx=\"650.889745\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 4: φP 53,681.6 kip; φM2 -0.1 kip-ft; φM3 80,411.7 kip-ft</title></circle><circle cx=\"687.4792550588236\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 5: φP 53,681.6 kip; φM2 -0.1 kip-ft; φM3 130,373.3 kip-ft</title></circle><circle cx=\"724.9231207352941\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 6: φP 53,681.6 kip; φM2 -0.1 kip-ft; φM3 181,501.5 kip-ft</title></circle><circle cx=\"762.6669362058823\" cy=\"275.5618\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 7: φP 49,859.6 kip; φM2 -0.1 kip-ft; φM3 233,039.2 kip-ft</title></circle><circle cx=\"800.4565749999999\" cy=\"292.45136\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 8: φP 45,637.2 kip; φM2 -0.1 kip-ft; φM3 284,639.5 kip-ft</title></circle><circle cx=\"838.1342589999999\" cy=\"309.70723999999996\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 9: φP 41,323.2 kip; φM2 -0.1 kip-ft; φM3 336,086.9 kip-ft</title></circle><circle cx=\"857.6951936764706\" cy=\"320.78724\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 10: φP 38,553.2 kip; φM2 0.0 kip-ft; φM3 362,796.7 kip-ft</title></circle><circle cx=\"866.2998354117647\" cy=\"327.97220000000004\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 11: φP 36,757.0 kip; φM2 0.0 kip-ft; φM3 374,546.0 kip-ft</title></circle><circle cx=\"877.8282790882351\" cy=\"340.2238\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 12: φP 33,694.1 kip; φM2 0.0 kip-ft; φM3 390,287.6 kip-ft</title></circle><circle cx=\"890.6600912941176\" cy=\"360.35056\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 13: φP 28,662.4 kip; φM2 0.0 kip-ft; φM3 407,809.0 kip-ft</title></circle><circle cx=\"924.8268752941176\" cy=\"358.63367999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 14: φP 29,091.6 kip; φM2 0.0 kip-ft; φM3 454,462.4 kip-ft</title></circle><circle cx=\"956.5710943529411\" cy=\"355.256\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 15: φP 29,936.0 kip; φM2 0.0 kip-ft; φM3 497,807.9 kip-ft</title></circle><circle cx=\"988.2597131764705\" cy=\"350.86032\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 16: φP 31,034.9 kip; φM2 0.1 kip-ft; φM3 541,077.5 kip-ft</title></circle><circle cx=\"970.8599886470587\" cy=\"364.14776\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 17: φP 27,713.1 kip; φM2 0.2 kip-ft; φM3 517,318.9 kip-ft</title></circle><circle cx=\"956.7964320294117\" cy=\"372.63596\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 18: φP 25,591.0 kip; φM2 0.3 kip-ft; φM3 498,115.6 kip-ft</title></circle><circle cx=\"936.7334035\" cy=\"382.83136\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 19: φP 23,042.2 kip; φM2 0.3 kip-ft; φM3 470,720.3 kip-ft</title></circle><circle cx=\"905.3030635882352\" cy=\"396.15236\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 20: φP 19,711.9 kip; φM2 1.0 kip-ft; φM3 427,803.4 kip-ft</title></circle><circle cx=\"877.1785209117648\" cy=\"407.10852\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 21: φP 16,972.9 kip; φM2 -1.5 kip-ft; φM3 389,400.4 kip-ft</title></circle><circle cx=\"847.0770500588235\" cy=\"418.60339999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 22: φP 14,099.2 kip; φM2 -1.5 kip-ft; φM3 348,298.0 kip-ft</title></circle><circle cx=\"816.4447551470588\" cy=\"430.19084\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 23: φP 11,202.3 kip; φM2 -1.8 kip-ft; φM3 306,470.8 kip-ft</title></circle><circle cx=\"790.8017464705881\" cy=\"439.79416000000003\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 24: φP 8,801.5 kip; φM2 -7.8 kip-ft; φM3 271,456.2 kip-ft</title></circle><circle cx=\"753.2333295294118\" cy=\"453.69615999999996\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 25: φP 5,326.0 kip; φM2 -10.1 kip-ft; φM3 220,158.0 kip-ft</title></circle><circle cx=\"726.9041574117647\" cy=\"463.34412\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 26: φP 2,914.0 kip; φM2 -4.4 kip-ft; φM3 184,206.5 kip-ft</title></circle><circle cx=\"699.3046971470587\" cy=\"473.21716\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 27: φP 445.7 kip; φM2 -10.8 kip-ft; φM3 146,520.5 kip-ft</title></circle><circle cx=\"682.2221473529412\" cy=\"479.26944000000003\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 28: φP -1,067.4 kip; φM2 -7.1 kip-ft; φM3 123,194.9 kip-ft</title></circle><circle cx=\"652.3947302941176\" cy=\"489.70388\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 29: φP -3,676.0 kip; φM2 -2.1 kip-ft; φM3 82,466.7 kip-ft</title></circle><circle cx=\"629.7158102941177\" cy=\"497.53716\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 30: φP -5,634.3 kip; φM2 -15.0 kip-ft; φM3 51,499.5 kip-ft</title></circle><circle cx=\"628.9597730588235\" cy=\"497.79748\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 31: φP -5,699.4 kip; φM2 -13.5 kip-ft; φM3 50,467.2 kip-ft</title></circle><circle cx=\"628.6192362647059\" cy=\"497.91468\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 32: φP -5,728.7 kip; φM2 -11.5 kip-ft; φM3 50,002.2 kip-ft</title></circle><circle cx=\"628.4503410294118\" cy=\"497.9728\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 33: φP -5,743.2 kip; φM2 -10.4 kip-ft; φM3 49,771.6 kip-ft</title></circle><circle cx=\"628.370185\" cy=\"498.00036\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 34: φP -5,750.1 kip; φM2 -9.4 kip-ft; φM3 49,662.1 kip-ft</title></circle><circle cx=\"628.3301106470589\" cy=\"498.01416\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 35: φP -5,753.5 kip; φM2 -8.9 kip-ft; φM3 49,607.4 kip-ft</title></circle><circle cx=\"628.3100734705882\" cy=\"498.02103999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 36: φP -5,755.3 kip; φM2 -8.7 kip-ft; φM3 49,580.0 kip-ft</title></circle><circle cx=\"628.3000548823529\" cy=\"498.02452\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 37: φP -5,756.1 kip; φM2 -8.5 kip-ft; φM3 49,566.3 kip-ft</title></circle><circle cx=\"628.2950455882353\" cy=\"498.02624000000003\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 38: φP -5,756.6 kip; φM2 -8.5 kip-ft; φM3 49,559.5 kip-ft</title></circle><circle cx=\"628.2925409411764\" cy=\"498.02708\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 39: φP -5,756.8 kip; φM2 -8.4 kip-ft; φM3 49,556.1 kip-ft</title></circle><circle cx=\"628.2912886176471\" cy=\"498.02752\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 40: φP -5,756.9 kip; φM2 -8.4 kip-ft; φM3 49,554.4 kip-ft</title></circle><circle cx=\"628.2906587941177\" cy=\"498.02772\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 41: φP -5,756.9 kip; φM2 -8.4 kip-ft; φM3 49,553.5 kip-ft</title></circle><circle cx=\"628.2903438823529\" cy=\"498.02783999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 42: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,553.1 kip-ft</title></circle><circle cx=\"628.2901900882352\" cy=\"498.02788\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 43: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.9 kip-ft</title></circle><circle cx=\"628.2901095294118\" cy=\"498.02792\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 44: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.8 kip-ft</title></circle><circle cx=\"628.2900729117646\" cy=\"498.02792\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 45: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.7 kip-ft</title></circle><circle cx=\"628.2900509411764\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 46: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.7 kip-ft</title></circle><circle cx=\"628.2900436176471\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 47: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.7 kip-ft</title></circle><circle cx=\"628.2900362941176\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 48: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.7 kip-ft</title></circle><circle cx=\"628.2900362941176\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 49: φP -5,757.0 kip; φM2 -8.4 kip-ft; φM3 49,552.7 kip-ft</title></circle><circle cx=\"592\" cy=\"510.49312\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 50: φP -8,873.3 kip; φM2 0.0 kip-ft; φM3 0.0 kip-ft</title></circle><circle cx=\"555.7099637058823\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 51: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.7 kip-ft</title></circle><circle cx=\"555.7099637058823\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 52: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.7 kip-ft</title></circle><circle cx=\"555.7099563823529\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 53: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.7 kip-ft</title></circle><circle cx=\"555.7099490588234\" cy=\"498.02796\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 54: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.7 kip-ft</title></circle><circle cx=\"555.7099270882353\" cy=\"498.02792\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 55: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.7 kip-ft</title></circle><circle cx=\"555.7098904705882\" cy=\"498.02792\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 56: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.8 kip-ft</title></circle><circle cx=\"555.7098099117648\" cy=\"498.02788\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 57: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,552.9 kip-ft</title></circle><circle cx=\"555.709656117647\" cy=\"498.02783999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 58: φP -5,757.0 kip; φM2 8.4 kip-ft; φM3 -49,553.1 kip-ft</title></circle><circle cx=\"555.7093412058823\" cy=\"498.02772\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 59: φP -5,756.9 kip; φM2 8.4 kip-ft; φM3 -49,553.5 kip-ft</title></circle><circle cx=\"555.7087113823529\" cy=\"498.02752\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 60: φP -5,756.9 kip; φM2 8.4 kip-ft; φM3 -49,554.4 kip-ft</title></circle><circle cx=\"555.7074590588236\" cy=\"498.02708\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 61: φP -5,756.8 kip; φM2 8.4 kip-ft; φM3 -49,556.1 kip-ft</title></circle><circle cx=\"555.7049544117647\" cy=\"498.02624000000003\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 62: φP -5,756.6 kip; φM2 8.5 kip-ft; φM3 -49,559.5 kip-ft</title></circle><circle cx=\"555.6999451176471\" cy=\"498.02452\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 63: φP -5,756.1 kip; φM2 8.5 kip-ft; φM3 -49,566.3 kip-ft</title></circle><circle cx=\"555.6899265294118\" cy=\"498.02103999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 64: φP -5,755.3 kip; φM2 8.7 kip-ft; φM3 -49,580.0 kip-ft</title></circle><circle cx=\"555.6698893529413\" cy=\"498.01416\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 65: φP -5,753.5 kip; φM2 8.9 kip-ft; φM3 -49,607.4 kip-ft</title></circle><circle cx=\"555.629815\" cy=\"498.00036\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 66: φP -5,750.1 kip; φM2 9.4 kip-ft; φM3 -49,662.1 kip-ft</title></circle><circle cx=\"555.5496589705882\" cy=\"497.9728\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 67: φP -5,743.2 kip; φM2 10.4 kip-ft; φM3 -49,771.6 kip-ft</title></circle><circle cx=\"555.3807637352941\" cy=\"497.91468\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 68: φP -5,728.7 kip; φM2 11.5 kip-ft; φM3 -50,002.2 kip-ft</title></circle><circle cx=\"555.0402269411765\" cy=\"497.79748\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 69: φP -5,699.4 kip; φM2 13.5 kip-ft; φM3 -50,467.2 kip-ft</title></circle><circle cx=\"554.2841897058823\" cy=\"497.53716\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 70: φP -5,634.3 kip; φM2 15.0 kip-ft; φM3 -51,499.5 kip-ft</title></circle><circle cx=\"531.6052697058824\" cy=\"489.70388\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 71: φP -3,676.0 kip; φM2 2.1 kip-ft; φM3 -82,466.7 kip-ft</title></circle><circle cx=\"501.7778526470588\" cy=\"479.26944000000003\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 72: φP -1,067.4 kip; φM2 7.1 kip-ft; φM3 -123,194.9 kip-ft</title></circle><circle cx=\"484.6953028529412\" cy=\"473.21716\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 73: φP 445.7 kip; φM2 10.8 kip-ft; φM3 -146,520.5 kip-ft</title></circle><circle cx=\"457.0958425882353\" cy=\"463.34412\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 74: φP 2,914.0 kip; φM2 4.4 kip-ft; φM3 -184,206.5 kip-ft</title></circle><circle cx=\"430.7666704705883\" cy=\"453.69615999999996\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 75: φP 5,326.0 kip; φM2 10.1 kip-ft; φM3 -220,158.0 kip-ft</title></circle><circle cx=\"393.1982535294117\" cy=\"439.79416000000003\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 76: φP 8,801.5 kip; φM2 7.8 kip-ft; φM3 -271,456.2 kip-ft</title></circle><circle cx=\"367.5552448529412\" cy=\"430.19084\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 77: φP 11,202.3 kip; φM2 1.8 kip-ft; φM3 -306,470.8 kip-ft</title></circle><circle cx=\"336.9229499411765\" cy=\"418.60339999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 78: φP 14,099.2 kip; φM2 1.5 kip-ft; φM3 -348,298.0 kip-ft</title></circle><circle cx=\"306.82147908823526\" cy=\"407.10852\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 79: φP 16,972.9 kip; φM2 1.5 kip-ft; φM3 -389,400.4 kip-ft</title></circle><circle cx=\"278.6969364117647\" cy=\"396.15236\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 80: φP 19,711.9 kip; φM2 -1.0 kip-ft; φM3 -427,803.4 kip-ft</title></circle><circle cx=\"247.26659650000002\" cy=\"382.83136\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 81: φP 23,042.2 kip; φM2 -0.3 kip-ft; φM3 -470,720.3 kip-ft</title></circle><circle cx=\"227.20356797058824\" cy=\"372.63596\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 82: φP 25,591.0 kip; φM2 -0.3 kip-ft; φM3 -498,115.6 kip-ft</title></circle><circle cx=\"213.1400113529412\" cy=\"364.14776\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 83: φP 27,713.1 kip; φM2 -0.2 kip-ft; φM3 -517,318.9 kip-ft</title></circle><circle cx=\"195.7402868235294\" cy=\"350.86032\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 84: φP 31,034.9 kip; φM2 -0.1 kip-ft; φM3 -541,077.5 kip-ft</title></circle><circle cx=\"227.42890564705883\" cy=\"355.256\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 85: φP 29,936.0 kip; φM2 0.0 kip-ft; φM3 -497,807.9 kip-ft</title></circle><circle cx=\"259.17312470588234\" cy=\"358.63367999999997\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 86: φP 29,091.6 kip; φM2 0.0 kip-ft; φM3 -454,462.4 kip-ft</title></circle><circle cx=\"293.33990870588235\" cy=\"360.35056\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 87: φP 28,662.4 kip; φM2 0.0 kip-ft; φM3 -407,809.0 kip-ft</title></circle><circle cx=\"306.17172091176474\" cy=\"340.2238\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 88: φP 33,694.1 kip; φM2 0.0 kip-ft; φM3 -390,287.6 kip-ft</title></circle><circle cx=\"317.7001645882353\" cy=\"327.97220000000004\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 89: φP 36,757.0 kip; φM2 0.0 kip-ft; φM3 -374,546.0 kip-ft</title></circle><circle cx=\"326.3048063235294\" cy=\"320.78724\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 90: φP 38,553.2 kip; φM2 0.0 kip-ft; φM3 -362,796.7 kip-ft</title></circle><circle cx=\"345.86574099999996\" cy=\"309.70723999999996\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 91: φP 41,323.2 kip; φM2 0.1 kip-ft; φM3 -336,086.9 kip-ft</title></circle><circle cx=\"383.543425\" cy=\"292.45136\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 92: φP 45,637.2 kip; φM2 0.1 kip-ft; φM3 -284,639.5 kip-ft</title></circle><circle cx=\"421.3330637941176\" cy=\"275.5618\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 93: φP 49,859.6 kip; φM2 0.1 kip-ft; φM3 -233,039.2 kip-ft</title></circle><circle cx=\"459.0768792647059\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 94: φP 53,681.6 kip; φM2 0.1 kip-ft; φM3 -181,501.5 kip-ft</title></circle><circle cx=\"496.5207449411765\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 95: φP 53,681.6 kip; φM2 0.1 kip-ft; φM3 -130,373.3 kip-ft</title></circle><circle cx=\"533.110255\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 96: φP 53,681.6 kip; φM2 0.1 kip-ft; φM3 -80,411.7 kip-ft</title></circle><circle cx=\"567.5882450588235\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 97: φP 53,681.6 kip; φM2 0.1 kip-ft; φM3 -33,333.3 kip-ft</title></circle><circle cx=\"588.8876025294118\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 98: φP 53,681.6 kip; φM2 0.0 kip-ft; φM3 -4,249.9 kip-ft</title></circle><circle cx=\"591.5749643235295\" cy=\"260.27352\" r=\"3.4\" fill=\"#d66a36\" stroke=\"white\" stroke-width=\"0.7\"><title>RETUG profile 99: φP 53,681.6 kip; φM2 0.0 kip-ft; φM3 -580.4 kip-ft</title></circle></g></svg>"
+}

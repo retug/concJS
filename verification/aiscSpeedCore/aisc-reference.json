@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "kind": "fixed-mm-reference",
+  "source": {
+    "title": "AISC Design Guide 37 — SpeedCore Example 3-2",
+    "report": "Seismic Design of Uncoupled 18-Story SpeedCore Walls, Example 3-2 (plated composite concrete shear wall)",
+    "page": "Worked example pages 7–10",
+    "url": "https://purr.purdue.edu/publications/3753/2"
+  },
+  "axialLoad": -3770,
+  "point": {
+    "Mx": 731416.67,
+    "My": 0
+  },
+  "units": {
+    "force": "kip",
+    "moment": "kip-ft"
+  },
+  "reportedPlasticMomentKipIn": 8810000,
+  "notes": [
+    "The published design example gives Mp = 8.81 × 10^6 kip-in = 734,166.67 kip-ft. The plotted comparison point follows the supplied 731,416.67 kip-ft AISC value."
+  ]
+}

@@ -1,0 +1,130 @@
+/* Selection is orange; response fields retain their red/blue engineering scale. */
+::selection {
+  background: var(--orange);
+  color: var(--ui-text);
+}
+
+input[type="checkbox"], input[type="radio"], input[type="range"] {
+  accent-color: var(--orange);
+}
+
+button:focus-visible, summary:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.section-response-options input:focus-visible + span,
+.section-camera-options input:focus-visible + span {
+  outline-color: var(--orange);
+}
+
+#workspaceInspector #materialsandShapes,
+#workspaceInspector #shapeContent,
+#workspaceInspector #ShapeButtons {
+  background: var(--ui-surface);
+}
+
+#workspaceInspector #shapeContent > div:first-child {
+  display: none;
+}
+
+#workspaceInspector #ShapeButtons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 7px;
+  padding: 10px 0 24px;
+}
+
+#workspaceInspector #ShapeButtons > div {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  margin: 0;
+}
+
+#workspaceInspector #ShapeButtons button {
+  position: relative;
+  height: 36px;
+  padding: 0;
+  border-color: var(--ui-muted);
+  background: var(--ui-background);
+  color: var(--ui-text);
+  box-shadow: none;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+#workspaceInspector #ShapeButtons .modern-button { width: 52px; }
+#workspaceInspector #ShapeButtons .barbell-button { width: 66px; }
+#workspaceInspector #ShapeButtons .plated-core-button { width: 44px; border-width: 3px; }
+
+#workspaceInspector #ShapeButtons button.active,
+#workspaceInspector #ShapeButtons button:hover {
+  border-color: var(--orange);
+  background: var(--ui-accent-soft);
+  box-shadow: none;
+}
+
+#workspaceInspector #ShapeButtons .circle {
+  background: var(--ui-text);
+  transition: none;
+}
+
+#workspaceInspector #ShapeButtons .plated-core-inner {
+  inset: 4px;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface);
+}
+
+#workspaceInspector #ShapeButtons button::after {
+  position: absolute;
+  top: 100%;
+  bottom: auto;
+  left: 50%;
+  margin-top: 5px;
+  padding: 0;
+  transform: translateX(-50%);
+  background: transparent;
+  color: var(--ui-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-transform: none;
+  white-space: nowrap;
+  opacity: 1;
+  pointer-events: none;
+}
+
+#workspaceInspector #rectangleButton::after { content: "Rectangle"; }
+#workspaceInspector #barbellButton::after { content: "Pier"; }
+#workspaceInspector #platedCoreButton::after { content: "Plated core"; }
+#workspaceInspector #ShapeButtons button.active::after { color: var(--ui-text); font-weight: 650; }
+
+#workspaceInspector .plated-core-note {
+  border-color: var(--orange);
+  background: var(--ui-accent-soft);
+  color: var(--ui-muted);
+}
+
+/* The inspector's generic button rule is intentionally outranked here. */
+#workspaceInspector #inspectorFooter #generatePMM-button,
+#workspaceInspector #inspectorFooter #inspectorEditSection {
+  background: var(--ui-accent-soft);
+  border-color: var(--orange);
+  color: var(--ui-text);
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+#workspaceInspector #inspectorFooter #generatePMM-button:hover:not(:disabled),
+#workspaceInspector #inspectorFooter #inspectorEditSection:hover:not(:disabled) {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--ui-text);
+  box-shadow: 0 2px 7px #ff8c6940;
+}
+
+#workspaceInspector #inspectorFooter #generatePMM-button:active:not(:disabled),
+#workspaceInspector #inspectorFooter #inspectorEditSection:active:not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--ui-text);
+}

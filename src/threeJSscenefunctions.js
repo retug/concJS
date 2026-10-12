@@ -19,12 +19,14 @@ let allSelectedPnts = []; // ✅ Declare globally so it is accessible everywhere
 let allSelectedRebar = [];
 let allSelectedConc = [];
 let activeResultsRaycastingCleanup = null;
+const SELECTION_COLOR = 0xff8c69;
+const POINT_COLOR = 0x334155;
 
 
 
 export function resizeThreeJsScene() {
     const concGui = document.getElementById('concGui');
-    const canvas = document.querySelector('canvas');
+    const canvas = renderer.domElement;
 
     if (!concGui || !canvas) return;
 
@@ -64,6 +66,14 @@ export function setupDragAndAnalyze() {
     const results = document.getElementById("results");
     const dragBar = document.getElementById("drag-bar");
     const middleColumn = document.getElementById("middleColumn");
+
+    // The workspace layout owns the split-pane divider. Keep this legacy
+    // initializer as a safe no-op for the new layout so it cannot attach a
+    // second mouse-only drag implementation to the same control.
+    if (document.body.dataset.workspaceReady === "true") {
+        requestAnimationFrame(() => requestAnimationFrame(resizeThreeJsScene));
+        return;
+    }
 
     let isDragging = false;
 
@@ -139,7 +149,7 @@ export function addRebar(x, y, barSize, scene, sprite, options = {}) {
         map: sprite,
         transparent: true,
         depthWrite: false,
-        color: 0x334155
+        color: POINT_COLOR
     });
 
     // ✅ Create Three.js Points object
@@ -178,13 +188,26 @@ export function resetProjectSelections() {
 }
 
 export function setupMouseTracking(threeJSDiv, intersectionPoint) {
+    const canvas = renderer.domElement;
     const mouse = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
     const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
     const intersectPoint = new THREE.Vector3();
 
+    function hideIntersectionPoint() {
+        intersectionPoint.visible = false;
+    }
+
     function onMouseMove(event) {
-        const rect = renderer.domElement.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
+        // Only the drawing canvas owns the cursor. Viewport cards and controls
+        // can occupy the same container without leaving a marker behind them.
+        if (event.target !== canvas || rect.width <= 0 || rect.height <= 0
+            || event.clientX < rect.left || event.clientX > rect.right
+            || event.clientY < rect.top || event.clientY > rect.bottom) {
+            hideIntersectionPoint();
+            return;
+        }
         mouse.x = ((event.clientX - rect.left) / (rect.right - rect.left)) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / (rect.bottom - rect.top)) * 2 + 1;
 
@@ -207,14 +230,22 @@ export function setupMouseTracking(threeJSDiv, intersectionPoint) {
             }
         } else {
             // Hide the point if there's no intersection
-            intersectionPoint.visible = false;
+            hideIntersectionPoint();
         }
     }
 
     // Attach event listener
     threeJSDiv.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseleave", hideIntersectionPoint);
+    hideIntersectionPoint();
 
-    // Return the function reference for later removal
+    // Keep the callable return value for existing consumers while allowing
+    // workflow changes to remove every listener and the visible marker.
+    onMouseMove.cleanup = () => {
+        threeJSDiv.removeEventListener("mousemove", onMouseMove);
+        canvas.removeEventListener("mouseleave", hideIntersectionPoint);
+        hideIntersectionPoint();
+    };
     return onMouseMove;
 }
 
@@ -224,12 +255,18 @@ export function setupMouseInteractions(threeJSDiv) {
     raycaster.params.Points.threshold = 1.25;
     let middlemouse = 0;
     let isLeftMouseDown = false;
+    let selectionGestureStarted = false;
     let pointerStart = null;
 
     const selectionBox = new SelectionBox(camera, scene);
     const helper = new SelectionHelper(renderer, "selectBox");
 
     function onPointerDown(event) {
+        // Only the renderer canvas owns section selection. The stress–strain
+        // inset and its controls live inside #concGui but must never clear or
+        // replace a geometry selection.
+        if (event.target !== renderer.domElement) return;
+
         //Prevents resetting the scene selections if you select the buttons
         if (event.target.closest("button, input, select, textarea, .modal, .ui")) return; 
 
@@ -237,6 +274,7 @@ export function setupMouseInteractions(threeJSDiv) {
             middlemouse = 1;
         } else if (event.button === 0) {
             isLeftMouseDown = true;
+            selectionGestureStarted = true;
             pointerStart = { x: event.clientX, y: event.clientY };
             if (!event.ctrlKey) resetSelections();
             setMousePosition(event);
@@ -245,15 +283,16 @@ export function setupMouseInteractions(threeJSDiv) {
     }
 
     function onPointerMove(event) {
-        if (middlemouse !== 1 && isLeftMouseDown) {
+        if (middlemouse !== 1 && isLeftMouseDown && selectionGestureStarted) {
             setMousePosition(event);
             selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
         }
     }
 
     function onPointerUp(event) {
+        if (event.button === 0 && !selectionGestureStarted) return;
         if (event.button === 0) isLeftMouseDown = false;
-        if (middlemouse !== 1) {
+        if (middlemouse !== 1 && selectionGestureStarted) {
             setMousePosition(event);
             selectionBox.endPoint.set(mouse.x, mouse.y, 0.5);
             const distance = pointerStart
@@ -266,6 +305,8 @@ export function setupMouseInteractions(threeJSDiv) {
             processSelection(allSelected);
         }
         middlemouse = 0;
+        selectionGestureStarted = false;
+        pointerStart = null;
     }
 
     threeJSDiv.addEventListener("pointerdown", onPointerDown);
@@ -279,8 +320,8 @@ export function setupMouseInteractions(threeJSDiv) {
     }
 
     function resetSelections() {
-        for (const pnt of allSelectedPnts) pnt.material.color.set(0x00FF00);
-        for (const pnt of allSelectedRebar) pnt.material.color.setHSL(0.0, 0.0, 0.5);
+        for (const pnt of allSelectedPnts) pnt.material.color.set(POINT_COLOR);
+        for (const pnt of allSelectedRebar) pnt.material.color.set(POINT_COLOR);
         
         for (const concShape of allSelectedConc) {
             console.log('your concrete shape is a instance of concrete shape?', concShape instanceof ConcShape )
@@ -297,16 +338,16 @@ export function setupMouseInteractions(threeJSDiv) {
     function applySelectionColors(selectedObjects) {
         for (const obj of selectedObjects) {
             if (obj.isReference !== true && obj.isRebar !== true && obj.isPoints === true) {
-                obj.material.color.set(0x2563EB);
+                obj.material.color.set(SELECTION_COLOR);
             } else if (obj.isRebar === true && obj.isPoints === true) {
-                obj.material.color.set(0x2563EB);
+                obj.material.color.set(SELECTION_COLOR);
             }
             else if (obj.isMesh === true) {
-                obj.material.color.set(0x2563EB);
+                obj.material.color.set(SELECTION_COLOR);
 
             } 
             else if (obj instanceof ConcShape) {
-                obj.mesh.material.color.set(0x2563EB);
+                obj.mesh.material.color.set(SELECTION_COLOR);
             }
         }
     }
@@ -481,7 +522,7 @@ export function setupMouseInteractions(threeJSDiv) {
                 if (wasDefaultPriority) concShape.priority = defaultPriorityForMaterial(concShape.material);
                 concShape.mesh.userData.material = concShape.material;
                 concShape.mesh.userData.priority = concShape.priority;
-                concShape.mesh.material.color.set(concShape.material?.type === 'steel' ? 0x64748B : 0xCBD5E1);
+                concShape.mesh.material.color.set(SELECTION_COLOR);
                 updateTables();
             });
 
@@ -571,7 +612,7 @@ export function setupMouseInteractions(threeJSDiv) {
 
         let dotGeo = new THREE.BufferGeometry();
         dotGeo.setAttribute('position', new THREE.Float32BufferAttribute([newX, newY, 0], 3));
-        let dotMat = new THREE.PointsMaterial({ size: 0.5, color: 0x00FF00 });
+        let dotMat = new THREE.PointsMaterial({ size: 0.5, color: SELECTION_COLOR });
         let newDot = new THREE.Points(dotGeo, dotMat);
         scene.add(newDot);
         allSelectedPnts.push(newDot);
@@ -587,66 +628,42 @@ export function setupMouseInteractions(threeJSDiv) {
         scene.remove(oldRebar); // Remove the old rebar from the scene
         // ✅ Create new rebar and store reference properly
         const newRebar = addRebar(newX, newY, barSize, scene, sprite);
+        newRebar.material.color.set(SELECTION_COLOR);
         // ✅ Store the correct rebar object in `allSelectedRebar`
         allSelectedRebar[oldIndex] = newRebar;    
         updateTables(); // ✅ Keep rebar in the table after update
     }
 
-    // Functions to toggle table views
-    function pointSelection() {
+    // Toggle each complete scroll wrapper so inactive tables do not leave
+    // borders, scrollbars, or empty space in the selection inspector.
+    const selectionViews = [
+        { buttonId: "Points", tableId: "pointInfo" },
+        { buttonId: "Rebar", tableId: "rebarInfo" },
+        { buttonId: "Conc", tableId: "concInfo" },
+    ].map(({ buttonId, tableId }) => ({
+        button: document.getElementById(buttonId),
+        table: document.getElementById(tableId),
+    }));
 
-        document.getElementById("pointInfo").style.display = "inline";
-        document.getElementById("pointInfo").style.display = "";
-        document.getElementById("rebarInfo").style.display = "none";
-        document.getElementById("concInfo").style.display = "none";
-        
-    
-        document.getElementById("Points").style.backgroundColor = '#1a202c';
-        document.getElementById("Points").style.color = 'white';
-        document.getElementById("Rebar").style.backgroundColor = 'white';
-        document.getElementById("Rebar").style.color = '#4a5568';
-        document.getElementById("Conc").style.backgroundColor = 'white';
-        document.getElementById("Conc").style.color = '#4a5568';
-
+    function showSelectionView(activeButton) {
+        for (const { button, table } of selectionViews) {
+            const active = button === activeButton;
+            const panel = table.parentElement;
+            panel.id ||= `${table.id}Panel`;
+            panel.hidden = !active;
+            table.style.removeProperty("display");
+            button.setAttribute("aria-controls", panel.id);
+            button.setAttribute("aria-pressed", String(active));
+            button.classList.toggle("is-active", active);
+        }
     }
-    
-    function rebarSelection() {
 
-        document.getElementById("pointInfo").style.display = "none";
-        document.getElementById("rebarInfo").style.display = "inline";
-        document.getElementById("rebarInfo").style.display = "";
-        //For some reason, style.display inline messes up with the styling of the table. Add it then remove makes this work
-        document.getElementById("concInfo").style.display = "none";
-    
-        document.getElementById("Points").style.backgroundColor = 'white';
-        document.getElementById("Points").style.color = '#4a5568';
-        document.getElementById("Rebar").style.backgroundColor = '#1a202c';
-        document.getElementById("Rebar").style.color = 'white';
-        document.getElementById("Conc").style.backgroundColor = 'white';
-        document.getElementById("Conc").style.color = '#4a5568';
-    
-        
+    const activeSelectionButton = selectionViews.find(({ button }) =>
+        button.getAttribute("aria-pressed") === "true")?.button ?? selectionViews[0].button;
+    for (const { button } of selectionViews) {
+        button.onclick = () => showSelectionView(button);
     }
-    
-    function concSelection() {
-
-        document.getElementById("pointInfo").style.display = "none";
-        document.getElementById("rebarInfo").style.display = "none";
-        document.getElementById("concInfo").style.display = "inline";
-        document.getElementById("concInfo").style.display = "";
-    
-        document.getElementById("Points").style.backgroundColor = 'white';
-        document.getElementById("Points").style.color = '#4a5568';
-        document.getElementById("Rebar").style.backgroundColor = 'white';
-        document.getElementById("Rebar").style.color = '#4a5568';
-        document.getElementById("Conc").style.backgroundColor = '#1a202c';
-        document.getElementById("Conc").style.color = 'white';
-    }
-    
-    // Event listeners for buttons
-    document.getElementById("Points").onclick = pointSelection;
-    document.getElementById("Rebar").onclick = rebarSelection;
-    document.getElementById("Conc").onclick = concSelection;
+    showSelectionView(activeSelectionButton);
   
 
     const dispose = () => {
@@ -672,7 +689,7 @@ export function addPoint() {
     var tempDotGeo = new THREE.BufferGeometry();
     tempDotGeo.setAttribute('position', new THREE.Float32BufferAttribute([X1, Y1, 0], 3));
   
-    var selectedDotMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0x00FF00 });
+    var selectedDotMaterial = new THREE.PointsMaterial({ size: 0.5, color: POINT_COLOR });
     var tempDot = new THREE.Points(tempDotGeo, selectedDotMaterial);
     
     scene.add(tempDot);
@@ -754,6 +771,7 @@ export function addHoleToShape(selectedConcShape, allSelectedPnts) {
 
     // ✅ Generate and add the updated shape to the scene
     if (selectedConcShape[0].mesh) {
+        selectedConcShape[0].mesh.material.color.set(SELECTION_COLOR);
         scene.add(selectedConcShape[0].mesh);
     } else {
         console.error("Failed to generate updated concrete mesh.");
